@@ -25,14 +25,21 @@ export function BrowserTab({ tab, updateTab }: TabRenderProps<BrowserTabModel>) 
             if (typeof title === 'string' && title.trim() && title !== tab.title)
                 updateTab({ ...tab, title: title.trim() });
         };
+        const persistFavicon = (event: Event) => {
+            const favicons = (event as Event & { favicons?: string[] }).favicons;
+            const favicon = favicons?.find((candidate) => candidate.trim());
+            if (favicon && favicon !== tab.favicon) updateTab({ ...tab, favicon });
+        };
 
         webview.addEventListener('did-navigate', persistUrl);
         webview.addEventListener('did-navigate-in-page', persistUrl);
         webview.addEventListener('page-title-updated', persistTitle);
+        webview.addEventListener('page-favicon-updated', persistFavicon);
         return () => {
             webview.removeEventListener('did-navigate', persistUrl);
             webview.removeEventListener('did-navigate-in-page', persistUrl);
             webview.removeEventListener('page-title-updated', persistTitle);
+            webview.removeEventListener('page-favicon-updated', persistFavicon);
         };
     }, [tab, updateTab]);
     return (
@@ -61,7 +68,15 @@ export function BrowserTab({ tab, updateTab }: TabRenderProps<BrowserTabModel>) 
                     <TooltipContent>Reload</TooltipContent>
                 </Tooltip>
                 <div className="relative flex-1">
-                    <GlobeIcon className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    {tab.favicon ? (
+                        <img
+                            src={tab.favicon}
+                            alt=""
+                            className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 rounded-sm object-contain"
+                        />
+                    ) : (
+                        <GlobeIcon className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    )}
                     <Input
                         value={draft}
                         onChange={(event) => setDraft(event.target.value)}

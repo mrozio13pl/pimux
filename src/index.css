@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '@fontsource-variable/raleway/wght.css';
 
 @font-face {
     font-family: 'Ioskeley Mono';
@@ -10,7 +11,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-sans: 'Ioskeley Mono', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Raleway Variable', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'Ioskeley Mono', ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, monospace;
 
     --color-background: var(--background);

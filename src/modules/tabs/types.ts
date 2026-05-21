@@ -25,6 +25,7 @@ export type ScratchTab = BaseWorkspaceTab<'scratch'> & {
 
 export type BrowserTab = BaseWorkspaceTab<'browser'> & {
     url: string;
+    favicon?: string;
 };
 
 export type WorkspaceTab = TerminalTab | PiTab | ScratchTab | BrowserTab;

@@ -1,4 +1,4 @@
-import { PlusIcon, XIcon } from '@phosphor-icons/react';
+import { GlobeIcon, PlusIcon, XIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { getTabDefinition, tabDefinitions } from '@/modules/tabs/registry';
-import type { TabKind, WorkspaceTab } from '@/modules/tabs/types';
+import type { BrowserTab, TabKind, WorkspaceTab } from '@/modules/tabs/types';
 
 type TabStripProps = {
     tabs: WorkspaceTab[];
@@ -46,12 +46,14 @@ export function TabStrip({ tabs, activeTabId, onSelectTab, onCloseTab, onAddTab 
                             className={cn(
                                 'group h-8 max-w-52 flex-none rounded-lg pr-1.5 pl-2.5 text-sm',
                                 active
-                                    ? 'bg-accent text-foreground after:opacity-0'
+                                    ? 'bg-accent font-semibold text-foreground after:opacity-0'
                                     : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground after:opacity-0',
                             )}
                         >
-                            <Icon data-icon="inline-start" />
-                            <span className="min-w-0 truncate">{tab.title}</span>
+                            <TabIcon tab={tab} Icon={Icon} />
+                            <span className={cn('min-w-0 truncate', active && 'font-bold')}>
+                                {tab.title}
+                            </span>
                             <span
                                 role="button"
                                 tabIndex={-1}
@@ -102,4 +104,13 @@ export function TabStrip({ tabs, activeTabId, onSelectTab, onCloseTab, onAddTab 
             </TabsList>
         </Tabs>
     );
+}
+
+function TabIcon({ tab, Icon }: { tab: WorkspaceTab; Icon: typeof GlobeIcon }) {
+    if (tab.kind === 'browser' && tab.favicon) return <BrowserFavicon tab={tab} />;
+    return <Icon data-icon="inline-start" />;
+}
+
+function BrowserFavicon({ tab }: { tab: BrowserTab }) {
+    return <img src={tab.favicon} alt="" className="size-4 shrink-0 rounded-sm object-contain" />;
 }

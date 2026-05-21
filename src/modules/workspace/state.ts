@@ -119,6 +119,7 @@ function migrateTab(value: unknown): WorkspaceTab | null {
             workspaceId,
             updatedAt: getUpdatedAt(value),
             url: typeof value.url === 'string' ? value.url : 'https://example.com',
+            favicon: typeof value.favicon === 'string' ? value.favicon : undefined,
         };
     }
 

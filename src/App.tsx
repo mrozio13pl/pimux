@@ -143,11 +143,17 @@ export function App() {
 
     function addTab(kind: TabKind) {
         if (!activeWorkspace) return;
-        const tab = createTab(kind, activeWorkspace);
+        addTabToWorkspace(activeWorkspace.id, kind);
+    }
+
+    function addTabToWorkspace(workspaceId: string, kind: TabKind) {
+        const workspace = state.workspaces.find((candidate) => candidate.id === workspaceId);
+        if (!workspace) return;
+        const tab = createTab(kind, workspace);
         setState((prev) => {
             let lastWorkspaceTabIndex = -1;
             for (let index = prev.tabs.length - 1; index >= 0; index -= 1) {
-                if (prev.tabs[index].workspaceId === activeWorkspace.id) {
+                if (prev.tabs[index].workspaceId === workspace.id) {
                     lastWorkspaceTabIndex = index;
                     break;
                 }
@@ -155,8 +161,8 @@ export function App() {
             const tabs = [...prev.tabs];
             tabs.splice(lastWorkspaceTabIndex + 1, 0, tab);
             return touchWorkspace(
-                { ...prev, tabs, activeTabId: tab.id },
-                activeWorkspace.id,
+                { ...prev, activeWorkspaceId: workspace.id, tabs, activeTabId: tab.id },
+                workspace.id,
                 tab.updatedAt,
             );
         });
@@ -207,6 +213,7 @@ export function App() {
                         onSelectWorkspace={selectWorkspace}
                         onSelectTab={selectTab}
                         onCreateWorkspace={createWorkspace}
+                        onAddTab={addTabToWorkspace}
                     />
                 </ResizablePanel>
                 <ResizableHandle />
