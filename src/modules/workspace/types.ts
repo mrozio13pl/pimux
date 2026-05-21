@@ -4,4 +4,5 @@ export type Workspace = {
     cwd: string;
     createdAt: number;
     updatedAt: number;
+    pinned?: boolean;
 };

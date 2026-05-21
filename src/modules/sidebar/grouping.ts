@@ -46,15 +46,19 @@ function sortWorkspaces(
 ): Workspace[] {
     const lastUsedAt = (workspace: Workspace) =>
         Math.max(workspace.updatedAt, workspaceLastUsedAt.get(workspace.id) ?? 0);
+    const pinnedFirst = (a: Workspace, b: Workspace) =>
+        Number(b.pinned === true) - Number(a.pinned === true);
 
     switch (sortMode) {
         case 'created':
-            return [...workspaces].toSorted((a, b) => b.createdAt - a.createdAt);
+            return [...workspaces].toSorted((a, b) => pinnedFirst(a, b) || b.createdAt - a.createdAt);
         case 'manual':
-            return [...workspaces];
+            return [...workspaces].toSorted(pinnedFirst);
         case 'last-used':
         default:
-            return [...workspaces].toSorted((a, b) => lastUsedAt(b) - lastUsedAt(a));
+            return [...workspaces].toSorted(
+                (a, b) => pinnedFirst(a, b) || lastUsedAt(b) - lastUsedAt(a),
+            );
     }
 }
 

@@ -1,13 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+    CodeIcon,
+    CopyIcon,
     FolderIcon,
+    FolderOpenIcon,
     FolderPlusIcon,
     GlobeIcon,
     NotePencilIcon,
     PiIcon,
     PlusIcon,
+    PushPinIcon,
+    PushPinSlashIcon,
     SlidersHorizontalIcon,
     TerminalWindowIcon,
+    TextTIcon,
+    TrashIcon,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +36,25 @@ import {
     AccordionTrigger,
 } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuGroup,
+    ContextMenuItem,
+    ContextMenuSeparator,
+    ContextMenuTrigger,
+} from '@/components/ui/context-menu';
+import { cn, copyText } from '@/lib/utils';
 import { ipc } from '@/ipc';
 import { groupWorkspaces, type ProjectGroupMode, type ProjectSortMode } from './grouping';
 import { relativeTime } from './time';
@@ -38,6 +63,9 @@ import { tabDefinitions } from '@/modules/tabs/registry';
 import type { BrowserTab, TabKind, WorkspaceTab } from '@/modules/tabs/types';
 
 type TabSortMode = 'last-used' | 'created';
+type DeleteTarget =
+    | { kind: 'workspace'; id: string; title: string }
+    | { kind: 'tab'; id: string; title: string };
 
 type SidebarSettings = {
     projectSort: ProjectSortMode;
@@ -65,6 +93,10 @@ export function Sidebar({
     onSelectTab,
     onCreateWorkspace,
     onAddTab,
+    onToggleWorkspacePin,
+    onToggleTabPin,
+    onRemoveWorkspace,
+    onRemoveTab,
 }: SidebarProps) {
     const [hoveredWorkspaceId, setHoveredWorkspaceId] = useState<string | null>(null);
     const [openWorkspaceIds, setOpenWorkspaceIds] = useState<string[]>(() =>
@@ -75,6 +107,7 @@ export function Sidebar({
     const [expandedTabWorkspaceIds, setExpandedTabWorkspaceIds] = useState<Set<string>>(
         () => new Set(),
     );
+    const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
     const tabsByWorkspace = useMemo(() => {
         const tabIndex = new Map(tabs.map((tab, index) => [tab.id, index]));
@@ -85,11 +118,13 @@ export function Sidebar({
             map.set(tab.workspaceId, list);
         }
         for (const list of map.values()) {
-            list.sort((a, b) =>
-                settings.tabSort === 'last-used'
+            list.sort((a, b) => {
+                const pinned = Number(b.pinned === true) - Number(a.pinned === true);
+                if (pinned !== 0) return pinned;
+                return settings.tabSort === 'last-used'
                     ? b.updatedAt - a.updatedAt
-                    : (tabIndex.get(a.id) ?? 0) - (tabIndex.get(b.id) ?? 0),
-            );
+                    : (tabIndex.get(a.id) ?? 0) - (tabIndex.get(b.id) ?? 0);
+            });
         }
         return map;
     }, [tabs, settings.tabSort]);
@@ -153,184 +188,250 @@ export function Sidebar({
     }, [workspaces, workspaceIcons]);
 
     return (
-        <aside className="flex h-full w-full flex-col bg-sidebar">
-            <ScrollArea className="min-h-0 flex-1 px-1 py-2">
-                <div className="mx-2 my-1 flex items-center justify-between">
-                    <h1 className="text-xs font-medium tracking-wider text-muted-foreground/60 uppercase">
-                        Projects
-                    </h1>
-                    <div className="flex items-center gap-0.5">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            className="size-7 text-muted-foreground hover:text-foreground"
-                            onClick={onCreateWorkspace}
-                        >
-                            <FolderPlusIcon />
-                            <span className="sr-only">New workspace</span>
-                        </Button>
-                        <SidebarSettingsMenu settings={settings} onChange={setSettings} />
+        <>
+            <aside className="flex h-full w-full flex-col bg-sidebar">
+                <ScrollArea className="min-h-0 flex-1 px-1 py-2">
+                    <div className="mx-2 my-1 flex items-center justify-between">
+                        <h1 className="text-xs font-medium tracking-wider text-muted-foreground/60 uppercase">
+                            Projects
+                        </h1>
+                        <div className="flex items-center gap-0.5">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="size-7 text-muted-foreground hover:text-foreground"
+                                onClick={onCreateWorkspace}
+                            >
+                                <FolderPlusIcon />
+                                <span className="sr-only">New workspace</span>
+                            </Button>
+                            <SidebarSettingsMenu settings={settings} onChange={setSettings} />
+                        </div>
                     </div>
-                </div>
-                <div>
-                    {workspaces.length === 0 ? (
-                        <p className="mt-10 px-6 text-center text-xs leading-relaxed text-muted-foreground">
-                            No workspaces yet. Bind a project directory to start a session.
-                        </p>
-                    ) : (
-                        groups.map((group) => (
-                            <div key={group.key} className="mt-1 first:mt-0">
-                                {group.label ? (
-                                    <div className="px-3 py-1 text-[11.5px] font-semibold text-muted-foreground">
-                                        {group.label}
-                                    </div>
-                                ) : null}
-                                <Accordion
-                                    multiple
-                                    value={openWorkspaceIds}
-                                    onValueChange={(value) => setOpenWorkspaceIds(value)}
-                                    className="w-full gap-0 overflow-visible rounded-none border-0 bg-transparent"
-                                >
-                                    {group.workspaces.map((workspace) => {
-                                        const active = workspace.id === activeWorkspaceId;
-                                        const hovered = hoveredWorkspaceId === workspace.id;
-                                        const open = openWorkspaceIds.includes(workspace.id);
-                                        const workspaceTabs =
-                                            tabsByWorkspace.get(workspace.id) ?? [];
-                                        const tabsExpanded = expandedTabWorkspaceIds.has(
-                                            workspace.id,
-                                        );
-                                        const visibleTabs = tabsExpanded
-                                            ? workspaceTabs
-                                            : workspaceTabs.slice(0, settings.visibleTabs);
-                                        const hiddenTabCount = Math.max(
-                                            0,
-                                            workspaceTabs.length - visibleTabs.length,
-                                        );
-                                        const workspaceStatus = firstVisibleStatus(
-                                            workspaceTabs,
-                                            piStatuses,
-                                        );
-                                        const lastUsedAt =
-                                            workspaceLastUsedAt.get(workspace.id) ??
-                                            workspace.updatedAt;
-                                        const showAddTab = hovered;
-                                        const showSummary = !hovered && !open;
+                    <div>
+                        {workspaces.length === 0 ? (
+                            <p className="mt-10 px-6 text-center text-xs leading-relaxed text-muted-foreground">
+                                No workspaces yet. Bind a project directory to start a session.
+                            </p>
+                        ) : (
+                            groups.map((group) => (
+                                <div key={group.key} className="mt-1 first:mt-0">
+                                    {group.label ? (
+                                        <div className="px-3 py-1 text-[11.5px] font-semibold text-muted-foreground">
+                                            {group.label}
+                                        </div>
+                                    ) : null}
+                                    <Accordion
+                                        multiple
+                                        value={openWorkspaceIds}
+                                        onValueChange={(value) => setOpenWorkspaceIds(value)}
+                                        className="w-full gap-0 overflow-visible rounded-none border-0 bg-transparent"
+                                    >
+                                        {group.workspaces.map((workspace) => {
+                                            const active = workspace.id === activeWorkspaceId;
+                                            const hovered = hoveredWorkspaceId === workspace.id;
+                                            const open = openWorkspaceIds.includes(workspace.id);
+                                            const workspaceTabs =
+                                                tabsByWorkspace.get(workspace.id) ?? [];
+                                            const tabsExpanded = expandedTabWorkspaceIds.has(
+                                                workspace.id,
+                                            );
+                                            const visibleTabs = tabsExpanded
+                                                ? workspaceTabs
+                                                : workspaceTabs.slice(0, settings.visibleTabs);
+                                            const hiddenTabCount = Math.max(
+                                                0,
+                                                workspaceTabs.length - visibleTabs.length,
+                                            );
+                                            const workspaceStatus = firstVisibleStatus(
+                                                workspaceTabs,
+                                                piStatuses,
+                                            );
+                                            const lastUsedAt =
+                                                workspaceLastUsedAt.get(workspace.id) ??
+                                                workspace.updatedAt;
+                                            const showAddTab = hovered;
+                                            const showSummary = !hovered && !open;
 
-                                        return (
-                                            <AccordionItem
-                                                key={workspace.id}
-                                                value={workspace.id}
-                                                onMouseEnter={() =>
-                                                    setHoveredWorkspaceId(workspace.id)
-                                                }
-                                                onMouseLeave={() => setHoveredWorkspaceId(null)}
-                                                className="w-full border-0 bg-transparent not-last:border-b-0 data-open:bg-transparent"
-                                            >
-                                                <div
-                                                    className={cn(
-                                                        'flex h-8 w-full items-center gap-1 rounded-md pr-2 transition-colors',
-                                                        active
-                                                            ? 'bg-accent text-foreground'
-                                                            : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground',
-                                                    )}
+                                            return (
+                                                <AccordionItem
+                                                    key={workspace.id}
+                                                    value={workspace.id}
+                                                    onMouseEnter={() =>
+                                                        setHoveredWorkspaceId(workspace.id)
+                                                    }
+                                                    onMouseLeave={() => setHoveredWorkspaceId(null)}
+                                                    className="w-full border-0 bg-transparent not-last:border-b-0 data-open:bg-transparent"
                                                 >
-                                                    <AccordionTrigger className="h-6 w-6 flex-none items-center justify-center gap-0 rounded-sm p-0 text-muted-foreground no-underline hover:bg-accent/50 hover:no-underline **:data-[slot=accordion-trigger-icon]:size-3.5">
-                                                        <span className="sr-only">
-                                                            Toggle workspace
-                                                        </span>
-                                                    </AccordionTrigger>
-                                                    <button
-                                                        type="button"
-                                                        aria-current={active}
-                                                        onClick={() =>
-                                                            onSelectWorkspace(workspace.id)
-                                                        }
-                                                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                                                    >
-                                                        <WorkspaceIcon
-                                                            src={workspaceIcons[workspace.id]}
-                                                        />
-                                                        <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium">
-                                                            {workspace.title}
-                                                        </span>
-                                                        {showSummary ? (
-                                                            workspaceStatus ? (
-                                                                <StatusLabel
-                                                                    status={workspaceStatus.status}
+                                                    <ContextMenu>
+                                                        <ContextMenuTrigger
+                                                            render={
+                                                                <div
+                                                                    className={cn(
+                                                                        'flex h-8 w-full items-center gap-1 rounded-md pr-2 transition-colors',
+                                                                        active
+                                                                            ? 'bg-accent text-foreground'
+                                                                            : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground',
+                                                                    )}
                                                                 />
-                                                            ) : (
-                                                                <span className="shrink-0 text-[10.5px] tabular-nums text-muted-foreground/70">
-                                                                    {workspaceTabs.length
-                                                                        ? workspaceTabs.length +
-                                                                          ' tabs'
-                                                                        : relativeTime(lastUsedAt)}
+                                                            }
+                                                        >
+                                                            <AccordionTrigger className="h-6 w-6 flex-none items-center justify-center gap-0 rounded-sm p-0 text-muted-foreground no-underline hover:bg-accent/50 hover:no-underline **:data-[slot=accordion-trigger-icon]:size-3.5">
+                                                                <span className="sr-only">
+                                                                    Toggle workspace
                                                                 </span>
-                                                            )
-                                                        ) : null}
-                                                    </button>
-                                                    {showAddTab ? (
-                                                        <AddTabMenu
-                                                            onAddTab={(kind) =>
-                                                                onAddTab(workspace.id, kind)
+                                                            </AccordionTrigger>
+                                                            <button
+                                                                type="button"
+                                                                aria-current={active}
+                                                                onClick={() =>
+                                                                    onSelectWorkspace(workspace.id)
+                                                                }
+                                                                className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                                                            >
+                                                                <WorkspaceIcon
+                                                                    src={
+                                                                        workspaceIcons[workspace.id]
+                                                                    }
+                                                                />
+                                                                <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium">
+                                                                    {workspace.title}
+                                                                </span>
+                                                                {workspace.pinned ? (
+                                                                    <PushPinIcon className="size-3 shrink-0" />
+                                                                ) : null}
+                                                                {showSummary ? (
+                                                                    workspaceStatus ? (
+                                                                        <StatusLabel
+                                                                            status={
+                                                                                workspaceStatus.status
+                                                                            }
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="shrink-0 text-[10.5px] tabular-nums text-muted-foreground/70">
+                                                                            {workspaceTabs.length
+                                                                                ? workspaceTabs.length +
+                                                                                  ' tabs'
+                                                                                : relativeTime(
+                                                                                      lastUsedAt,
+                                                                                  )}
+                                                                        </span>
+                                                                    )
+                                                                ) : null}
+                                                            </button>
+                                                            {showAddTab ? (
+                                                                <AddTabMenu
+                                                                    onAddTab={(kind) =>
+                                                                        onAddTab(workspace.id, kind)
+                                                                    }
+                                                                />
+                                                            ) : null}
+                                                        </ContextMenuTrigger>
+                                                        <WorkspaceContextMenuContent
+                                                            workspace={workspace}
+                                                            onTogglePin={() =>
+                                                                onToggleWorkspacePin(workspace.id)
+                                                            }
+                                                            onDelete={() =>
+                                                                setDeleteTarget({
+                                                                    kind: 'workspace',
+                                                                    id: workspace.id,
+                                                                    title: workspace.title,
+                                                                })
                                                             }
                                                         />
-                                                    ) : null}
-                                                </div>
-                                                <AccordionContent className="w-full pb-1">
-                                                    {workspaceTabs.length > 0 ? (
-                                                        <ul className="flex flex-col gap-0.5">
-                                                            {visibleTabs.map((tab) => (
-                                                                <TabRow
-                                                                    key={tab.id}
-                                                                    tab={tab}
-                                                                    active={tab.id === activeTabId}
-                                                                    status={piStatuses[tab.id]}
-                                                                    onSelectTab={onSelectTab}
-                                                                />
-                                                            ))}
-                                                            {hiddenTabCount > 0 ? (
-                                                                <li>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            setExpandedTabWorkspaceIds(
-                                                                                (current) => {
-                                                                                    const next =
-                                                                                        new Set(
-                                                                                            current,
-                                                                                        );
-                                                                                    next.add(
-                                                                                        workspace.id,
-                                                                                    );
-                                                                                    return next;
-                                                                                },
-                                                                            )
+                                                    </ContextMenu>
+                                                    <AccordionContent className="w-full pb-1">
+                                                        {workspaceTabs.length > 0 ? (
+                                                            <ul className="flex flex-col gap-0.5">
+                                                                {visibleTabs.map((tab) => (
+                                                                    <TabRow
+                                                                        key={tab.id}
+                                                                        tab={tab}
+                                                                        active={
+                                                                            tab.id === activeTabId
                                                                         }
-                                                                        className="flex h-7 w-full items-center rounded-md px-7 text-left text-[11.5px] text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
-                                                                    >
-                                                                        +{hiddenTabCount} more
-                                                                    </button>
-                                                                </li>
-                                                            ) : null}
-                                                        </ul>
-                                                    ) : (
-                                                        <p className="px-3 py-1 text-[11.5px] text-muted-foreground">
-                                                            No tabs
-                                                        </p>
-                                                    )}
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        );
-                                    })}
-                                </Accordion>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </ScrollArea>
-        </aside>
+                                                                        status={piStatuses[tab.id]}
+                                                                        workspace={workspace}
+                                                                        onSelectTab={onSelectTab}
+                                                                        onTogglePin={() =>
+                                                                            onToggleTabPin(tab.id)
+                                                                        }
+                                                                        onDelete={() => {
+                                                                            if (
+                                                                                shouldConfirmTabDelete(
+                                                                                    tab,
+                                                                                    piStatuses[
+                                                                                        tab.id
+                                                                                    ],
+                                                                                )
+                                                                            ) {
+                                                                                setDeleteTarget({
+                                                                                    kind: 'tab',
+                                                                                    id: tab.id,
+                                                                                    title: tab.title,
+                                                                                });
+                                                                                return;
+                                                                            }
+                                                                            onRemoveTab(tab.id);
+                                                                        }}
+                                                                    />
+                                                                ))}
+                                                                {hiddenTabCount > 0 ? (
+                                                                    <li>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                setExpandedTabWorkspaceIds(
+                                                                                    (current) => {
+                                                                                        const next =
+                                                                                            new Set(
+                                                                                                current,
+                                                                                            );
+                                                                                        next.add(
+                                                                                            workspace.id,
+                                                                                        );
+                                                                                        return next;
+                                                                                    },
+                                                                                )
+                                                                            }
+                                                                            className="flex h-7 w-full items-center rounded-md px-7 text-left text-[11.5px] text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
+                                                                        >
+                                                                            +{hiddenTabCount} more
+                                                                        </button>
+                                                                    </li>
+                                                                ) : null}
+                                                            </ul>
+                                                        ) : (
+                                                            <p className="px-3 py-1 text-[11.5px] text-muted-foreground">
+                                                                No tabs
+                                                            </p>
+                                                        )}
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            );
+                                        })}
+                                    </Accordion>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </ScrollArea>
+            </aside>
+            <DeleteConfirmDialog
+                target={deleteTarget}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteTarget(null);
+                }}
+                onConfirm={() => {
+                    if (!deleteTarget) return;
+                    if (deleteTarget.kind === 'workspace') onRemoveWorkspace(deleteTarget.id);
+                    else onRemoveTab(deleteTarget.id);
+                    setDeleteTarget(null);
+                }}
+            />
+        </>
     );
 }
 
@@ -542,16 +643,148 @@ function WorkspaceIcon({ src }: { src: string | null | undefined }) {
     return <FolderIcon className="size-4 shrink-0" />;
 }
 
+function WorkspaceContextMenuContent({
+    workspace,
+    onTogglePin,
+    onDelete,
+}: {
+    workspace: SidebarProps['workspaces'][number];
+    onTogglePin(): void;
+    onDelete(): void;
+}) {
+    return (
+        <ContextMenuContent className="min-w-56">
+            <ContextMenuGroup>
+                <ContextMenuItem onClick={onTogglePin}>
+                    {workspace.pinned ? <PushPinSlashIcon /> : <PushPinIcon />}
+                    {workspace.pinned ? 'Unpin project' : 'Pin project'}
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => copyText(workspace.cwd)}>
+                    <CopyIcon />
+                    Copy path
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onClick={() => void ipc.system.openEditor({ path: workspace.cwd })}
+                >
+                    <CodeIcon />
+                    Open in editor
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onClick={() => void ipc.system.revealInFileManager({ path: workspace.cwd })}
+                >
+                    <FolderOpenIcon />
+                    Open in file manager
+                </ContextMenuItem>
+            </ContextMenuGroup>
+            <ContextMenuSeparator />
+            <ContextMenuGroup>
+                <ContextMenuItem variant="destructive" onClick={onDelete}>
+                    <TrashIcon />
+                    Delete workspace
+                </ContextMenuItem>
+            </ContextMenuGroup>
+        </ContextMenuContent>
+    );
+}
+
+function TabContextMenuContent({
+    tab,
+    workspace,
+    onTogglePin,
+    onDelete,
+}: {
+    tab: WorkspaceTab;
+    workspace: SidebarProps['workspaces'][number];
+    onTogglePin(): void;
+    onDelete(): void;
+}) {
+    return (
+        <ContextMenuContent className="min-w-56">
+            <ContextMenuGroup>
+                <ContextMenuItem onClick={onTogglePin}>
+                    {tab.pinned ? <PushPinSlashIcon /> : <PushPinIcon />}
+                    {tab.pinned ? 'Unpin tab' : 'Pin tab'}
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => copyText(tab.title)}>
+                    <TextTIcon />
+                    Copy title
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => copyText(workspace.cwd)}>
+                    <CopyIcon />
+                    Copy path
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onClick={() => void ipc.system.openEditor({ path: workspace.cwd })}
+                >
+                    <CodeIcon />
+                    Open in editor
+                </ContextMenuItem>
+                <ContextMenuItem
+                    onClick={() => void ipc.system.revealInFileManager({ path: workspace.cwd })}
+                >
+                    <FolderOpenIcon />
+                    Open in file manager
+                </ContextMenuItem>
+            </ContextMenuGroup>
+            <ContextMenuSeparator />
+            <ContextMenuGroup>
+                <ContextMenuItem variant="destructive" onClick={onDelete}>
+                    <TrashIcon />
+                    Delete tab
+                </ContextMenuItem>
+            </ContextMenuGroup>
+        </ContextMenuContent>
+    );
+}
+
+function DeleteConfirmDialog({
+    target,
+    onOpenChange,
+    onConfirm,
+}: {
+    target: DeleteTarget | null;
+    onOpenChange(open: boolean): void;
+    onConfirm(): void;
+}) {
+    return (
+        <AlertDialog open={target != null} onOpenChange={onOpenChange}>
+            <AlertDialogContent onBackdropMouseDown={() => onOpenChange(false)}>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>
+                        Remove {target?.kind === 'workspace' ? 'project' : 'tab'} from Pimux?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        All tabs from <i>{target?.title}</i> will be deleted. This action is not
+                        recoverable.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" onClick={onConfirm}>
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+}
+
 function TabRow({
     tab,
     active,
     status,
+    workspace,
     onSelectTab,
+    onTogglePin,
+    onDelete,
 }: {
     tab: WorkspaceTab;
     active: boolean;
     status: SidebarProps['piStatuses'][string] | undefined;
+    workspace: SidebarProps['workspaces'][number];
     onSelectTab(tabId: string): void;
+    onTogglePin(): void;
+    onDelete(): void;
 }) {
     const Icon =
         tab.kind === 'pi'
@@ -564,23 +797,38 @@ function TabRow({
 
     return (
         <li>
-            <button
-                type="button"
-                aria-current={active}
-                onClick={() => onSelectTab(tab.id)}
-                className={cn(
-                    'flex h-7 w-full items-center gap-2 rounded-md pr-3 pl-7 text-left transition-colors',
-                    active
-                        ? 'bg-accent/50 font-semibold text-foreground'
-                        : 'text-muted-foreground hover:bg-accent/30 hover:text-foreground',
-                )}
-            >
-                <TabIcon tab={tab} Icon={Icon} />
-                <span className={cn('min-w-0 flex-1 truncate text-[12px]', active && 'font-bold')}>
-                    {tab.title}
-                </span>
-                {tab.kind === 'pi' ? <StatusLabel status={status?.status} /> : null}
-            </button>
+            <ContextMenu>
+                <ContextMenuTrigger
+                    render={
+                        <button
+                            type="button"
+                            aria-current={active}
+                            onClick={() => onSelectTab(tab.id)}
+                            className={cn(
+                                'flex h-7 w-full items-center gap-2 rounded-md pr-3 pl-7 text-left transition-colors',
+                                active
+                                    ? 'bg-accent/50 font-semibold text-foreground'
+                                    : 'text-muted-foreground hover:bg-accent/30 hover:text-foreground',
+                            )}
+                        />
+                    }
+                >
+                    <TabIcon tab={tab} Icon={Icon} />
+                    <span
+                        className={cn('min-w-0 flex-1 truncate text-[12px]', active && 'font-bold')}
+                    >
+                        {tab.title}
+                    </span>
+                    {tab.pinned ? <PushPinIcon className="size-3 shrink-0" /> : null}
+                    {tab.kind === 'pi' ? <StatusLabel status={status?.status} /> : null}
+                </ContextMenuTrigger>
+                <TabContextMenuContent
+                    tab={tab}
+                    workspace={workspace}
+                    onTogglePin={onTogglePin}
+                    onDelete={onDelete}
+                />
+            </ContextMenu>
         </li>
     );
 }
@@ -603,6 +851,18 @@ function firstVisibleStatus(
         .map((tab) => piStatuses[tab.id])
         .filter((status) => statusPresentation(status?.status))
         .toSorted((a, b) => b.timestamp - a.timestamp)[0];
+}
+
+function shouldConfirmTabDelete(
+    tab: WorkspaceTab,
+    status: SidebarProps['piStatuses'][string] | undefined,
+): boolean {
+    return (
+        tab.kind === 'pi' &&
+        (status?.status === 'thinking' ||
+            status?.status === 'answering' ||
+            status?.status === 'running-tool')
+    );
 }
 
 function StatusLabel({ status }: { status: string | undefined }) {

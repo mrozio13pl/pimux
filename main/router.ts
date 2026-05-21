@@ -1,7 +1,9 @@
-import { dialog } from 'electron';
+import { dialog, shell } from 'electron';
+import openEditor from 'open-editor';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { access } from 'node:fs/promises';
 import * as pty from 'node-pty';
 import { defineRouter, handler, type HandlerContext } from '../shared/rpc';
 import { emitEvent } from '../shared/events';
@@ -97,6 +99,18 @@ export const router = defineRouter({
     system: {
         homeDir: handler(() => ({ home: os.homedir() })),
         terminalProfile: handler(() => detectTerminalProfile()),
+        openEditor: handler(async (input: { path: string }) => {
+            const editor = await findEditor();
+            if (editor) {
+                await openEditor([input.path], { editor });
+                return;
+            }
+            const error = await shell.openPath(input.path);
+            if (error) throw new Error(error);
+        }),
+        revealInFileManager: handler(async (input: { path: string }) => {
+            await shell.openPath(input.path);
+        }),
         workspaceIcon: handler(
             async (input: { cwd: string }): Promise<{ icon: string | null }> => ({
                 icon: await findWorkspaceIcon(input.cwd),
@@ -230,6 +244,45 @@ function iconMime(file: string): string {
         default:
             return 'application/octet-stream';
     }
+}
+
+const EDITOR_CANDIDATES = [
+    'cursor',
+    'code',
+    'windsurf',
+    'zed',
+    'subl',
+    'atom',
+    'webstorm',
+] as const;
+
+async function findEditor(): Promise<string | undefined> {
+    if (process.env.VISUAL) return process.env.VISUAL;
+    if (process.env.EDITOR) return process.env.EDITOR;
+
+    for (const candidate of EDITOR_CANDIDATES) {
+        const binary = await findOnPath(candidate);
+        if (binary) return binary;
+    }
+    return undefined;
+}
+
+async function findOnPath(command: string): Promise<string | undefined> {
+    const pathValue = process.env.PATH ?? '';
+    const extensions = process.platform === 'win32' ? ['', '.cmd', '.exe', '.bat'] : [''];
+    for (const directory of pathValue.split(path.delimiter)) {
+        if (!directory) continue;
+        for (const extension of extensions) {
+            const candidate = path.join(directory, `${command}${extension}`);
+            try {
+                await access(candidate);
+                return candidate;
+            } catch {
+                // keep looking
+            }
+        }
+    }
+    return undefined;
 }
 
 function getUserShell(): string {

@@ -192,6 +192,52 @@ export function App() {
         });
     }
 
+    function removeWorkspace(workspaceId: string) {
+        for (const tab of state.tabs) {
+            if (tab.workspaceId === workspaceId && isTerminalBackedTab(tab)) {
+                void ipc.terminal.kill({ terminalId: tab.id });
+            }
+        }
+        setState((prev) => {
+            const workspaces = prev.workspaces.filter((workspace) => workspace.id !== workspaceId);
+            const tabs = prev.tabs.filter((tab) => tab.workspaceId !== workspaceId);
+            const activeWorkspaceId =
+                prev.activeWorkspaceId === workspaceId
+                    ? (workspaces[0]?.id ?? null)
+                    : prev.activeWorkspaceId;
+            const activeTabId =
+                prev.activeWorkspaceId === workspaceId
+                    ? (tabs.find((tab) => tab.workspaceId === activeWorkspaceId)?.id ?? null)
+                    : prev.activeTabId;
+            return { ...prev, workspaces, tabs, activeWorkspaceId, activeTabId };
+        });
+        setPiStatuses((prev) => {
+            const next = { ...prev };
+            for (const tab of state.tabs) if (tab.workspaceId === workspaceId) delete next[tab.id];
+            return next;
+        });
+    }
+
+    function toggleWorkspacePin(workspaceId: string) {
+        setState((prev) => ({
+            ...prev,
+            workspaces: prev.workspaces.map((workspace) =>
+                workspace.id === workspaceId
+                    ? { ...workspace, pinned: !workspace.pinned }
+                    : workspace,
+            ),
+        }));
+    }
+
+    function toggleTabPin(tabId: string) {
+        setState((prev) => ({
+            ...prev,
+            tabs: prev.tabs.map((tab) =>
+                tab.id === tabId ? { ...tab, pinned: !tab.pinned } : tab,
+            ),
+        }));
+    }
+
     function updateTab(next: WorkspaceTab) {
         setState((prev) => ({
             ...prev,
@@ -220,6 +266,10 @@ export function App() {
                         onSelectTab={selectTab}
                         onCreateWorkspace={createWorkspace}
                         onAddTab={addTabToWorkspace}
+                        onToggleWorkspacePin={toggleWorkspacePin}
+                        onToggleTabPin={toggleTabPin}
+                        onRemoveWorkspace={removeWorkspace}
+                        onRemoveTab={closeTab}
                     />
                 </ResizablePanel>
                 <ResizableHandle />
@@ -230,10 +280,13 @@ export function App() {
                             <>
                                 <TabStrip
                                     tabs={workspaceTabs}
+                                    workspace={activeWorkspace}
                                     activeTabId={activeTab?.id ?? null}
+                                    piStatuses={piStatuses}
                                     onSelectTab={selectTab}
                                     onCloseTab={closeTab}
                                     onAddTab={addTab}
+                                    onToggleTabPin={toggleTabPin}
                                 />
                                 <section className="relative min-h-0 flex-1 overflow-hidden">
                                     {workspaceTabs.length > 0 ? (

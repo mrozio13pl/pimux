@@ -13,4 +13,8 @@ export type SidebarProps = {
     onSelectTab(tabId: string): void;
     onCreateWorkspace(): void;
     onAddTab(workspaceId: string, kind: TabKind): void;
+    onToggleWorkspacePin(workspaceId: string): void;
+    onToggleTabPin(tabId: string): void;
+    onRemoveWorkspace(workspaceId: string): void;
+    onRemoveTab(tabId: string): void;
 };

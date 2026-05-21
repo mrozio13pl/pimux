@@ -83,6 +83,7 @@ function migrateTab(value: unknown): WorkspaceTab | null {
             title: value.title,
             workspaceId,
             updatedAt: getUpdatedAt(value),
+            pinned: value.pinned === true,
             scrollback: typeof value.scrollback === 'string' ? value.scrollback : undefined,
         };
     }
@@ -94,6 +95,7 @@ function migrateTab(value: unknown): WorkspaceTab | null {
             title: value.title,
             workspaceId,
             updatedAt: getUpdatedAt(value),
+            pinned: value.pinned === true,
             scrollback: typeof value.scrollback === 'string' ? value.scrollback : undefined,
             sessionFile: typeof value.sessionFile === 'string' ? value.sessionFile : undefined,
         };
@@ -107,6 +109,7 @@ function migrateTab(value: unknown): WorkspaceTab | null {
             title: value.title === 'Editor' ? 'Scratch' : value.title,
             workspaceId,
             updatedAt: getUpdatedAt(value),
+            pinned: value.pinned === true,
             text: typeof value.text === 'string' ? value.text : '',
         };
     }
@@ -118,6 +121,7 @@ function migrateTab(value: unknown): WorkspaceTab | null {
             title: value.title,
             workspaceId,
             updatedAt: getUpdatedAt(value),
+            pinned: value.pinned === true,
             url: typeof value.url === 'string' ? value.url : 'https://example.com',
             favicon: typeof value.favicon === 'string' ? value.favicon : undefined,
         };
