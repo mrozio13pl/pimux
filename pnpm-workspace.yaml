@@ -1,0 +1,9 @@
+allowBuilds:
+    electron: true
+    esbuild: true
+    node-pty: true
+    koffi: true
+    simple-git-hooks: true
+    protobufjs: true
+    '@google/genai': false
+minimumReleaseAge: 720

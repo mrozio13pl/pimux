@@ -1,0 +1,13 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": ["typescript", "unicorn", "oxc", "react", "eslint"],
+    "categories": {
+        "correctness": "warn",
+        "suspicious": "warn",
+        "perf": "warn"
+    },
+    "rules": {},
+    "env": {
+        "builtin": true
+    }
+}
