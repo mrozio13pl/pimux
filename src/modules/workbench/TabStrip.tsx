@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/context-menu';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn, copyText } from '@/lib/utils';
+import { HotkeyIndicator } from '@/modules/hotkeys';
 import { getTabDefinition, tabDefinitions } from '@/modules/tabs/registry';
 import { ipc } from '@/ipc';
 import type { Workspace } from '@/modules/workspace/types';
@@ -54,6 +55,7 @@ type TabStripProps = {
     onCloseTab(tabId: string): void;
     onAddTab(kind: TabKind): void;
     onToggleTabPin(tabId: string): void;
+    showHotkeyIndicators?: boolean;
 };
 
 export function TabStrip({
@@ -65,6 +67,7 @@ export function TabStrip({
     onCloseTab,
     onAddTab,
     onToggleTabPin,
+    showHotkeyIndicators = false,
 }: TabStripProps) {
     const [deleteTarget, setDeleteTarget] = useState<WorkspaceTab | null>(null);
     if (tabs.length === 0) return null;
@@ -82,7 +85,7 @@ export function TabStrip({
                     variant="line"
                     className="h-11 w-full justify-start gap-1 overflow-x-auto px-2"
                 >
-                    {tabs.map((tab) => {
+                    {tabs.map((tab, index) => {
                         const definition = getTabDefinition(tab.kind);
                         const Icon = definition.Icon;
                         const active = activeTabId === tab.id;
@@ -108,6 +111,11 @@ export function TabStrip({
                                     {tab.pinned ? (
                                         <PushPinIcon className="size-3 shrink-0" />
                                     ) : null}
+                                    <HotkeyIndicator
+                                        visible={showHotkeyIndicators && index < 9}
+                                        keys={`Ctrl+${index + 1}`}
+                                        className="ml-1 shrink-0"
+                                    />
                                     <span
                                         role="button"
                                         tabIndex={-1}

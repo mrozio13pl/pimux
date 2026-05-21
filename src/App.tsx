@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import {
+    useHybridHotkeys,
+    useModifierKeyPressed,
+    type HybridHotkeyBinding,
+} from '@/modules/hotkeys';
 import { loadState, STORAGE_KEY, type Workspace, type StoredState } from '@/modules/workspace';
 import { WorkspacePicker } from '@/modules/workspace/WorkspacePicker';
+import { WorkspacePreviewOverlay } from '@/modules/workspace/WorkspacePreviewOverlay';
+import { workspaceHotkeyLabel } from '@/modules/workspace/hotkeys';
 import { Sidebar } from '@/modules/sidebar';
 import {
     createTab,
@@ -35,6 +42,13 @@ export function App() {
     const [homeDir, setHomeDir] = useState<string | null>(null);
     const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
     const [piStatuses, setPiStatuses] = useState<Record<string, PiStatusEvent>>({});
+    const [workspaceOrderIds, setWorkspaceOrderIds] = useState<string[]>([]);
+    const [workspacePreviewIndex, setWorkspacePreviewIndex] = useState(0);
+    const [deleteWorkspaceRequest, setDeleteWorkspaceRequest] = useState<{
+        id: string;
+        nonce: number;
+    } | null>(null);
+    const showHotkeyIndicators = useModifierKeyPressed('Control');
 
     const activeWorkspace =
         state.workspaces.find((workspace) => workspace.id === state.activeWorkspaceId) ?? null;
@@ -94,6 +108,154 @@ export function App() {
         };
     }, []);
 
+    const hotkeyBindings = useMemo<HybridHotkeyBinding[]>(
+        () => [
+            {
+                keys: 'Control+o',
+                command: 'workspace.picker.open',
+                description: 'Open workspace picker',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space o',
+                command: 'workspace.picker.open',
+                description: 'Open workspace picker',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space c',
+                command: 'tab.add',
+                args: { kind: 'pi' },
+                description: 'New Pi tab',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space t',
+                command: 'tab.add',
+                args: { kind: 'terminal' },
+                description: 'New shell tab',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space s',
+                command: 'tab.add',
+                args: { kind: 'scratch' },
+                description: 'New scratch tab',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space b',
+                command: 'tab.add',
+                args: { kind: 'browser' },
+                description: 'New browser tab',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+w',
+                command: 'tab.close.active',
+                description: 'Close current tab',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Shift+w',
+                command: 'workspace.delete.active.confirm',
+                description: 'Delete current workspace',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space d',
+                command: 'workspace.delete.active.confirm',
+                description: 'Delete current workspace',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space [Control]+ArrowLeft',
+                command: 'workspace.preview.move',
+                args: { delta: -1 },
+                description: 'Move left',
+                stay: true,
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space [Control]+ArrowRight',
+                command: 'workspace.preview.move',
+                args: { delta: 1 },
+                description: 'Move right',
+                stay: true,
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space [Control]+ArrowUp',
+                command: 'workspace.preview.move',
+                args: { delta: -5 },
+                description: 'Move up',
+                stay: true,
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space [Control]+ArrowDown',
+                command: 'workspace.preview.move',
+                args: { delta: 5 },
+                description: 'Move down',
+                stay: true,
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+Space [Control]+Enter',
+                command: 'workspace.preview.select',
+                description: 'Select workspace',
+                allowInInputs: true,
+            },
+            ...Array.from({ length: 10 }, (_, index) => ({
+                keys: `Control+Space [Control]+${workspaceHotkeyLabel(index)}`,
+                command: 'workspace.focus',
+                args: { index },
+                description: `Focus workspace ${workspaceHotkeyLabel(index)}`,
+                allowInInputs: true,
+            })),
+            ...Array.from({ length: 9 }, (_, index) => ({
+                keys: `Control+${index + 1}`,
+                command: 'tab.focus',
+                args: { index },
+                description: `Focus tab ${index + 1}`,
+                allowInInputs: true,
+            })),
+        ],
+        [],
+    );
+
+    const hotkeyCommands = {
+        'workspace.picker.open': () => setWorkspacePickerOpen(true),
+        'workspace.focus': (args?: unknown) => focusWorkspace(readIndexArg(args)),
+        'workspace.preview.move': (args?: unknown) => moveWorkspacePreview(readDeltaArg(args)),
+        'workspace.preview.select': () => focusWorkspace(workspacePreviewIndex),
+        'workspace.delete.active.confirm': () => confirmDeleteActiveWorkspace(),
+        'tab.focus': (args?: unknown) => focusTab(readIndexArg(args)),
+        'tab.add': (args?: unknown) => addTab(readTabKindArg(args) ?? 'pi'),
+        'tab.close.active': () => {
+            if (activeTab) closeTab(activeTab.id);
+        },
+    };
+
+    const hotkeys = useHybridHotkeys({
+        prefixKey: 'Control+Space',
+        bindings: hotkeyBindings,
+        commands: hotkeyCommands,
+    });
+    const previousHotkeyTableRef = useRef(hotkeys.activeTable);
+
+    useEffect(() => {
+        const previousTable = previousHotkeyTableRef.current;
+        previousHotkeyTableRef.current = hotkeys.activeTable;
+        if (hotkeys.activeTable === 'root' || previousTable !== 'root') return;
+
+        const orderedIds = workspaceOrderIds.length
+            ? workspaceOrderIds
+            : state.workspaces.map((workspace) => workspace.id);
+        const activeIndex = orderedIds.indexOf(state.activeWorkspaceId ?? '');
+        setWorkspacePreviewIndex(Math.max(0, activeIndex));
+    }, [hotkeys.activeTable, state.activeWorkspaceId, state.workspaces, workspaceOrderIds]);
+
     function createWorkspace() {
         setWorkspacePickerOpen(true);
     }
@@ -123,6 +285,15 @@ export function App() {
         }));
     }
 
+    function confirmDeleteActiveWorkspace() {
+        const workspaceId = state.activeWorkspaceId;
+        if (!workspaceId) return;
+        setDeleteWorkspaceRequest((current) => ({
+            id: workspaceId,
+            nonce: (current?.nonce ?? 0) + 1,
+        }));
+    }
+
     function selectWorkspace(workspaceId: string) {
         const workspaceTabs = state.tabs
             .filter((tab) => tab.workspaceId === workspaceId)
@@ -145,6 +316,31 @@ export function App() {
             delete next[tabId];
             return next;
         });
+    }
+
+    function focusWorkspace(index: number | null) {
+        if (index == null) return;
+        const orderedIds = workspaceOrderIds.length
+            ? workspaceOrderIds
+            : state.workspaces.map((workspace) => workspace.id);
+        const workspaceId = orderedIds[index];
+        if (workspaceId) selectWorkspace(workspaceId);
+    }
+
+    function moveWorkspacePreview(delta: number | null) {
+        if (delta == null) return;
+        const maxIndex = Math.min(
+            9,
+            (workspaceOrderIds.length ? workspaceOrderIds.length : state.workspaces.length) - 1,
+        );
+        if (maxIndex < 0) return;
+        setWorkspacePreviewIndex((current) => Math.min(maxIndex, Math.max(0, current + delta)));
+    }
+
+    function focusTab(index: number | null) {
+        if (index == null) return;
+        const tab = workspaceTabs[index];
+        if (tab) selectTab(tab.id);
     }
 
     function addTab(kind: TabKind) {
@@ -262,7 +458,12 @@ export function App() {
                         activeTabId={state.activeTabId}
                         piStatuses={piStatuses}
                         homeDir={homeDir}
+                        showHotkeyIndicators={
+                            showHotkeyIndicators || hotkeys.activeTable !== 'root'
+                        }
+                        deleteWorkspaceRequest={deleteWorkspaceRequest}
                         onSelectWorkspace={selectWorkspace}
+                        onWorkspaceOrderChange={setWorkspaceOrderIds}
                         onSelectTab={selectTab}
                         onCreateWorkspace={createWorkspace}
                         onAddTab={addTabToWorkspace}
@@ -287,6 +488,7 @@ export function App() {
                                     onCloseTab={closeTab}
                                     onAddTab={addTab}
                                     onToggleTabPin={toggleTabPin}
+                                    showHotkeyIndicators={showHotkeyIndicators}
                                 />
                                 <section className="relative min-h-0 flex-1 overflow-hidden">
                                     {workspaceTabs.length > 0 ? (
@@ -319,6 +521,24 @@ export function App() {
                     </main>
                 </ResizablePanel>
             </ResizablePanelGroup>
+            {hotkeys.activeTable !== 'root' ? (
+                <WorkspacePreviewOverlay
+                    workspaces={state.workspaces}
+                    tabs={state.tabs}
+                    activeWorkspaceId={state.activeWorkspaceId}
+                    workspaceOrderIds={workspaceOrderIds}
+                    selectedIndex={workspacePreviewIndex}
+                    bindings={
+                        hotkeys.tables.find((table) => table.name === hotkeys.activeTable)
+                            ?.bindings ?? []
+                    }
+                    onPreviewIndexChange={setWorkspacePreviewIndex}
+                    onSelectWorkspace={(workspaceId) => {
+                        selectWorkspace(workspaceId);
+                        hotkeys.reset();
+                    }}
+                />
+            ) : null}
             <WorkspacePicker
                 open={workspacePickerOpen}
                 initialCwd={homeDir}
@@ -327,4 +547,24 @@ export function App() {
             />
         </TooltipProvider>
     );
+}
+
+function readDeltaArg(args: unknown): number | null {
+    if (typeof args !== 'object' || args === null || !('delta' in args)) return null;
+    const delta = (args as { delta?: unknown }).delta;
+    return typeof delta === 'number' ? delta : null;
+}
+
+function readIndexArg(args: unknown): number | null {
+    if (typeof args !== 'object' || args === null || !('index' in args)) return null;
+    const index = (args as { index?: unknown }).index;
+    return typeof index === 'number' ? index : null;
+}
+
+function readTabKindArg(args: unknown): TabKind | null {
+    if (typeof args !== 'object' || args === null || !('kind' in args)) return null;
+    const kind = (args as { kind?: unknown }).kind;
+    return kind === 'pi' || kind === 'terminal' || kind === 'scratch' || kind === 'browser'
+        ? kind
+        : null;
 }

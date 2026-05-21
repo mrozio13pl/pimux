@@ -56,6 +56,8 @@ import {
 } from '@/components/ui/context-menu';
 import { cn, copyText } from '@/lib/utils';
 import { ipc } from '@/ipc';
+import { HotkeyIndicatorBadge } from '@/modules/hotkeys';
+import { workspaceHotkeyLabel } from '@/modules/workspace';
 import { groupWorkspaces, type ProjectGroupMode, type ProjectSortMode } from './grouping';
 import { relativeTime } from './time';
 import type { SidebarProps } from './types';
@@ -89,7 +91,10 @@ export function Sidebar({
     activeTabId,
     piStatuses,
     homeDir,
+    showHotkeyIndicators = false,
+    deleteWorkspaceRequest,
     onSelectWorkspace,
+    onWorkspaceOrderChange,
     onSelectTab,
     onCreateWorkspace,
     onAddTab,
@@ -108,6 +113,15 @@ export function Sidebar({
         () => new Set(),
     );
     const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+
+    useEffect(() => {
+        if (!deleteWorkspaceRequest) return;
+        const workspace = workspaces.find(
+            (candidate) => candidate.id === deleteWorkspaceRequest.id,
+        );
+        if (!workspace) return;
+        setDeleteTarget({ kind: 'workspace', id: workspace.id, title: workspace.title });
+    }, [deleteWorkspaceRequest, workspaces]);
 
     const tabsByWorkspace = useMemo(() => {
         const tabIndex = new Map(tabs.map((tab, index) => [tab.id, index]));
@@ -151,6 +165,25 @@ export function Sidebar({
             }),
         [workspaces, workspaceLastUsedAt, settings.projectSort, settings.projectGroup, homeDir],
     );
+
+    const visibleWorkspaceIds = useMemo(
+        () => groups.flatMap((group) => group.workspaces.map((workspace) => workspace.id)),
+        [groups],
+    );
+
+    const workspaceHotkeyIndex = useMemo(
+        () =>
+            new Map(
+                visibleWorkspaceIds
+                    .slice(0, 10)
+                    .map((id, index) => [id, workspaceHotkeyLabel(index)]),
+            ),
+        [visibleWorkspaceIds],
+    );
+
+    useEffect(() => {
+        onWorkspaceOrderChange?.(visibleWorkspaceIds);
+    }, [onWorkspaceOrderChange, visibleWorkspaceIds]);
 
     useEffect(() => {
         localStorage.setItem(SIDEBAR_SETTINGS_KEY, JSON.stringify(settings));
@@ -271,7 +304,7 @@ export function Sidebar({
                                                                     className={cn(
                                                                         'flex h-8 w-full items-center gap-1 rounded-md pr-2 transition-colors',
                                                                         active
-                                                                            ? 'bg-accent text-foreground'
+                                                                            ? 'text-foreground'
                                                                             : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground',
                                                                     )}
                                                                 />
@@ -301,6 +334,15 @@ export function Sidebar({
                                                                 {workspace.pinned ? (
                                                                     <PushPinIcon className="size-3 shrink-0" />
                                                                 ) : null}
+                                                                <HotkeyIndicatorBadge
+                                                                    visible={
+                                                                        showHotkeyIndicators &&
+                                                                        workspaceHotkeyIndex.has(
+                                                                            workspace.id,
+                                                                        )
+                                                                    }
+                                                                    keys={`Ctrl+Space ${workspaceHotkeyIndex.get(workspace.id)}`}
+                                                                />
                                                                 {showSummary ? (
                                                                     workspaceStatus ? (
                                                                         <StatusLabel

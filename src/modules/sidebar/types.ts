@@ -9,7 +9,10 @@ export type SidebarProps = {
     activeTabId: string | null;
     piStatuses: Record<string, PiStatusEvent>;
     homeDir: string | null;
+    showHotkeyIndicators?: boolean;
+    deleteWorkspaceRequest?: { id: string; nonce: number } | null;
     onSelectWorkspace(workspaceId: string): void;
+    onWorkspaceOrderChange?(workspaceIds: string[]): void;
     onSelectTab(tabId: string): void;
     onCreateWorkspace(): void;
     onAddTab(workspaceId: string, kind: TabKind): void;

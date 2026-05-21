@@ -10,7 +10,7 @@ export const tabDefinitionsByKind = {
     pi: {
         kind: 'pi',
         label: 'Pi',
-        shortcut: 'pi',
+        shortcut: 'Ctrl Space C',
         Icon: PiIcon,
         create(workspace: Workspace) {
             return {
@@ -28,7 +28,7 @@ export const tabDefinitionsByKind = {
     terminal: {
         kind: 'terminal',
         label: 'Shell',
-        shortcut: 'PTY',
+        shortcut: 'Ctrl Space T',
         Icon: TerminalWindowIcon,
         create(workspace: Workspace) {
             return {
@@ -46,7 +46,7 @@ export const tabDefinitionsByKind = {
     scratch: {
         kind: 'scratch',
         label: 'Scratch',
-        shortcut: undefined,
+        shortcut: 'Ctrl Space S',
         Icon: NotePencilIcon,
         create(workspace: Workspace) {
             return {
@@ -65,7 +65,7 @@ export const tabDefinitionsByKind = {
     browser: {
         kind: 'browser',
         label: 'Browser',
-        shortcut: undefined,
+        shortcut: 'Ctrl Space B',
         Icon: GlobeIcon,
         create(workspace: Workspace) {
             return {
