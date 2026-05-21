@@ -29,6 +29,7 @@
         "@xterm/xterm": "^6.0.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "cmdk": "^1.1.1",
         "culori": "^4.0.2",
         "date-fns": "^4.2.1",
         "get-port": "^7.2.0",

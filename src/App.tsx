@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { loadState, STORAGE_KEY, type Workspace, type StoredState } from '@/modules/workspace';
+import { WorkspacePicker } from '@/modules/workspace/WorkspacePicker';
 import { Sidebar } from '@/modules/sidebar';
 import {
     createTab,
@@ -32,6 +33,7 @@ function normalizePiTitle(title: string): string | null {
 export function App() {
     const [state, setState] = useState<StoredState>(() => loadState());
     const [homeDir, setHomeDir] = useState<string | null>(null);
+    const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
     const [piStatuses, setPiStatuses] = useState<Record<string, PiStatusEvent>>({});
 
     const activeWorkspace =
@@ -92,9 +94,13 @@ export function App() {
         };
     }, []);
 
-    async function createWorkspace() {
-        const cwd = await ipc.dialog.chooseDirectory();
+    function createWorkspace() {
+        setWorkspacePickerOpen(true);
+    }
+
+    function addWorkspace(cwd: string) {
         if (!cwd) return;
+        setWorkspacePickerOpen(false);
 
         const existing = state.workspaces.find((workspace) => workspace.cwd === cwd);
         if (existing) {
@@ -260,6 +266,12 @@ export function App() {
                     </main>
                 </ResizablePanel>
             </ResizablePanelGroup>
+            <WorkspacePicker
+                open={workspacePickerOpen}
+                initialCwd={homeDir}
+                onClose={() => setWorkspacePickerOpen(false)}
+                onAdd={addWorkspace}
+            />
         </TooltipProvider>
     );
 }
