@@ -41,12 +41,24 @@ export type PiSessionEvent = {
     timestamp: number;
 };
 
+export type PiThemeEvent = {
+    tabId: string;
+    name?: string;
+    primary?: string;
+    ring?: string;
+    selection?: string;
+    accentAnsi?: string;
+    colors?: Record<string, string>;
+    timestamp: number;
+};
+
 export type AppEvents = {
     'terminal:data': TerminalDataEvent;
     'terminal:exit': TerminalExitEvent;
     'pi:status': PiStatusEvent;
     'pi:title': PiTitleEvent;
     'pi:session': PiSessionEvent;
+    'pi:theme': PiThemeEvent;
 };
 
 export function emitEvent<K extends keyof AppEvents>(

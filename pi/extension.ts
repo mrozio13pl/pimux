@@ -1,5 +1,5 @@
 import dgram from 'node:dgram';
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 
 const port = Number(process.env.PIMUX_STATUS_PORT || 0);
 const tabId = process.env.PIMUX_PI_TAB_ID || '';
@@ -24,6 +24,15 @@ function sendTitle(title: string): void {
 
 function sendSessionFile(sessionFile: string | undefined): void {
     if (sessionFile) send({ sessionFile });
+}
+
+function sendTheme(ctx: ExtensionContext): void {
+    send({
+        theme: {
+            name: ctx.ui.theme.name,
+            accentAnsi: ctx.ui.theme.getFgAnsi('accent'),
+        },
+    });
 }
 
 function send(payload: Record<string, unknown>): void {
@@ -78,10 +87,12 @@ export default function pimuxExtension(pi: ExtensionAPI): void {
     pi.on('session_start', (_event, ctx) => {
         sendStatus('idle', 'session');
         sendSessionFile(ctx.sessionManager.getSessionFile());
+        sendTheme(ctx);
     });
     let hasRequestedInitialTitle = false;
 
-    pi.on('before_agent_start', (event) => {
+    pi.on('before_agent_start', (event, ctx) => {
+        sendTheme(ctx);
         sendStatus('thinking');
         const titleInstruction = hasRequestedInitialTitle
             ? TITLE_INSTRUCTION

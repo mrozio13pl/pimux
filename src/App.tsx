@@ -20,7 +20,7 @@ import {
 } from '@/modules/tabs';
 import { EmptyApp, EmptyTabs, TabStrip } from '@/modules/workbench';
 import { events, ipc } from './ipc';
-import type { PiStatusEvent } from '../shared/events';
+import type { PiStatusEvent, PiThemeEvent } from '../shared/events';
 
 function touchWorkspace(state: StoredState, workspaceId: string, updatedAt: number): StoredState {
     return {
@@ -42,6 +42,8 @@ export function App() {
     const [homeDir, setHomeDir] = useState<string | null>(null);
     const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
     const [piStatuses, setPiStatuses] = useState<Record<string, PiStatusEvent>>({});
+    const [piThemes, setPiThemes] = useState<Record<string, PiThemeEvent>>({});
+    const [startupPiTheme, setStartupPiTheme] = useState<PiThemeEvent | null>(null);
     const [workspaceOrderIds, setWorkspaceOrderIds] = useState<string[]>([]);
     const [workspacePreviewIndex, setWorkspacePreviewIndex] = useState(0);
     const [deleteWorkspaceRequest, setDeleteWorkspaceRequest] = useState<{
@@ -60,6 +62,20 @@ export function App() {
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }, [state]);
+
+    useEffect(() => {
+        let cancelled = false;
+        ipc.system
+            .piTheme({})
+            .then((theme) => {
+                if (cancelled) return;
+                setStartupPiTheme({ tabId: '__startup__', ...theme, timestamp: Date.now() });
+            })
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     useEffect(() => {
         return events.on('pi:status', (event) => {
@@ -92,6 +108,18 @@ export function App() {
             }));
         });
     }, []);
+
+    useEffect(() => {
+        return events.on('pi:theme', (event) => {
+            setPiThemes((prev) => ({ ...prev, [event.tabId]: event }));
+        });
+    }, []);
+
+    useEffect(() => {
+        const theme =
+            activeTab?.kind === 'pi' ? (piThemes[activeTab.id] ?? startupPiTheme) : startupPiTheme;
+        applyPiTheme(theme);
+    }, [activeTab, piThemes, startupPiTheme]);
 
     useEffect(() => {
         let cancelled = false;
@@ -316,6 +344,11 @@ export function App() {
             delete next[tabId];
             return next;
         });
+        setPiThemes((prev) => {
+            const next = { ...prev };
+            delete next[tabId];
+            return next;
+        });
     }
 
     function focusWorkspace(index: number | null) {
@@ -408,6 +441,11 @@ export function App() {
             return { ...prev, workspaces, tabs, activeWorkspaceId, activeTabId };
         });
         setPiStatuses((prev) => {
+            const next = { ...prev };
+            for (const tab of state.tabs) if (tab.workspaceId === workspaceId) delete next[tab.id];
+            return next;
+        });
+        setPiThemes((prev) => {
             const next = { ...prev };
             for (const tab of state.tabs) if (tab.workspaceId === workspaceId) delete next[tab.id];
             return next;
@@ -547,6 +585,27 @@ export function App() {
             />
         </TooltipProvider>
     );
+}
+
+function applyPiTheme(theme: PiThemeEvent | null | undefined): void {
+    if (!theme?.primary) return;
+    document.documentElement.style.setProperty('--primary', theme.primary);
+    document.documentElement.style.setProperty(
+        '--ring',
+        theme.ring ?? colorWithAlpha(theme.primary, 0.6),
+    );
+    document.documentElement.style.setProperty(
+        '--selection',
+        theme.selection ?? colorWithAlpha(theme.primary, 0.25),
+    );
+}
+
+function colorWithAlpha(color: string, alpha: number): string {
+    return color.startsWith('#')
+        ? `${color}${Math.round(alpha * 255)
+              .toString(16)
+              .padStart(2, '0')}`
+        : color;
 }
 
 function readDeltaArg(args: unknown): number | null {

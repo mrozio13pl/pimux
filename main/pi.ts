@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { HandlerContext } from '../shared/rpc';
 import { emitEvent } from '../shared/events';
+import { ansiColorToHex, colorWithAlpha } from './pi-theme';
 import piExtensionSource from '../pi/extension.ts?raw';
 
 let server: dgram.Socket | null = null;
@@ -46,6 +47,38 @@ export async function ensurePiStatusServer(nextCtx: HandlerContext): Promise<num
                     sessionFile: event.sessionFile,
                     timestamp,
                 });
+                return;
+            }
+            if (event.theme && typeof event.theme === 'object') {
+                const theme = event.theme as Record<string, unknown>;
+                const accentAnsi =
+                    typeof theme.accentAnsi === 'string' ? theme.accentAnsi : undefined;
+                const primary =
+                    typeof theme.primary === 'string'
+                        ? theme.primary
+                        : accentAnsi
+                          ? ansiColorToHex(accentAnsi)
+                          : undefined;
+                emitEvent(ctx, 'pi:theme', {
+                    tabId: event.tabId,
+                    name: typeof theme.name === 'string' ? theme.name : undefined,
+                    primary,
+                    ring:
+                        typeof theme.ring === 'string'
+                            ? theme.ring
+                            : primary
+                              ? colorWithAlpha(primary, 0.6)
+                              : undefined,
+                    selection:
+                        typeof theme.selection === 'string'
+                            ? theme.selection
+                            : primary
+                              ? colorWithAlpha(primary, 0.25)
+                              : undefined,
+                    accentAnsi,
+                    colors: isStringRecord(theme.colors) ? theme.colors : undefined,
+                    timestamp,
+                });
             }
         } catch {
             // Ignore malformed datagrams.
@@ -62,6 +95,14 @@ export async function ensurePiStatusServer(nextCtx: HandlerContext): Promise<num
 
     if (port == null) throw new Error('Failed to start pi status server');
     return port;
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+    return (
+        value != null &&
+        typeof value === 'object' &&
+        Object.values(value).every((entry) => typeof entry === 'string')
+    );
 }
 
 export function getPiStatusExtensionPath(): string {

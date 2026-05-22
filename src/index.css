@@ -68,6 +68,7 @@
     --border: oklch(1 0 0 / 8%);
     --input: oklch(1 0 0 / 10%);
     --ring: oklch(0.79 0.132 68 / 60%);
+    --selection: oklch(0.79 0.132 68 / 25%);
 }
 
 @layer base {
@@ -84,7 +85,7 @@
     }
 
     ::selection {
-        background: oklch(0.79 0.132 68 / 25%);
+        background: var(--selection);
     }
 }
 
