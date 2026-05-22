@@ -9,6 +9,7 @@ export type BaseWorkspaceTab<K extends string> = {
     workspaceId: string;
     updatedAt: number;
     pinned?: boolean;
+    groupId?: string;
 };
 
 export type TerminalBackedTab<K extends 'terminal' | 'pi'> = BaseWorkspaceTab<K> & {

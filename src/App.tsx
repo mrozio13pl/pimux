@@ -1,24 +1,39 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+    closestCenter,
+    DndContext,
+    DragEndEvent,
+    DragOverlay,
+    DragStartEvent,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import {
-    useHybridHotkeys,
-    useModifierKeyPressed,
-    type HybridHotkeyBinding,
-} from '@/modules/hotkeys';
+import { useModifierKeyPressed } from '@/modules/hotkeys';
 import { loadState, STORAGE_KEY, type Workspace, type StoredState } from '@/modules/workspace';
 import { WorkspacePicker } from '@/modules/workspace/WorkspacePicker';
 import { WorkspacePreviewOverlay } from '@/modules/workspace/WorkspacePreviewOverlay';
-import { workspaceHotkeyLabel } from '@/modules/workspace/hotkeys';
 import { Sidebar } from '@/modules/sidebar';
+import { createTab, isTerminalBackedTab, type TabKind, type WorkspaceTab } from '@/modules/tabs';
+import { EmptyApp, EmptyTabs, TabDragPreview } from '@/modules/workbench';
 import {
-    createTab,
-    isTerminalBackedTab,
-    renderTab,
-    type TabKind,
-    type WorkspaceTab,
-} from '@/modules/tabs';
-import { EmptyApp, EmptyTabs, TabStrip } from '@/modules/workbench';
+    DEFAULT_TAB_GROUP_ID,
+    ensureTabLayout,
+    insertGroupInLayout,
+    tabGroupId,
+    TabLayoutRenderer,
+    type TabSplitDirection,
+} from '@/modules/workbench/TabLayout';
+import { orderedWorkspaceIds, useAppHotkeys } from '@/modules/app/useAppHotkeys';
+
+function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
+    const next = [...items];
+    const [item] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, item);
+    return next;
+}
 import { events, ipc } from './ipc';
 import type { PiStatusEvent, PiThemeEvent } from '../shared/events';
 
@@ -46,11 +61,16 @@ export function App() {
     const [startupPiTheme, setStartupPiTheme] = useState<PiThemeEvent | null>(null);
     const [workspaceOrderIds, setWorkspaceOrderIds] = useState<string[]>([]);
     const [workspacePreviewIndex, setWorkspacePreviewIndex] = useState(0);
+    const [draggingTab, setDraggingTab] = useState<WorkspaceTab | null>(null);
+    const [activeGroupId, setActiveGroupId] = useState(DEFAULT_TAB_GROUP_ID);
     const [deleteWorkspaceRequest, setDeleteWorkspaceRequest] = useState<{
         id: string;
         nonce: number;
     } | null>(null);
     const showHotkeyIndicators = useModifierKeyPressed('Control');
+    const tabDragSensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    );
 
     const activeWorkspace =
         state.workspaces.find((workspace) => workspace.id === state.activeWorkspaceId) ?? null;
@@ -58,10 +78,28 @@ export function App() {
     const workspaceTabs = state.tabs.filter((tab) => tab.workspaceId === state.activeWorkspaceId);
     const activeTab =
         workspaceTabs.find((tab) => tab.id === state.activeTabId) ?? workspaceTabs[0] ?? null;
+    const tabGroups = useMemo(() => {
+        const groups = new Map<string, WorkspaceTab[]>();
+        for (const tab of workspaceTabs) {
+            const id = tabGroupId(tab);
+            const groupTabs = groups.get(id) ?? [];
+            groupTabs.push(tab);
+            groups.set(id, groupTabs);
+        }
+        return groups;
+    }, [workspaceTabs]);
+    const tabLayout = useMemo(
+        () => ensureTabLayout(activeWorkspace?.tabLayout, [...tabGroups.keys()]),
+        [activeWorkspace?.tabLayout, tabGroups],
+    );
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }, [state]);
+
+    useEffect(() => {
+        if (activeTab) setActiveGroupId(tabGroupId(activeTab));
+    }, [activeTab]);
 
     useEffect(() => {
         let cancelled = false;
@@ -136,153 +174,24 @@ export function App() {
         };
     }, []);
 
-    const hotkeyBindings = useMemo<HybridHotkeyBinding[]>(
-        () => [
-            {
-                keys: 'Control+o',
-                command: 'workspace.picker.open',
-                description: 'Open workspace picker',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space o',
-                command: 'workspace.picker.open',
-                description: 'Open workspace picker',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space c',
-                command: 'tab.add',
-                args: { kind: 'pi' },
-                description: 'New Pi tab',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space t',
-                command: 'tab.add',
-                args: { kind: 'terminal' },
-                description: 'New shell tab',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space s',
-                command: 'tab.add',
-                args: { kind: 'scratch' },
-                description: 'New scratch tab',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space b',
-                command: 'tab.add',
-                args: { kind: 'browser' },
-                description: 'New browser tab',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+w',
-                command: 'tab.close.active',
-                description: 'Close current tab',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Shift+w',
-                command: 'workspace.delete.active.confirm',
-                description: 'Delete current workspace',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space d',
-                command: 'workspace.delete.active.confirm',
-                description: 'Delete current workspace',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space [Control]+ArrowLeft',
-                command: 'workspace.preview.move',
-                args: { delta: -1 },
-                description: 'Move left',
-                stay: true,
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space [Control]+ArrowRight',
-                command: 'workspace.preview.move',
-                args: { delta: 1 },
-                description: 'Move right',
-                stay: true,
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space [Control]+ArrowUp',
-                command: 'workspace.preview.move',
-                args: { delta: -5 },
-                description: 'Move up',
-                stay: true,
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space [Control]+ArrowDown',
-                command: 'workspace.preview.move',
-                args: { delta: 5 },
-                description: 'Move down',
-                stay: true,
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space [Control]+Enter',
-                command: 'workspace.preview.select',
-                description: 'Select workspace',
-                allowInInputs: true,
-            },
-            ...Array.from({ length: 10 }, (_, index) => ({
-                keys: `Control+Space [Control]+${workspaceHotkeyLabel(index)}`,
-                command: 'workspace.focus',
-                args: { index },
-                description: `Focus workspace ${workspaceHotkeyLabel(index)}`,
-                allowInInputs: true,
-            })),
-            ...Array.from({ length: 9 }, (_, index) => ({
-                keys: `Control+${index + 1}`,
-                command: 'tab.focus',
-                args: { index },
-                description: `Focus tab ${index + 1}`,
-                allowInInputs: true,
-            })),
-        ],
-        [],
-    );
-
-    const hotkeyCommands = {
-        'workspace.picker.open': () => setWorkspacePickerOpen(true),
-        'workspace.focus': (args?: unknown) => focusWorkspace(readIndexArg(args)),
-        'workspace.preview.move': (args?: unknown) => moveWorkspacePreview(readDeltaArg(args)),
-        'workspace.preview.select': () => focusWorkspace(workspacePreviewIndex),
-        'workspace.delete.active.confirm': () => confirmDeleteActiveWorkspace(),
-        'tab.focus': (args?: unknown) => focusTab(readIndexArg(args)),
-        'tab.add': (args?: unknown) => addTab(readTabKindArg(args) ?? 'pi'),
-        'tab.close.active': () => {
+    const hotkeyActions = {
+        openWorkspacePicker: () => setWorkspacePickerOpen(true),
+        focusWorkspace,
+        moveWorkspacePreview,
+        selectWorkspacePreview: () => focusWorkspace(workspacePreviewIndex),
+        confirmDeleteActiveWorkspace,
+        focusTab,
+        addTab,
+        closeActiveTab: () => {
             if (activeTab) closeTab(activeTab.id);
         },
+        primeWorkspacePreview: () => {
+            const orderedIds = orderedWorkspaceIds(workspaceOrderIds, state.workspaces);
+            const activeIndex = orderedIds.indexOf(state.activeWorkspaceId ?? '');
+            setWorkspacePreviewIndex(Math.max(0, activeIndex));
+        },
     };
-
-    const hotkeys = useHybridHotkeys({
-        prefixKey: 'Control+Space',
-        bindings: hotkeyBindings,
-        commands: hotkeyCommands,
-    });
-    const previousHotkeyTableRef = useRef(hotkeys.activeTable);
-
-    useEffect(() => {
-        const previousTable = previousHotkeyTableRef.current;
-        previousHotkeyTableRef.current = hotkeys.activeTable;
-        if (hotkeys.activeTable === 'root' || previousTable !== 'root') return;
-
-        const orderedIds = workspaceOrderIds.length
-            ? workspaceOrderIds
-            : state.workspaces.map((workspace) => workspace.id);
-        const activeIndex = orderedIds.indexOf(state.activeWorkspaceId ?? '');
-        setWorkspacePreviewIndex(Math.max(0, activeIndex));
-    }, [hotkeys.activeTable, state.activeWorkspaceId, state.workspaces, workspaceOrderIds]);
+    const hotkeys = useAppHotkeys(hotkeyActions);
 
     function createWorkspace() {
         setWorkspacePickerOpen(true);
@@ -336,6 +245,7 @@ export function App() {
     function selectTab(tabId: string) {
         const tab = state.tabs.find((candidate) => candidate.id === tabId);
         if (!tab) return;
+        setActiveGroupId(tabGroupId(tab));
         setState((prev) => ({ ...prev, activeWorkspaceId: tab.workspaceId, activeTabId: tabId }));
         setPiStatuses((prev) => {
             const status = prev[tabId]?.status;
@@ -372,23 +282,32 @@ export function App() {
 
     function focusTab(index: number | null) {
         if (index == null) return;
-        const tab = workspaceTabs[index];
+        const currentGroupId =
+            activeGroupId || (activeTab ? tabGroupId(activeTab) : DEFAULT_TAB_GROUP_ID);
+        const currentGroupTabs = workspaceTabs.filter((tab) => tabGroupId(tab) === currentGroupId);
+        const tab = currentGroupTabs[index];
         if (tab) selectTab(tab.id);
     }
 
     function addTab(kind: TabKind) {
         if (!activeWorkspace) return;
-        addTabToWorkspace(activeWorkspace.id, kind);
+        addTabToWorkspace(activeWorkspace.id, kind, activeTab ? tabGroupId(activeTab) : undefined);
     }
 
-    function addTabToWorkspace(workspaceId: string, kind: TabKind) {
+    function addTabToWorkspace(workspaceId: string, kind: TabKind, groupId?: string) {
         const workspace = state.workspaces.find((candidate) => candidate.id === workspaceId);
         if (!workspace) return;
-        const tab = createTab(kind, workspace);
+        const tab = {
+            ...createTab(kind, workspace),
+            groupId: groupId === DEFAULT_TAB_GROUP_ID ? undefined : groupId,
+        };
         setState((prev) => {
             let lastWorkspaceTabIndex = -1;
             for (let index = prev.tabs.length - 1; index >= 0; index -= 1) {
-                if (prev.tabs[index].workspaceId === workspace.id) {
+                if (
+                    prev.tabs[index].workspaceId === workspace.id &&
+                    tabGroupId(prev.tabs[index]) === tabGroupId(tab)
+                ) {
                     lastWorkspaceTabIndex = index;
                     break;
                 }
@@ -472,6 +391,160 @@ export function App() {
         }));
     }
 
+    function moveWorkspace(activeWorkspaceId: string, overWorkspaceId: string) {
+        setState((prev) => {
+            const from = prev.workspaces.findIndex(
+                (workspace) => workspace.id === activeWorkspaceId,
+            );
+            const to = prev.workspaces.findIndex((workspace) => workspace.id === overWorkspaceId);
+            if (from < 0 || to < 0 || from === to) return prev;
+            return { ...prev, workspaces: moveItem(prev.workspaces, from, to) };
+        });
+    }
+
+    function moveTab(
+        tabId: string,
+        overTabId: string | null,
+        targetWorkspaceId: string,
+        targetGroupId?: string,
+    ) {
+        setState((prev) => {
+            const active = prev.tabs.find((tab) => tab.id === tabId);
+            const workspace = prev.workspaces.find(
+                (candidate) => candidate.id === targetWorkspaceId,
+            );
+            if (!active || !workspace) return prev;
+
+            const overTab = overTabId ? prev.tabs.find((tab) => tab.id === overTabId) : null;
+            const groupId = targetGroupId ?? overTab?.groupId ?? active.groupId;
+            const moved = {
+                ...active,
+                workspaceId: targetWorkspaceId,
+                groupId: groupId === DEFAULT_TAB_GROUP_ID ? undefined : groupId,
+                updatedAt: Date.now(),
+            };
+            if (
+                overTab &&
+                active.workspaceId === targetWorkspaceId &&
+                overTab.workspaceId === targetWorkspaceId &&
+                tabGroupId(active) === tabGroupId(overTab) &&
+                tabGroupId(active) === (groupId ?? DEFAULT_TAB_GROUP_ID)
+            ) {
+                const from = prev.tabs.findIndex((tab) => tab.id === tabId);
+                const to = prev.tabs.findIndex((tab) => tab.id === overTab.id);
+                if (from < 0 || to < 0 || from === to) return prev;
+                const tabs = moveItem(prev.tabs, from, to).map((tab) =>
+                    tab.id === tabId ? moved : tab,
+                );
+                return touchWorkspace(
+                    { ...prev, tabs, activeWorkspaceId: targetWorkspaceId, activeTabId: tabId },
+                    targetWorkspaceId,
+                    moved.updatedAt,
+                );
+            }
+
+            const withoutActive = prev.tabs.filter((tab) => tab.id !== tabId);
+            const overIndex = overTabId
+                ? withoutActive.findIndex((tab) => tab.id === overTabId)
+                : -1;
+            const fallbackIndex = withoutActive.findLastIndex(
+                (tab) =>
+                    tab.workspaceId === targetWorkspaceId && tabGroupId(tab) === tabGroupId(moved),
+            );
+            const insertIndex = overIndex >= 0 ? overIndex : fallbackIndex + 1;
+            const tabs = [...withoutActive];
+            tabs.splice(insertIndex, 0, moved);
+            return touchWorkspace(
+                { ...prev, tabs, activeWorkspaceId: targetWorkspaceId, activeTabId: tabId },
+                targetWorkspaceId,
+                moved.updatedAt,
+            );
+        });
+    }
+
+    function splitTab(tabId: string, targetGroupId: string, direction: TabSplitDirection) {
+        if (!activeWorkspace) return;
+        const newGroupId = crypto.randomUUID();
+        setState((prev) => {
+            const active = prev.tabs.find((tab) => tab.id === tabId);
+            if (!active) return prev;
+            const targetIndexes = prev.tabs
+                .map((tab, index) => ({ tab, index }))
+                .filter(
+                    ({ tab }) =>
+                        tab.workspaceId === active.workspaceId && tabGroupId(tab) === targetGroupId,
+                )
+                .map(({ index }) => index);
+            const before = direction === 'left' || direction === 'top';
+            const anchorIndex = before
+                ? Math.min(...targetIndexes)
+                : Math.max(...targetIndexes) + 1;
+            const withoutActive = prev.tabs.filter((tab) => tab.id !== tabId);
+            const activeIndexBefore = prev.tabs.findIndex((tab) => tab.id === tabId);
+            const insertIndex = Math.max(
+                0,
+                anchorIndex - (activeIndexBefore < anchorIndex ? 1 : 0),
+            );
+            const moved = { ...active, groupId: newGroupId, updatedAt: Date.now() };
+            const tabs = [...withoutActive];
+            tabs.splice(insertIndex, 0, moved);
+            const workspaceTabs = tabs.filter((tab) => tab.workspaceId === active.workspaceId);
+            const groupIds = [...new Set(workspaceTabs.map(tabGroupId))];
+            const workspace = prev.workspaces.find(
+                (candidate) => candidate.id === active.workspaceId,
+            );
+            const nextLayout = insertGroupInLayout(
+                ensureTabLayout(workspace?.tabLayout, groupIds),
+                targetGroupId,
+                newGroupId,
+                direction,
+            );
+            return touchWorkspace(
+                {
+                    ...prev,
+                    workspaces: prev.workspaces.map((workspace) =>
+                        workspace.id === active.workspaceId
+                            ? { ...workspace, tabLayout: nextLayout }
+                            : workspace,
+                    ),
+                    tabs,
+                    activeWorkspaceId: active.workspaceId,
+                    activeTabId: tabId,
+                },
+                active.workspaceId,
+                moved.updatedAt,
+            );
+        });
+    }
+
+    function handleTabDragStart(event: DragStartEvent) {
+        const tab = state.tabs.find((candidate) => candidate.id === event.active.id);
+        setDraggingTab(tab ?? null);
+    }
+
+    function handleTabDragEnd(event: DragEndEvent) {
+        setDraggingTab(null);
+        const tabId = String(event.active.id);
+        const overId = event.over?.id ? String(event.over.id) : null;
+        if (!overId || tabId === overId || !activeWorkspace) return;
+        if (overId.startsWith('split:')) {
+            const [, groupId, direction] = overId.split(':');
+            if (
+                direction === 'left' ||
+                direction === 'right' ||
+                direction === 'top' ||
+                direction === 'bottom'
+            )
+                splitTab(tabId, groupId, direction);
+            return;
+        }
+        if (overId.startsWith('merge:')) {
+            moveTab(tabId, null, activeWorkspace.id, overId.slice('merge:'.length));
+            return;
+        }
+        moveTab(tabId, overId, activeWorkspace.id);
+    }
+
     function updateTab(next: WorkspaceTab) {
         setState((prev) => ({
             ...prev,
@@ -502,11 +575,13 @@ export function App() {
                         deleteWorkspaceRequest={deleteWorkspaceRequest}
                         onSelectWorkspace={selectWorkspace}
                         onWorkspaceOrderChange={setWorkspaceOrderIds}
+                        onMoveWorkspace={moveWorkspace}
                         onSelectTab={selectTab}
                         onCreateWorkspace={createWorkspace}
                         onAddTab={addTabToWorkspace}
                         onToggleWorkspacePin={toggleWorkspacePin}
                         onToggleTabPin={toggleTabPin}
+                        onMoveTab={moveTab}
                         onRemoveWorkspace={removeWorkspace}
                         onRemoveTab={closeTab}
                     />
@@ -516,43 +591,38 @@ export function App() {
                 <ResizablePanel id="workspace" minSize="480px">
                     <main className="flex h-full min-w-0 flex-1 flex-col">
                         {activeWorkspace ? (
-                            <>
-                                <TabStrip
-                                    tabs={workspaceTabs}
-                                    workspace={activeWorkspace}
-                                    activeTabId={activeTab?.id ?? null}
-                                    piStatuses={piStatuses}
-                                    onSelectTab={selectTab}
-                                    onCloseTab={closeTab}
-                                    onAddTab={addTab}
-                                    onToggleTabPin={toggleTabPin}
-                                    showHotkeyIndicators={showHotkeyIndicators}
-                                />
-                                <section className="relative min-h-0 flex-1 overflow-hidden">
-                                    {workspaceTabs.length > 0 ? (
-                                        workspaceTabs.map((tab) => {
-                                            const workspace = workspacesById.get(tab.workspaceId);
-                                            if (!workspace) return null;
-                                            const active = tab.id === activeTab?.id;
-                                            return (
-                                                <div
-                                                    key={tab.id}
-                                                    aria-hidden={!active}
-                                                    className={
-                                                        active
-                                                            ? 'absolute inset-0'
-                                                            : 'pointer-events-none absolute inset-0 opacity-0'
-                                                    }
-                                                >
-                                                    {renderTab(tab, { workspace, updateTab })}
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        <EmptyTabs onOpenTerminal={() => addTab('terminal')} />
-                                    )}
-                                </section>
-                            </>
+                            <DndContext
+                                sensors={tabDragSensors}
+                                collisionDetection={closestCenter}
+                                onDragStart={handleTabDragStart}
+                                onDragEnd={handleTabDragEnd}
+                                onDragCancel={() => setDraggingTab(null)}
+                            >
+                                {workspaceTabs.length > 0 ? (
+                                    <TabLayoutRenderer
+                                        node={tabLayout}
+                                        groups={tabGroups}
+                                        workspace={activeWorkspace}
+                                        activeTabId={activeTab?.id ?? null}
+                                        activeGroupId={activeGroupId}
+                                        piStatuses={piStatuses}
+                                        dragging={draggingTab != null}
+                                        workspacesById={workspacesById}
+                                        showHotkeyIndicators={showHotkeyIndicators}
+                                        onSelectTab={selectTab}
+                                        onCloseTab={closeTab}
+                                        onAddTab={addTabToWorkspace}
+                                        onToggleTabPin={toggleTabPin}
+                                        onActivateGroup={setActiveGroupId}
+                                        updateTab={updateTab}
+                                    />
+                                ) : (
+                                    <EmptyTabs onOpenTerminal={() => addTab('terminal')} />
+                                )}
+                                <DragOverlay>
+                                    {draggingTab ? <TabDragPreview tab={draggingTab} /> : null}
+                                </DragOverlay>
+                            </DndContext>
                         ) : (
                             <EmptyApp onCreateWorkspace={createWorkspace} />
                         )}
@@ -606,24 +676,4 @@ function colorWithAlpha(color: string, alpha: number): string {
               .toString(16)
               .padStart(2, '0')}`
         : color;
-}
-
-function readDeltaArg(args: unknown): number | null {
-    if (typeof args !== 'object' || args === null || !('delta' in args)) return null;
-    const delta = (args as { delta?: unknown }).delta;
-    return typeof delta === 'number' ? delta : null;
-}
-
-function readIndexArg(args: unknown): number | null {
-    if (typeof args !== 'object' || args === null || !('index' in args)) return null;
-    const index = (args as { index?: unknown }).index;
-    return typeof index === 'number' ? index : null;
-}
-
-function readTabKindArg(args: unknown): TabKind | null {
-    if (typeof args !== 'object' || args === null || !('kind' in args)) return null;
-    const kind = (args as { kind?: unknown }).kind;
-    return kind === 'pi' || kind === 'terminal' || kind === 'scratch' || kind === 'browser'
-        ? kind
-        : null;
 }

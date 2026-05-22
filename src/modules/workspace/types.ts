@@ -1,3 +1,7 @@
+export type TabLayoutNode =
+    | { type: 'group'; id: string }
+    | { type: 'split'; orientation: 'horizontal' | 'vertical'; children: TabLayoutNode[] };
+
 export type Workspace = {
     id: string;
     title: string;
@@ -5,4 +9,5 @@ export type Workspace = {
     createdAt: number;
     updatedAt: number;
     pinned?: boolean;
+    tabLayout?: TabLayoutNode;
 };

@@ -51,7 +51,9 @@ function sortWorkspaces(
 
     switch (sortMode) {
         case 'created':
-            return [...workspaces].toSorted((a, b) => pinnedFirst(a, b) || b.createdAt - a.createdAt);
+            return [...workspaces].toSorted(
+                (a, b) => pinnedFirst(a, b) || b.createdAt - a.createdAt,
+            );
         case 'manual':
             return [...workspaces].toSorted(pinnedFirst);
         case 'last-used':

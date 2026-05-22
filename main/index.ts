@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import type { Input } from 'electron';
 import { join } from 'node:path';
 import { attachRpc } from './ipc';
 import { killAllTerminals, router } from './router';
@@ -33,12 +34,27 @@ function createWindow(): void {
         },
     });
 
+    win.webContents.on('before-input-event', (event, input) => {
+        const key = nativeHotkeyKey(input);
+        if (!key) return;
+        win.webContents.send('native:hotkey', { key });
+        event.preventDefault();
+    });
+
     if (process.env.VITE_DEV_SERVER_URL) {
         win.loadURL(process.env.VITE_DEV_SERVER_URL);
     } else {
         win.setMenuBarVisibility(false);
         win.loadFile(join(__dirname, '../renderer/index.html'));
     }
+}
+
+function nativeHotkeyKey(input: Input): string | null {
+    if (input.type !== 'keyDown' || !input.control || input.alt || input.meta) return null;
+    if (/^[1-9]$/.test(input.key)) return `Control+${input.key}`;
+    if (input.key.toLowerCase() === 'w') return input.shift ? 'Control+Shift+w' : 'Control+w';
+    if (input.key.toLowerCase() === 'o') return 'Control+o';
+    return null;
 }
 
 app.whenReady().then(() => {

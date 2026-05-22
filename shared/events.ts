@@ -52,7 +52,12 @@ export type PiThemeEvent = {
     timestamp: number;
 };
 
+export type NativeHotkeyEvent = {
+    key: string;
+};
+
 export type AppEvents = {
+    'native:hotkey': NativeHotkeyEvent;
     'terminal:data': TerminalDataEvent;
     'terminal:exit': TerminalExitEvent;
     'pi:status': PiStatusEvent;

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { CSSProperties, useState } from 'react';
+import { horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
     CodeIcon,
     CopyIcon,
@@ -85,70 +87,31 @@ export function TabStrip({
                     variant="line"
                     className="h-11 w-full justify-start gap-1 overflow-x-auto px-2"
                 >
-                    {tabs.map((tab, index) => {
-                        const definition = getTabDefinition(tab.kind);
-                        const Icon = definition.Icon;
-                        const active = activeTabId === tab.id;
-                        return (
-                            <ContextMenu key={tab.id}>
-                                <ContextMenuTrigger
-                                    render={
-                                        <TabsTrigger
-                                            value={tab.id}
-                                            className={cn(
-                                                'group h-8 max-w-52 flex-none rounded-lg pr-1.5 pl-2.5 text-sm',
-                                                active
-                                                    ? 'bg-accent font-semibold text-foreground after:opacity-0'
-                                                    : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground after:opacity-0',
-                                            )}
-                                        />
-                                    }
-                                >
-                                    <TabIcon tab={tab} Icon={Icon} />
-                                    <span className={cn('min-w-0 truncate', active && 'font-bold')}>
-                                        {tab.title}
-                                    </span>
-                                    {tab.pinned ? (
-                                        <PushPinIcon className="size-3 shrink-0" />
-                                    ) : null}
-                                    <HotkeyIndicator
-                                        visible={showHotkeyIndicators && index < 9}
-                                        keys={`Ctrl+${index + 1}`}
-                                        className="ml-1 shrink-0"
-                                    />
-                                    <span
-                                        role="button"
-                                        tabIndex={-1}
-                                        aria-label={`Close ${tab.title}`}
-                                        className={cn(
-                                            'grid size-5 shrink-0 place-items-center rounded-md transition-all hover:bg-foreground/10',
-                                            active
-                                                ? 'opacity-70 hover:opacity-100'
-                                                : 'opacity-0 group-hover:opacity-60',
-                                        )}
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            onCloseTab(tab.id);
-                                        }}
-                                    >
-                                        <XIcon />
-                                    </span>
-                                </ContextMenuTrigger>
-                                <TabContextMenuContent
+                    <SortableContext
+                        items={tabs.map((tab) => tab.id)}
+                        strategy={horizontalListSortingStrategy}
+                    >
+                        {tabs.map((tab, index) => {
+                            const definition = getTabDefinition(tab.kind);
+                            const Icon = definition.Icon;
+                            const active = activeTabId === tab.id;
+                            return (
+                                <SortableHeaderTab
+                                    key={tab.id}
                                     tab={tab}
                                     workspace={workspace}
-                                    onTogglePin={() => onToggleTabPin(tab.id)}
-                                    onDelete={() => {
-                                        if (shouldConfirmTabDelete(tab, piStatuses[tab.id])) {
-                                            setDeleteTarget(tab);
-                                            return;
-                                        }
-                                        onCloseTab(tab.id);
-                                    }}
+                                    active={active}
+                                    index={index}
+                                    Icon={Icon}
+                                    piStatuses={piStatuses}
+                                    showHotkeyIndicators={showHotkeyIndicators}
+                                    onCloseTab={onCloseTab}
+                                    onToggleTabPin={onToggleTabPin}
+                                    onDeleteTarget={setDeleteTarget}
                                 />
-                            </ContextMenu>
-                        );
-                    })}
+                            );
+                        })}
+                    </SortableContext>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger
@@ -190,6 +153,112 @@ export function TabStrip({
                 }}
             />
         </>
+    );
+}
+
+function SortableHeaderTab({
+    tab,
+    workspace,
+    active,
+    index,
+    Icon,
+    piStatuses,
+    showHotkeyIndicators,
+    onCloseTab,
+    onToggleTabPin,
+    onDeleteTarget,
+}: {
+    tab: WorkspaceTab;
+    workspace: Workspace;
+    active: boolean;
+    index: number;
+    Icon: typeof GlobeIcon;
+    piStatuses: Record<string, PiStatusEvent>;
+    showHotkeyIndicators: boolean;
+    onCloseTab(tabId: string): void;
+    onToggleTabPin(tabId: string): void;
+    onDeleteTarget(tab: WorkspaceTab): void;
+}) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
+        useSortable({ id: tab.id });
+    const style: CSSProperties = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    return (
+        <ContextMenu>
+            <ContextMenuTrigger
+                render={
+                    <TabsTrigger
+                        ref={setNodeRef}
+                        value={tab.id}
+                        style={style}
+                        {...attributes}
+                        {...listeners}
+                        className={cn(
+                            'group relative h-8 max-w-52 flex-none cursor-grab rounded-lg pr-1.5 pl-2.5 text-sm active:cursor-grabbing',
+                            active
+                                ? 'bg-accent font-semibold text-foreground after:opacity-0'
+                                : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground after:opacity-0',
+                            isDragging && 'opacity-35 ring-2 ring-primary/70',
+                            isOver &&
+                                !isDragging &&
+                                'before:absolute before:top-1 before:bottom-1 before:left-0 before:w-0.5 before:rounded-full before:bg-primary',
+                        )}
+                    />
+                }
+            >
+                <TabIcon tab={tab} Icon={Icon} />
+                <span className={cn('min-w-0 truncate', active && 'font-bold')}>{tab.title}</span>
+                {tab.pinned ? <PushPinIcon className="size-3 shrink-0" /> : null}
+                <HotkeyIndicator
+                    visible={showHotkeyIndicators && index < 9}
+                    keys={`Ctrl+${index + 1}`}
+                    className="ml-1 shrink-0"
+                />
+                <span
+                    role="button"
+                    tabIndex={-1}
+                    aria-label={`Close ${tab.title}`}
+                    className={cn(
+                        'grid size-5 shrink-0 place-items-center rounded-md transition-all hover:bg-foreground/10',
+                        active
+                            ? 'opacity-70 hover:opacity-100'
+                            : 'opacity-0 group-hover:opacity-60',
+                    )}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        onCloseTab(tab.id);
+                    }}
+                >
+                    <XIcon />
+                </span>
+            </ContextMenuTrigger>
+            <TabContextMenuContent
+                tab={tab}
+                workspace={workspace}
+                onTogglePin={() => onToggleTabPin(tab.id)}
+                onDelete={() => {
+                    if (shouldConfirmTabDelete(tab, piStatuses[tab.id])) {
+                        onDeleteTarget(tab);
+                        return;
+                    }
+                    onCloseTab(tab.id);
+                }}
+            />
+        </ContextMenu>
+    );
+}
+
+export function TabDragPreview({ tab }: { tab: WorkspaceTab }) {
+    const definition = getTabDefinition(tab.kind);
+    return (
+        <div className="flex h-8 max-w-52 items-center gap-2 rounded-lg border border-primary/60 bg-popover px-2.5 text-sm font-semibold text-popover-foreground shadow-xl">
+            <TabIcon tab={tab} Icon={definition.Icon} />
+            <span className="truncate">{tab.title}</span>
+        </div>
     );
 }
 

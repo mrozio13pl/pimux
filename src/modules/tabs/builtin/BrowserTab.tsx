@@ -16,6 +16,16 @@ export function BrowserTab({ tab, updateTab }: TabRenderProps<BrowserTabModel>) 
         const webview = webviewRef.current;
         if (!webview) return;
 
+        webview.setAttribute('allowpopups', 'true');
+
+        const forwardHotkey = (event: Event) => {
+            const input = (event as Event & { input?: BrowserHotkeyInput }).input;
+            const key = browserHotkeyKey(input);
+            if (!key) return;
+            event.preventDefault();
+            window.dispatchEvent(new CustomEvent('pimux:native-hotkey', { detail: { key } }));
+        };
+
         const persistUrl = (event: Event) => {
             const url = (event as Event & { url?: string }).url;
             if (typeof url === 'string' && url !== tab.url) updateTab({ ...tab, url });
@@ -31,11 +41,13 @@ export function BrowserTab({ tab, updateTab }: TabRenderProps<BrowserTabModel>) 
             if (favicon && favicon !== tab.favicon) updateTab({ ...tab, favicon });
         };
 
+        webview.addEventListener('before-input-event', forwardHotkey);
         webview.addEventListener('did-navigate', persistUrl);
         webview.addEventListener('did-navigate-in-page', persistUrl);
         webview.addEventListener('page-title-updated', persistTitle);
         webview.addEventListener('page-favicon-updated', persistFavicon);
         return () => {
+            webview.removeEventListener('before-input-event', forwardHotkey);
             webview.removeEventListener('did-navigate', persistUrl);
             webview.removeEventListener('did-navigate-in-page', persistUrl);
             webview.removeEventListener('page-title-updated', persistTitle);
@@ -90,10 +102,28 @@ export function BrowserTab({ tab, updateTab }: TabRenderProps<BrowserTabModel>) 
                 </Button>
             </form>
             <div className="min-h-0 flex-1 bg-sidebar">
-                <webview ref={webviewRef} src={src} allowpopups={true} />
+                <webview ref={webviewRef} src={src} />
             </div>
         </div>
     );
+}
+
+type BrowserHotkeyInput = {
+    type?: string;
+    key?: string;
+    control?: boolean;
+    alt?: boolean;
+    meta?: boolean;
+    shift?: boolean;
+};
+
+function browserHotkeyKey(input: BrowserHotkeyInput | undefined): string | null {
+    if (!input || input.type !== 'keyDown' || !input.control || input.alt || input.meta)
+        return null;
+    if (input.key && /^[1-9]$/.test(input.key)) return `Control+${input.key}`;
+    if (input.key?.toLowerCase() === 'w') return input.shift ? 'Control+Shift+w' : 'Control+w';
+    if (input.key?.toLowerCase() === 'o') return 'Control+o';
+    return null;
 }
 
 function normalizeUrl(value: string): string {
