@@ -2,6 +2,11 @@
     "name": "pimux",
     "version": "0.0.0",
     "private": true,
+    "description": "Pimux desktop app",
+    "author": {
+        "name": "mrozio13pl",
+        "email": "mrozio13pl@gmail.com"
+    },
     "main": "out/main/index.js",
     "scripts": {
         "lint": "oxlint",
@@ -9,11 +14,17 @@
         "format": "oxfmt",
         "format:check": "oxfmt --check",
         "dev": "vite",
-        "build": "vite build",
+        "build": "pnpm icons && vite build",
         "preview": "vite preview --outDir out/renderer",
         "prepare": "simple-git-hooks",
         "postinstall": "node scripts/electron-install.mjs",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "dist": "pnpm build && electron-builder",
+        "dist:dir": "pnpm build && electron-builder --dir",
+        "dist:linux": "pnpm build && electron-builder --linux",
+        "dist:win": "pnpm build && electron-builder --win",
+        "dist:mac": "pnpm build && electron-builder --mac",
+        "icons": "node scripts/generate-icons.mjs"
     },
     "dependencies": {
         "@base-ui/react": "^1.5.0",
@@ -56,9 +67,12 @@
         "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "^6.0.2",
         "electron": "42.1.0",
+        "electron-builder": "^26.8.1",
         "nano-staged": "^1.0.2",
         "oxfmt": "^0.51.0",
         "oxlint": "^1.66.0",
+        "png2icons": "^2.0.1",
+        "sharp": "^0.34.5",
         "simple-git-hooks": "^2.13.1",
         "tailwindcss": "^4.3.0",
         "typescript": "^6.0.3",
@@ -86,5 +100,45 @@
     "engines": {
         "node": ">=22"
     },
-    "packageManager": "pnpm@11.1.3"
+    "packageManager": "pnpm@11.1.3",
+    "build": {
+        "appId": "dev.pimux.app",
+        "productName": "Pimux",
+        "directories": {
+            "output": "release"
+        },
+        "files": [
+            "out/**",
+            "assets/**",
+            "package.json"
+        ],
+        "asarUnpack": [
+            "node_modules/node-pty/**"
+        ],
+        "npmRebuild": true,
+        "mac": {
+            "target": [
+                "dmg",
+                "zip"
+            ],
+            "category": "public.app-category.developer-tools",
+            "icon": "assets/icons/icon.icns"
+        },
+        "win": {
+            "target": [
+                "nsis",
+                "portable"
+            ],
+            "icon": "assets/icons/icon.ico"
+        },
+        "linux": {
+            "target": [
+                "AppImage",
+                "deb",
+                "pacman"
+            ],
+            "category": "Development",
+            "icon": "assets/icons"
+        }
+    }
 }

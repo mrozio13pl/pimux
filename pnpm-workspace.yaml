@@ -6,4 +6,6 @@ allowBuilds:
     simple-git-hooks: true
     protobufjs: true
     '@google/genai': false
+    electron-winstaller: true
+    sharp: true
 minimumReleaseAge: 720

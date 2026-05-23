@@ -1,0 +1,76 @@
+name: Release builds
+
+on:
+    workflow_dispatch:
+    release:
+        types: [published]
+
+permissions:
+    contents: write
+
+jobs:
+    build:
+        name: Build ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest, windows-latest, macos-latest]
+
+        env:
+            CSC_IDENTITY_AUTO_DISCOVERY: false
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+
+            - name: Install Linux packaging deps
+              if: runner.os == 'Linux'
+              run: sudo apt-get update && sudo apt-get install -y libarchive-tools rpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Typecheck
+              run: pnpm typecheck
+
+            - name: Build distributables
+              run: pnpm dist
+
+            - name: Upload workflow artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: pimux-${{ runner.os }}
+                  path: |
+                      release/*.AppImage
+                      release/*.deb
+                      release/*.pacman
+                      release/*.dmg
+                      release/*.zip
+                      release/*.exe
+                      release/*.blockmap
+                      release/latest*.yml
+                  if-no-files-found: ignore
+
+            - name: Attach artifacts to GitHub release
+              if: github.event_name != 'workflow_dispatch'
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: |
+                      release/*.AppImage
+                      release/*.deb
+                      release/*.pacman
+                      release/*.dmg
+                      release/*.zip
+                      release/*.exe
+                      release/*.blockmap
+                      release/latest*.yml
