@@ -26,7 +26,11 @@ import {
     TabLayoutRenderer,
     type TabSplitDirection,
 } from '@/modules/workbench/TabLayout';
-import { orderedWorkspaceIds, useAppHotkeys } from '@/modules/app/useAppHotkeys';
+import {
+    orderedWorkspaceIds,
+    useAppHotkeys,
+    type TerminalZoomAction,
+} from '@/modules/app/useAppHotkeys';
 
 function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
     const next = [...items];
@@ -184,6 +188,14 @@ export function App() {
         addTab,
         closeActiveTab: () => {
             if (activeTab) closeTab(activeTab.id);
+        },
+        terminalZoom: (action: TerminalZoomAction) => {
+            if (!activeTab || !isTerminalBackedTab(activeTab)) return;
+            window.dispatchEvent(
+                new CustomEvent('pimux:terminal-zoom', {
+                    detail: { tabId: activeTab.id, action },
+                }),
+            );
         },
         primeWorkspacePreview: () => {
             const orderedIds = orderedWorkspaceIds(workspaceOrderIds, state.workspaces);

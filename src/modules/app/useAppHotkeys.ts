@@ -13,6 +13,7 @@ export type AppHotkeyActions = {
     focusTab(index: number | null): void;
     addTab(kind: TabKind): void;
     closeActiveTab(): void;
+    terminalZoom(action: TerminalZoomAction): void;
     primeWorkspacePreview(): void;
 };
 
@@ -89,6 +90,7 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
                 description: `Focus tab ${index + 1}`,
                 allowInInputs: true,
             })),
+            ...terminalZoomHotkeys(),
         ],
         [],
     );
@@ -104,6 +106,8 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
             'tab.focus': (args?: unknown) => actions.focusTab(readIndexArg(args)),
             'tab.add': (args?: unknown) => actions.addTab(readTabKindArg(args) ?? 'pi'),
             'tab.close.active': actions.closeActiveTab,
+            'terminal.zoom': (args?: unknown) =>
+                actions.terminalZoom(readTerminalZoomArg(args) ?? 'reset'),
         }),
         [actions],
     );
@@ -137,6 +141,9 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
             if (key === 'Control+w') actions.closeActiveTab();
             if (key === 'Control+Shift+w') actions.confirmDeleteActiveWorkspace();
             if (key === 'Control+o') actions.openWorkspacePicker();
+            if (key === 'Control+=' || key === 'Control++') actions.terminalZoom('in');
+            if (key === 'Control+-') actions.terminalZoom('out');
+            if (key === 'Control+0') actions.terminalZoom('reset');
         });
     }, [actions]);
 
@@ -156,6 +163,8 @@ function listenForNativeHotkeys(onHotkey: (key: string) => void) {
     };
 }
 
+export type TerminalZoomAction = 'in' | 'out' | 'reset';
+
 export function orderedWorkspaceIds(orderIds: string[], workspaces: Workspace[]): string[] {
     return orderIds.length ? orderIds : workspaces.map((workspace) => workspace.id);
 }
@@ -172,10 +181,34 @@ function readIndexArg(args: unknown): number | null {
     return typeof index === 'number' ? index : null;
 }
 
+function terminalZoomHotkeys(): HybridHotkeyBinding[] {
+    return [
+        ['Control+[Shift]++', 'in', 'Zoom terminal in'],
+        ['Control+=', 'in', 'Zoom terminal in'],
+        ['Control+NumpadAdd', 'in', 'Zoom terminal in'],
+        ['Control+-', 'out', 'Zoom terminal out'],
+        ['Control+NumpadSubtract', 'out', 'Zoom terminal out'],
+        ['Control+0', 'reset', 'Reset terminal zoom'],
+        ['Control+Numpad0', 'reset', 'Reset terminal zoom'],
+    ].map(([keys, action, description]) => ({
+        keys,
+        command: 'terminal.zoom',
+        args: { action },
+        description,
+        allowInInputs: true,
+    }));
+}
+
 function readTabKindArg(args: unknown): TabKind | null {
     if (typeof args !== 'object' || args === null || !('kind' in args)) return null;
     const kind = (args as { kind?: unknown }).kind;
     return kind === 'pi' || kind === 'terminal' || kind === 'scratch' || kind === 'browser'
         ? kind
         : null;
+}
+
+function readTerminalZoomArg(args: unknown): TerminalZoomAction | null {
+    if (typeof args !== 'object' || args === null || !('action' in args)) return null;
+    const action = (args as { action?: unknown }).action;
+    return action === 'in' || action === 'out' || action === 'reset' ? action : null;
 }

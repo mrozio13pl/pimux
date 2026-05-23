@@ -17,7 +17,11 @@ import type {
 } from '../types';
 
 const TERMINAL_FONT_SIZE_KEY = 'pimux:terminal-font-size';
+const TERMINAL_FONT_SIZE_VERSION_KEY = 'pimux:terminal-font-size-version';
+const TERMINAL_FONT_SIZE_VERSION = '3';
 const MIN_TERMINAL_FONT_SIZE = 9;
+const MIN_DEFAULT_TERMINAL_FONT_SIZE = 16;
+const MIN_TERMINAL_LINE_HEIGHT = 1;
 const MAX_TERMINAL_FONT_SIZE = 32;
 
 export function TerminalTab({
@@ -32,6 +36,7 @@ export function TerminalTab({
     const updateTabRef = useRef(updateTab);
     const fitRef = useRef<FitAddon | null>(null);
     const fontSizeRef = useRef<number | null>(null);
+    const defaultFontSizeRef = useRef<number>(getNativeTerminalProfile().fontSize);
     const startedRef = useRef(false);
 
     useEffect(() => {
@@ -54,7 +59,9 @@ export function TerminalTab({
             if (disposed || !hostRef.current) return;
 
             hostRef.current.style.backgroundColor = terminalProfile.theme.background ?? '#000000';
-            const initialFontSize = getStoredTerminalFontSize(terminalProfile.fontSize);
+            const defaultFontSize = normalizeDefaultFontSize(terminalProfile.fontSize);
+            defaultFontSizeRef.current = defaultFontSize;
+            const initialFontSize = getStoredTerminalFontSize(defaultFontSize);
             fontSizeRef.current = initialFontSize;
 
             const term = new Terminal({
@@ -69,7 +76,7 @@ export function TerminalTab({
                 fastScrollSensitivity: 5,
                 fontFamily: terminalProfile.fontFamily,
                 fontSize: initialFontSize,
-                fontWeight: '400',
+                fontWeight: '500',
                 fontWeightBold: '700',
                 lineHeight: terminalProfile.lineHeight,
                 letterSpacing: 0,
@@ -115,10 +122,18 @@ export function TerminalTab({
                 // Keep terminal usable when WebGL2 is unavailable.
             }
 
-            requestAnimationFrame(() => {
+            const fitAndResize = () => {
                 fit.fit();
+                const terminalId = terminalIdRef.current;
+                if (terminalId)
+                    ipc.terminal.resize({ terminalId, cols: term.cols, rows: term.rows });
+            };
+
+            requestAnimationFrame(() => {
+                fitAndResize();
                 term.focus();
             });
+            window.setTimeout(fitAndResize, 50);
 
             const disposables: Array<() => void> = [];
             const pendingInput: string[] = [];
@@ -187,7 +202,7 @@ export function TerminalTab({
                     zoomTerminal(-1);
                 } else if (isZoomResetKey(domEvent)) {
                     domEvent.preventDefault();
-                    resetTerminalZoom(terminalProfile.fontSize);
+                    resetTerminalZoom(defaultFontSize);
                 } else if (domEvent.shiftKey && key === 'f') {
                     domEvent.preventDefault();
                     const query = window.prompt('Find in terminal');
@@ -260,10 +275,7 @@ export function TerminalTab({
 
             const resizeObserver = new ResizeObserver(() => {
                 requestAnimationFrame(() => {
-                    fit.fit();
-                    const terminalId = terminalIdRef.current;
-                    if (terminalId)
-                        ipc.terminal.resize({ terminalId, cols: term.cols, rows: term.rows });
+                    fitAndResize();
                 });
             });
             resizeObserver.observe(hostRef.current);
@@ -290,6 +302,19 @@ export function TerminalTab({
         };
     }, [workspace.cwd, workspace.id]);
 
+    useEffect(() => {
+        const handleTerminalZoom = (event: Event) => {
+            const detail = (event as CustomEvent<TerminalZoomEvent>).detail;
+            if (detail?.tabId !== tab.id) return;
+            if (detail.action === 'in') zoomTerminal(1);
+            else if (detail.action === 'out') zoomTerminal(-1);
+            else resetTerminalZoom(defaultFontSizeRef.current);
+        };
+
+        window.addEventListener('pimux:terminal-zoom', handleTerminalZoom);
+        return () => window.removeEventListener('pimux:terminal-zoom', handleTerminalZoom);
+    }, [tab.id]);
+
     function zoomTerminal(delta: number) {
         const current = fontSizeRef.current ?? getNativeTerminalProfile().fontSize;
         setTerminalFontSize(current + delta);
@@ -304,6 +329,7 @@ export function TerminalTab({
         const size = clamp(Math.round(next), MIN_TERMINAL_FONT_SIZE, MAX_TERMINAL_FONT_SIZE);
         fontSizeRef.current = size;
         localStorage.setItem(TERMINAL_FONT_SIZE_KEY, String(size));
+        localStorage.setItem(TERMINAL_FONT_SIZE_VERSION_KEY, TERMINAL_FONT_SIZE_VERSION);
         if (!term) return;
 
         term.options.fontSize = size;
@@ -336,6 +362,11 @@ export function TerminalTab({
     );
 }
 
+type TerminalZoomEvent = {
+    tabId: string;
+    action: 'in' | 'out' | 'reset';
+};
+
 type NativeTerminalProfile = {
     fontFamily: string;
     fontSize: number;
@@ -353,7 +384,7 @@ function mergeNativeTerminalProfile(
         ...fallback,
         fontFamily: detected.fontFamily ?? fallback.fontFamily,
         fontSize: detected.fontSize ?? fallback.fontSize,
-        lineHeight: detected.lineHeight ?? fallback.lineHeight,
+        lineHeight: Math.max(detected.lineHeight ?? fallback.lineHeight, MIN_TERMINAL_LINE_HEIGHT),
         theme: { ...fallback.theme, ...detected.theme },
     };
 }
@@ -363,8 +394,8 @@ function getNativeTerminalProfile(): NativeTerminalProfile {
     if (platform === 'windows') {
         return {
             fontFamily: "'Cascadia Mono', Consolas, 'Courier New', monospace",
-            fontSize: 14,
-            lineHeight: 1.2,
+            fontSize: 16,
+            lineHeight: 1,
             windowsPty: { backend: 'conpty' },
             theme: {
                 background: '#0c0c0c',
@@ -395,8 +426,8 @@ function getNativeTerminalProfile(): NativeTerminalProfile {
     if (platform === 'mac') {
         return {
             fontFamily: 'Menlo, Monaco, "SF Mono", "DejaVu Sans Mono", monospace',
-            fontSize: 13,
-            lineHeight: 1.18,
+            fontSize: 16,
+            lineHeight: 1,
             theme: {
                 background: '#000000',
                 foreground: '#c7c7c7',
@@ -426,8 +457,8 @@ function getNativeTerminalProfile(): NativeTerminalProfile {
     return {
         fontFamily:
             "'DejaVu Sans Mono', 'Ubuntu Mono', 'Liberation Mono', 'Noto Sans Mono', monospace",
-        fontSize: 14,
-        lineHeight: 1.18,
+        fontSize: 16,
+        lineHeight: 1,
         theme: {
             background: '#171421',
             foreground: '#d0cfcc',
@@ -462,9 +493,15 @@ function normalizeTerminalTitle(title: string): string | null {
 
 function getStoredTerminalFontSize(fallback: number): number {
     const stored = Number.parseInt(localStorage.getItem(TERMINAL_FONT_SIZE_KEY) ?? '', 10);
-    return Number.isFinite(stored)
-        ? clamp(stored, MIN_TERMINAL_FONT_SIZE, MAX_TERMINAL_FONT_SIZE)
-        : fallback;
+    const storedVersion = localStorage.getItem(TERMINAL_FONT_SIZE_VERSION_KEY);
+    if (!Number.isFinite(stored)) return normalizeDefaultFontSize(fallback);
+    if (storedVersion !== TERMINAL_FONT_SIZE_VERSION && stored < MIN_DEFAULT_TERMINAL_FONT_SIZE)
+        return normalizeDefaultFontSize(fallback);
+    return clamp(stored, MIN_TERMINAL_FONT_SIZE, MAX_TERMINAL_FONT_SIZE);
+}
+
+function normalizeDefaultFontSize(size: number): number {
+    return clamp(Math.round(size), MIN_DEFAULT_TERMINAL_FONT_SIZE, MAX_TERMINAL_FONT_SIZE);
 }
 
 function isZoomInKey(event: KeyboardEvent): boolean {
