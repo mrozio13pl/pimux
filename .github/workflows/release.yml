@@ -44,7 +44,7 @@ jobs:
               run: pnpm typecheck
 
             - name: Build distributables
-              run: pnpm dist
+              run: pnpm dist -- --publish never
 
             - name: Upload workflow artifacts
               uses: actions/upload-artifact@v4
