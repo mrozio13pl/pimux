@@ -9,17 +9,14 @@
             "changelog-path": "CHANGELOG.md",
             "include-component-in-tag": false,
             "changelog-sections": [
+                { "type": "breaking", "section": "Breaking Changes" },
                 { "type": "feat", "section": "Features" },
                 { "type": "fix", "section": "Fixes" },
-                { "type": "perf", "section": "Performance" },
-                { "type": "deps", "section": "Dependencies" },
-                { "type": "revert", "section": "Reverts" },
-                { "type": "docs", "section": "Documentation" },
-                { "type": "refactor", "section": "Code Refactoring" },
-                { "type": "test", "section": "Tests" },
-                { "type": "build", "section": "Build System" },
-                { "type": "ci", "section": "Continuous Integration" },
-                { "type": "chore", "section": "Miscellaneous" }
+                { "type": "build", "section": "Improvements" },
+                { "type": "improve", "section": "Improvements" },
+                { "type": "improvement", "section": "Improvements" },
+                { "type": "perf", "section": "Improvements" },
+                { "type": "refactor", "section": "Improvements" }
             ]
         }
     }
