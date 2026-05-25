@@ -1,5 +1,7 @@
-import { PiIcon, PlusIcon, TerminalWindowIcon } from '@phosphor-icons/react';
+import { PiIcon, PlusIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { AddTabMenu } from '@/modules/sidebar/SidebarMenus';
+import type { TabKind } from '@/modules/tabs';
 
 export function EmptyApp({ onCreateWorkspace }: { onCreateWorkspace(): void }) {
     return (
@@ -23,14 +25,20 @@ export function EmptyApp({ onCreateWorkspace }: { onCreateWorkspace(): void }) {
     );
 }
 
-export function EmptyTabs({ onOpenTerminal }: { onOpenTerminal(): void }) {
+export function EmptyTabs({ onAddTab }: { onAddTab(kind: TabKind): void }) {
     return (
         <div className="flex h-full flex-col items-center justify-center gap-4 bg-sidebar text-center">
             <p className="text-sm text-muted-foreground">No tabs open in this workspace.</p>
-            <Button variant="outline" size="sm" onClick={onOpenTerminal}>
-                <TerminalWindowIcon data-icon="inline-start" />
-                Open terminal
-            </Button>
+            <AddTabMenu
+                onAddTab={onAddTab}
+                align="center"
+                trigger={
+                    <Button variant="outline" size="sm">
+                        <PlusIcon data-icon="inline-start" />
+                        New tab
+                    </Button>
+                }
+            />
         </div>
     );
 }

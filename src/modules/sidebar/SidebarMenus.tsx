@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import {
     CodeIcon,
     CopyIcon,
@@ -29,23 +30,33 @@ import { tabDefinitions } from '@/modules/tabs/registry';
 import type { TabKind } from '@/modules/tabs/types';
 import type { SidebarProps } from './types';
 
-export function AddTabMenu({ onAddTab }: { onAddTab(kind: TabKind): void }) {
+export function AddTabMenu({
+    onAddTab,
+    trigger,
+    align = 'start',
+}: {
+    onAddTab(kind: TabKind): void;
+    trigger?: ReactElement;
+    align?: 'start' | 'center' | 'end';
+}) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
                 render={
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <PlusIcon />
-                        <span className="sr-only">Add tab</span>
-                    </Button>
+                    trigger ?? (
+                        <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <PlusIcon />
+                            <span className="sr-only">Add tab</span>
+                        </Button>
+                    )
                 }
             />
-            <DropdownMenuContent align="start" className="min-w-58">
+            <DropdownMenuContent align={align} className="min-w-58">
                 {tabDefinitions.map((definition) => (
                     <DropdownMenuItem
                         key={definition.kind}

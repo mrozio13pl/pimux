@@ -223,14 +223,12 @@ export function App() {
         const now = Date.now();
         const title = cwd.split(/[\\/]/).filter(Boolean).at(-1) ?? cwd;
         const workspace: Workspace = { id, title, cwd, createdAt: now, updatedAt: now };
-        const firstTab = createTab('pi', workspace);
 
         setState((prev) => ({
             ...prev,
             workspaces: [workspace, ...prev.workspaces],
             activeWorkspaceId: id,
-            tabs: [...prev.tabs, firstTab],
-            activeTabId: firstTab.id,
+            activeTabId: null,
         }));
     }
 
@@ -629,7 +627,7 @@ export function App() {
                                         updateTab={updateTab}
                                     />
                                 ) : (
-                                    <EmptyTabs onOpenTerminal={() => addTab('terminal')} />
+                                    <EmptyTabs onAddTab={addTab} />
                                 )}
                                 <DragOverlay>
                                     {draggingTab ? <TabDragPreview tab={draggingTab} /> : null}
