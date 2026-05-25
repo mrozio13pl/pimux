@@ -67,6 +67,7 @@ export function App() {
     const [workspacePreviewIndex, setWorkspacePreviewIndex] = useState(0);
     const [draggingTab, setDraggingTab] = useState<WorkspaceTab | null>(null);
     const [activeGroupId, setActiveGroupId] = useState(DEFAULT_TAB_GROUP_ID);
+    const [focusToken, setFocusToken] = useState(0);
     const [deleteWorkspaceRequest, setDeleteWorkspaceRequest] = useState<{
         id: string;
         nonce: number;
@@ -209,6 +210,10 @@ export function App() {
         setWorkspacePickerOpen(true);
     }
 
+    function requestContentFocus() {
+        setFocusToken((current) => current + 1);
+    }
+
     function addWorkspace(cwd: string) {
         if (!cwd) return;
         setWorkspacePickerOpen(false);
@@ -242,21 +247,34 @@ export function App() {
     }
 
     function selectWorkspace(workspaceId: string) {
-        const workspaceTabs = state.tabs
-            .filter((tab) => tab.workspaceId === workspaceId)
-            .toSorted((a, b) => b.updatedAt - a.updatedAt);
+        const workspace = state.workspaces.find((candidate) => candidate.id === workspaceId);
+        const selectedWorkspaceTabs = state.tabs.filter((tab) => tab.workspaceId === workspaceId);
+        const activeTabId = selectedWorkspaceTabs.some((tab) => tab.id === workspace?.activeTabId)
+            ? (workspace?.activeTabId ?? null)
+            : (selectedWorkspaceTabs[0]?.id ?? null);
+        const activeTab = selectedWorkspaceTabs.find((tab) => tab.id === activeTabId);
+        if (activeTab) setActiveGroupId(tabGroupId(activeTab));
         setState((prev) => ({
             ...prev,
             activeWorkspaceId: workspaceId,
-            activeTabId: workspaceTabs[0]?.id ?? null,
+            activeTabId,
         }));
+        requestContentFocus();
     }
 
     function selectTab(tabId: string) {
         const tab = state.tabs.find((candidate) => candidate.id === tabId);
         if (!tab) return;
         setActiveGroupId(tabGroupId(tab));
-        setState((prev) => ({ ...prev, activeWorkspaceId: tab.workspaceId, activeTabId: tabId }));
+        setState((prev) => ({
+            ...prev,
+            activeWorkspaceId: tab.workspaceId,
+            activeTabId: tabId,
+            workspaces: prev.workspaces.map((workspace) =>
+                workspace.id === tab.workspaceId ? { ...workspace, activeTabId: tabId } : workspace,
+            ),
+        }));
+        requestContentFocus();
         setPiStatuses((prev) => {
             const status = prev[tabId]?.status;
             if (status !== 'done' && status !== 'exited' && status !== 'error') return prev;
@@ -311,6 +329,7 @@ export function App() {
             ...createTab(kind, workspace),
             groupId: groupId === DEFAULT_TAB_GROUP_ID ? undefined : groupId,
         };
+        setActiveGroupId(tabGroupId(tab));
         setState((prev) => {
             let lastWorkspaceTabIndex = -1;
             for (let index = prev.tabs.length - 1; index >= 0; index -= 1) {
@@ -325,11 +344,22 @@ export function App() {
             const tabs = [...prev.tabs];
             tabs.splice(lastWorkspaceTabIndex + 1, 0, tab);
             return touchWorkspace(
-                { ...prev, activeWorkspaceId: workspace.id, tabs, activeTabId: tab.id },
+                {
+                    ...prev,
+                    activeWorkspaceId: workspace.id,
+                    workspaces: prev.workspaces.map((candidate) =>
+                        candidate.id === workspace.id
+                            ? { ...candidate, activeTabId: tab.id }
+                            : candidate,
+                    ),
+                    tabs,
+                    activeTabId: tab.id,
+                },
                 workspace.id,
                 tab.updatedAt,
             );
         });
+        requestContentFocus();
     }
 
     function closeTab(tabId: string) {
@@ -337,17 +367,37 @@ export function App() {
         if (tab && isTerminalBackedTab(tab)) void ipc.terminal.kill({ terminalId: tab.id });
 
         setState((prev) => {
-            const remaining = prev.tabs.filter((tab) => tab.id !== tabId);
-            const nextForWorkspace = remaining.find(
-                (tab) => tab.workspaceId === prev.activeWorkspaceId,
+            const closingTab = prev.tabs.find((candidate) => candidate.id === tabId);
+            const beforeWorkspaceTabs = prev.tabs.filter(
+                (candidate) => candidate.workspaceId === closingTab?.workspaceId,
             );
+            const closingWorkspaceIndex = beforeWorkspaceTabs.findIndex(
+                (candidate) => candidate.id === tabId,
+            );
+            const remaining = prev.tabs.filter((candidate) => candidate.id !== tabId);
+            const remainingWorkspaceTabs = remaining.filter(
+                (candidate) => candidate.workspaceId === closingTab?.workspaceId,
+            );
+            const nextForWorkspace =
+                remainingWorkspaceTabs[
+                    Math.min(closingWorkspaceIndex, remainingWorkspaceTabs.length - 1)
+                ] ??
+                remainingWorkspaceTabs.at(-1) ??
+                null;
+            const activeTabId =
+                prev.activeTabId === tabId ? (nextForWorkspace?.id ?? null) : prev.activeTabId;
             return {
                 ...prev,
                 tabs: remaining,
-                activeTabId:
-                    prev.activeTabId === tabId ? (nextForWorkspace?.id ?? null) : prev.activeTabId,
+                activeTabId,
+                workspaces: prev.workspaces.map((workspace) =>
+                    workspace.id === closingTab?.workspaceId
+                        ? { ...workspace, activeTabId: nextForWorkspace?.id }
+                        : workspace,
+                ),
             };
         });
+        requestContentFocus();
     }
 
     function removeWorkspace(workspaceId: string) {
@@ -363,9 +413,19 @@ export function App() {
                 prev.activeWorkspaceId === workspaceId
                     ? (workspaces[0]?.id ?? null)
                     : prev.activeWorkspaceId;
+            const nextActiveWorkspace = workspaces.find(
+                (workspace) => workspace.id === activeWorkspaceId,
+            );
+            const nextActiveWorkspaceTabs = tabs.filter(
+                (tab) => tab.workspaceId === activeWorkspaceId,
+            );
             const activeTabId =
                 prev.activeWorkspaceId === workspaceId
-                    ? (tabs.find((tab) => tab.workspaceId === activeWorkspaceId)?.id ?? null)
+                    ? nextActiveWorkspaceTabs.some(
+                          (tab) => tab.id === nextActiveWorkspace?.activeTabId,
+                      )
+                        ? (nextActiveWorkspace?.activeTabId ?? null)
+                        : (nextActiveWorkspaceTabs[0]?.id ?? null)
                     : prev.activeTabId;
             return { ...prev, workspaces, tabs, activeWorkspaceId, activeTabId };
         });
@@ -447,7 +507,17 @@ export function App() {
                     tab.id === tabId ? moved : tab,
                 );
                 return touchWorkspace(
-                    { ...prev, tabs, activeWorkspaceId: targetWorkspaceId, activeTabId: tabId },
+                    {
+                        ...prev,
+                        tabs,
+                        activeWorkspaceId: targetWorkspaceId,
+                        activeTabId: tabId,
+                        workspaces: prev.workspaces.map((workspace) =>
+                            workspace.id === targetWorkspaceId
+                                ? { ...workspace, activeTabId: tabId }
+                                : workspace,
+                        ),
+                    },
                     targetWorkspaceId,
                     moved.updatedAt,
                 );
@@ -465,11 +535,22 @@ export function App() {
             const tabs = [...withoutActive];
             tabs.splice(insertIndex, 0, moved);
             return touchWorkspace(
-                { ...prev, tabs, activeWorkspaceId: targetWorkspaceId, activeTabId: tabId },
+                {
+                    ...prev,
+                    tabs,
+                    activeWorkspaceId: targetWorkspaceId,
+                    activeTabId: tabId,
+                    workspaces: prev.workspaces.map((workspace) =>
+                        workspace.id === targetWorkspaceId
+                            ? { ...workspace, activeTabId: tabId }
+                            : workspace,
+                    ),
+                },
                 targetWorkspaceId,
                 moved.updatedAt,
             );
         });
+        requestContentFocus();
     }
 
     function splitTab(tabId: string, targetGroupId: string, direction: TabSplitDirection) {
@@ -498,13 +579,13 @@ export function App() {
             const moved = { ...active, groupId: newGroupId, updatedAt: Date.now() };
             const tabs = [...withoutActive];
             tabs.splice(insertIndex, 0, moved);
-            const workspaceTabs = tabs.filter((tab) => tab.workspaceId === active.workspaceId);
-            const groupIds = [...new Set(workspaceTabs.map(tabGroupId))];
-            const workspace = prev.workspaces.find(
+            const movedWorkspaceTabs = tabs.filter((tab) => tab.workspaceId === active.workspaceId);
+            const groupIds = [...new Set(movedWorkspaceTabs.map(tabGroupId))];
+            const layoutWorkspace = prev.workspaces.find(
                 (candidate) => candidate.id === active.workspaceId,
             );
             const nextLayout = insertGroupInLayout(
-                ensureTabLayout(workspace?.tabLayout, groupIds),
+                ensureTabLayout(layoutWorkspace?.tabLayout, groupIds),
                 targetGroupId,
                 newGroupId,
                 direction,
@@ -514,7 +595,7 @@ export function App() {
                     ...prev,
                     workspaces: prev.workspaces.map((workspace) =>
                         workspace.id === active.workspaceId
-                            ? { ...workspace, tabLayout: nextLayout }
+                            ? { ...workspace, activeTabId: tabId, tabLayout: nextLayout }
                             : workspace,
                     ),
                     tabs,
@@ -525,6 +606,7 @@ export function App() {
                 moved.updatedAt,
             );
         });
+        requestContentFocus();
     }
 
     function handleTabDragStart(event: DragStartEvent) {
@@ -615,6 +697,7 @@ export function App() {
                                         workspace={activeWorkspace}
                                         activeTabId={activeTab?.id ?? null}
                                         activeGroupId={activeGroupId}
+                                        focusToken={focusToken}
                                         piStatuses={piStatuses}
                                         dragging={draggingTab != null}
                                         workspacesById={workspacesById}

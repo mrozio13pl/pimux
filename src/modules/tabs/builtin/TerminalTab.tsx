@@ -27,12 +27,15 @@ const MAX_TERMINAL_FONT_SIZE = 32;
 export function TerminalTab({
     tab,
     workspace,
+    active,
+    focusToken,
     updateTab,
 }: TabRenderProps<TerminalTabModel | PiTabModel>) {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const terminalIdRef = useRef<string | null>(null);
     const latestTabRef = useRef(tab);
+    const activeRef = useRef(active);
     const updateTabRef = useRef(updateTab);
     const fitRef = useRef<FitAddon | null>(null);
     const fontSizeRef = useRef<number | null>(null);
@@ -41,8 +44,9 @@ export function TerminalTab({
 
     useEffect(() => {
         latestTabRef.current = tab;
+        activeRef.current = active;
         updateTabRef.current = updateTab;
-    }, [tab, updateTab]);
+    }, [tab, active, updateTab]);
 
     useEffect(() => {
         if (startedRef.current || !hostRef.current) return;
@@ -131,9 +135,12 @@ export function TerminalTab({
 
             requestAnimationFrame(() => {
                 fitAndResize();
-                term.focus();
+                if (activeRef.current) term.focus();
             });
-            window.setTimeout(fitAndResize, 50);
+            window.setTimeout(() => {
+                fitAndResize();
+                if (activeRef.current) term.focus();
+            }, 50);
 
             const disposables: Array<() => void> = [];
             const pendingInput: string[] = [];
@@ -301,6 +308,19 @@ export function TerminalTab({
             cleanup();
         };
     }, [workspace.cwd, workspace.id]);
+
+    useEffect(() => {
+        if (!active) return;
+        const focus = () => {
+            fitRef.current?.fit();
+            terminalRef.current?.focus();
+        };
+        requestAnimationFrame(() => {
+            focus();
+            requestAnimationFrame(focus);
+        });
+        window.setTimeout(focus, 75);
+    }, [active, focusToken]);
 
     useEffect(() => {
         const handleTerminalZoom = (event: Event) => {

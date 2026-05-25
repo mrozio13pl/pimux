@@ -9,5 +9,6 @@ export type Workspace = {
     createdAt: number;
     updatedAt: number;
     pinned?: boolean;
+    activeTabId?: string;
     tabLayout?: TabLayoutNode;
 };

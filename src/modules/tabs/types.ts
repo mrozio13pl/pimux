@@ -40,6 +40,8 @@ export type UpdateTab = (tab: WorkspaceTab) => void;
 export type TabRenderProps<T extends WorkspaceTab = WorkspaceTab> = {
     tab: T;
     workspace: Workspace;
+    active: boolean;
+    focusToken: number;
     updateTab: UpdateTab;
 };
 

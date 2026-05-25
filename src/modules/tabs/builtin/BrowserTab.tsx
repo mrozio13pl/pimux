@@ -5,12 +5,27 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BrowserTab as BrowserTabModel, TabRenderProps } from '../types';
 
-export function BrowserTab({ tab, updateTab }: TabRenderProps<BrowserTabModel>) {
+export function BrowserTab({
+    tab,
+    active,
+    focusToken,
+    updateTab,
+}: TabRenderProps<BrowserTabModel>) {
     const webviewRef = useRef<HTMLElement | null>(null);
     const [draft, setDraft] = useState(tab.url);
     const src = useMemo(() => normalizeUrl(tab.url), [tab.url]);
 
     useEffect(() => setDraft(tab.url), [tab.url]);
+
+    useEffect(() => {
+        if (!active) return;
+        const focus = () => webviewRef.current?.focus();
+        requestAnimationFrame(() => {
+            focus();
+            requestAnimationFrame(focus);
+        });
+        window.setTimeout(focus, 75);
+    }, [active, focusToken]);
 
     useEffect(() => {
         const webview = webviewRef.current;

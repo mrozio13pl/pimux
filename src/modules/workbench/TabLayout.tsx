@@ -100,6 +100,7 @@ export function TabLayoutRenderer({
     workspace,
     activeTabId,
     activeGroupId,
+    focusToken,
     piStatuses,
     dragging,
     workspacesById,
@@ -117,6 +118,7 @@ export function TabLayoutRenderer({
     workspace: Workspace;
     activeTabId: string | null;
     activeGroupId: string;
+    focusToken: number;
     piStatuses: Record<string, PiStatusEvent>;
     dragging: boolean;
     workspacesById: Map<string, Workspace>;
@@ -139,7 +141,7 @@ export function TabLayoutRenderer({
                     'flex h-full min-h-0 min-w-0 flex-col border-r border-b last:border-r-0 last:border-b-0',
                     activeGroupId === node.id && 'ring-1 ring-primary/40 ring-inset',
                 )}
-                onPointerEnter={() => onActivateGroup(node.id)}
+                onPointerDownCapture={() => onActivateGroup(node.id)}
                 onFocusCapture={() => onActivateGroup(node.id)}
             >
                 <TabStrip
@@ -158,18 +160,24 @@ export function TabLayoutRenderer({
                     {tabs.map((tab) => {
                         const tabWorkspace = workspacesById.get(tab.workspaceId);
                         if (!tabWorkspace) return null;
-                        const active = tab.id === groupActiveTab?.id;
+                        const visible = tab.id === groupActiveTab?.id;
+                        const focused = tab.id === activeTabId;
                         return (
                             <div
                                 key={tab.id}
-                                aria-hidden={!active}
+                                aria-hidden={!visible}
                                 className={
-                                    active
+                                    visible
                                         ? 'absolute inset-0'
                                         : 'pointer-events-none absolute inset-0 opacity-0'
                                 }
                             >
-                                {renderTab(tab, { workspace: tabWorkspace, updateTab })}
+                                {renderTab(tab, {
+                                    workspace: tabWorkspace,
+                                    active: focused,
+                                    focusToken,
+                                    updateTab,
+                                })}
                             </div>
                         );
                     })}
@@ -191,6 +199,7 @@ export function TabLayoutRenderer({
                                 workspace={workspace}
                                 activeTabId={activeTabId}
                                 activeGroupId={activeGroupId}
+                                focusToken={focusToken}
                                 piStatuses={piStatuses}
                                 dragging={dragging}
                                 workspacesById={workspacesById}

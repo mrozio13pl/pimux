@@ -59,10 +59,19 @@ function normalizeState(value: unknown): StoredState {
         rawActiveWorkspaceId && workspaceIds.has(rawActiveWorkspaceId)
             ? rawActiveWorkspaceId
             : (workspaces[0]?.id ?? null);
+    const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId);
+    const workspaceActiveTabId = activeWorkspace?.activeTabId;
     const activeTabId =
-        typeof value.activeTabId === 'string' && tabs.some((tab) => tab.id === value.activeTabId)
+        typeof value.activeTabId === 'string' &&
+        tabs.some((tab) => tab.id === value.activeTabId && tab.workspaceId === activeWorkspaceId)
             ? value.activeTabId
-            : (tabs.find((tab) => tab.workspaceId === activeWorkspaceId)?.id ?? null);
+            : workspaceActiveTabId &&
+                tabs.some(
+                    (tab) =>
+                        tab.id === workspaceActiveTabId && tab.workspaceId === activeWorkspaceId,
+                )
+              ? workspaceActiveTabId
+              : (tabs.find((tab) => tab.workspaceId === activeWorkspaceId)?.id ?? null);
 
     const collapsedGroups = Array.isArray(value.collapsedGroups)
         ? value.collapsedGroups.filter((key): key is string => typeof key === 'string')
