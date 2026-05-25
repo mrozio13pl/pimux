@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0](https://github.com/mrozio13pl/pimux/compare/v0.1.0...v0.2.0) (2026-05-25)
+
+
+### Features
+
+* sidebar sorting setting ([da0e930](https://github.com/mrozio13pl/pimux/commit/da0e93031ceca5957079cca57cdfb61e47d5436f))
+
+
+### Fixes
+
+* disable terminal webgl renderer ([7730d74](https://github.com/mrozio13pl/pimux/commit/7730d7439e8e4e602e2ff2f52c2ad1b067ca2abc))
+* display pi status ([1f4f85d](https://github.com/mrozio13pl/pimux/commit/1f4f85d4a65d2418306d2c67dfac2f2e0a008d8e))
+* focus active tab content ([08237f8](https://github.com/mrozio13pl/pimux/commit/08237f8c8705ffd5aea60683438d33eefa0b3ab9))
+* stop auto-opening pi tab for new workspaces ([69a771f](https://github.com/mrozio13pl/pimux/commit/69a771f216f17f50f813cbd0b1b1712b5b9a8325))
+
 ## 0.1.0 (2026-05-23)
 
 
