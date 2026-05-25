@@ -27,4 +27,4 @@ jobs:
               if: steps.release.outputs.release_created == 'true'
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: gh workflow run "Release builds" --ref "${{ steps.release.outputs.tag_name }}"
+              run: gh workflow run "Release builds" --repo "${{ github.repository }}" --ref "${{ steps.release.outputs.tag_name }}"
