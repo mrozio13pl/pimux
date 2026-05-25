@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuCheckboxItem,
     DropdownMenuGroup,
     DropdownMenuLabel,
     DropdownMenuRadioGroup,
@@ -17,14 +18,18 @@ export type TabSortMode = 'last-used' | 'created' | 'manual';
 export type SidebarSettings = {
     projectSort: ProjectSortMode;
     tabSort: TabSortMode;
+    autoOrderWorkspaces: boolean;
+    autoOrderTabs: boolean;
     visibleTabs: number;
     projectGroup: ProjectGroupMode;
 };
 
 const SIDEBAR_SETTINGS_KEY = 'pimux:sidebar-settings';
 const DEFAULT_SIDEBAR_SETTINGS: SidebarSettings = {
-    projectSort: 'last-used',
-    tabSort: 'last-used',
+    projectSort: 'manual',
+    tabSort: 'manual',
+    autoOrderWorkspaces: false,
+    autoOrderTabs: false,
     visibleTabs: 3,
     projectGroup: 'separate',
 };
@@ -43,6 +48,14 @@ export function loadSidebarSettings(): SidebarSettings {
                 : isTabSortMode((parsed as { threadSort?: unknown }).threadSort)
                   ? (parsed as { threadSort: TabSortMode }).threadSort
                   : DEFAULT_SIDEBAR_SETTINGS.tabSort,
+            autoOrderWorkspaces:
+                typeof parsed.autoOrderWorkspaces === 'boolean'
+                    ? parsed.autoOrderWorkspaces
+                    : DEFAULT_SIDEBAR_SETTINGS.autoOrderWorkspaces,
+            autoOrderTabs:
+                typeof parsed.autoOrderTabs === 'boolean'
+                    ? parsed.autoOrderTabs
+                    : DEFAULT_SIDEBAR_SETTINGS.autoOrderTabs,
             visibleTabs:
                 typeof parsed.visibleTabs === 'number'
                     ? Math.min(12, Math.max(1, Math.round(parsed.visibleTabs)))
@@ -103,8 +116,34 @@ export function SidebarSettingsMenu({
                 }
             />
             <DropdownMenuContent align="start" className="min-w-56">
+                <DropdownMenuGroup>
+                    <DropdownMenuLabel>Recent activity</DropdownMenuLabel>
+                    <DropdownMenuCheckboxItem
+                        checked={settings.autoOrderWorkspaces}
+                        onCheckedChange={(checked) =>
+                            onChange((current) => ({
+                                ...current,
+                                autoOrderWorkspaces: checked === true,
+                            }))
+                        }
+                    >
+                        Auto-order workspaces
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                        checked={settings.autoOrderTabs}
+                        onCheckedChange={(checked) =>
+                            onChange((current) => ({
+                                ...current,
+                                autoOrderTabs: checked === true,
+                            }))
+                        }
+                    >
+                        Auto-order tabs
+                    </DropdownMenuCheckboxItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
                 <DropdownMenuRadioGroup
-                    value={settings.projectSort}
+                    value={settings.projectSort === 'last-used' ? 'manual' : settings.projectSort}
                     onValueChange={(value) =>
                         onChange((current) => ({
                             ...current,
@@ -112,24 +151,18 @@ export function SidebarSettingsMenu({
                         }))
                     }
                 >
-                    <DropdownMenuLabel>Sort projects</DropdownMenuLabel>
-                    <DropdownMenuRadioItem value="last-used">
-                        Last user message
-                    </DropdownMenuRadioItem>
+                    <DropdownMenuLabel>Workspace fallback order</DropdownMenuLabel>
                     <DropdownMenuRadioItem value="created">Created at</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="manual">Manual</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuRadioGroup
-                    value={settings.tabSort}
+                    value={settings.tabSort === 'last-used' ? 'manual' : settings.tabSort}
                     onValueChange={(value) =>
                         onChange((current) => ({ ...current, tabSort: value as TabSortMode }))
                     }
                 >
-                    <DropdownMenuLabel>Sort tabs</DropdownMenuLabel>
-                    <DropdownMenuRadioItem value="last-used">
-                        Last user message
-                    </DropdownMenuRadioItem>
+                    <DropdownMenuLabel>Tab fallback order</DropdownMenuLabel>
                     <DropdownMenuRadioItem value="created">Created at</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="manual">Manual</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>

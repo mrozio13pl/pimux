@@ -45,7 +45,7 @@ export function AddTabMenu({ onAddTab }: { onAddTab(kind: TabKind): void }) {
                     </Button>
                 }
             />
-            <DropdownMenuContent align="start" className="min-w-44">
+            <DropdownMenuContent align="start" className="min-w-58">
                 {tabDefinitions.map((definition) => (
                     <DropdownMenuItem
                         key={definition.kind}

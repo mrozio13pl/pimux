@@ -102,13 +102,13 @@ export function Sidebar({
             list.sort((a, b) => {
                 const pinned = Number(b.pinned === true) - Number(a.pinned === true);
                 if (pinned !== 0) return pinned;
-                return settings.tabSort === 'last-used'
+                return settings.autoOrderTabs
                     ? b.updatedAt - a.updatedAt
                     : (tabIndex.get(a.id) ?? 0) - (tabIndex.get(b.id) ?? 0);
             });
         }
         return map;
-    }, [tabs, settings.tabSort]);
+    }, [tabs, settings.autoOrderTabs]);
 
     const workspaceLastUsedAt = useMemo(() => {
         const map = new Map<string, number>();
@@ -126,11 +126,22 @@ export function Sidebar({
     const groups = useMemo(
         () =>
             groupWorkspaces(workspaces, workspaceLastUsedAt, {
-                sortMode: settings.projectSort,
+                sortMode: settings.autoOrderWorkspaces
+                    ? 'last-used'
+                    : settings.projectSort === 'last-used'
+                      ? 'manual'
+                      : settings.projectSort,
                 groupMode: settings.projectGroup,
                 homeDir,
             }),
-        [workspaces, workspaceLastUsedAt, settings.projectSort, settings.projectGroup, homeDir],
+        [
+            workspaces,
+            workspaceLastUsedAt,
+            settings.autoOrderWorkspaces,
+            settings.projectSort,
+            settings.projectGroup,
+            homeDir,
+        ],
     );
 
     const visibleWorkspaceIds = useMemo(
@@ -192,6 +203,7 @@ export function Sidebar({
             setSettings((current) => ({
                 ...current,
                 projectSort: 'manual',
+                autoOrderWorkspaces: false,
                 projectGroup: 'separate',
             }));
             onMoveWorkspace?.(activeWorkspaceId, overWorkspaceId);
@@ -211,7 +223,7 @@ export function Sidebar({
             targetWorkspaceId = overId.slice('workspace:'.length);
         }
         if (!targetWorkspaceId) return;
-        setSettings((current) => ({ ...current, tabSort: 'manual' }));
+        setSettings((current) => ({ ...current, tabSort: 'manual', autoOrderTabs: false }));
         onMoveTab?.(tabId, overTabId, targetWorkspaceId);
         setOpenWorkspaceIds((current) =>
             current.includes(targetWorkspaceId) ? current : [...current, targetWorkspaceId],

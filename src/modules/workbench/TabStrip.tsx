@@ -122,7 +122,7 @@ export function TabStrip({
                                 </Button>
                             }
                         />
-                        <DropdownMenuContent align="start" className="min-w-44">
+                        <DropdownMenuContent align="start" className="min-w-56">
                             {tabDefinitions.map((definition) => (
                                 <DropdownMenuItem
                                     key={definition.kind}
