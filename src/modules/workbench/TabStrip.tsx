@@ -46,6 +46,7 @@ import { getTabDefinition, tabDefinitions } from '@/modules/tabs/registry';
 import { ipc } from '@/ipc';
 import type { Workspace } from '@/modules/workspace/types';
 import type { BrowserTab, TabKind, WorkspaceTab } from '@/modules/tabs/types';
+import { StatusLabel } from '@/modules/sidebar/SidebarStatus';
 import type { PiStatusEvent } from '../../../shared/events';
 
 type TabStripProps = {
@@ -211,6 +212,7 @@ function SortableHeaderTab({
             >
                 <TabIcon tab={tab} Icon={Icon} />
                 <span className={cn('min-w-0 truncate', active && 'font-bold')}>{tab.title}</span>
+                {tab.kind === 'pi' ? <StatusLabel status={piStatuses[tab.id]?.status} /> : null}
                 {tab.pinned ? <PushPinIcon className="size-3 shrink-0" /> : null}
                 <HotkeyIndicator
                     visible={showHotkeyIndicators && index < 9}
