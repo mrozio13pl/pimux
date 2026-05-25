@@ -5,7 +5,6 @@ import { SearchAddon } from '@xterm/addon-search';
 import { SerializeAddon } from '@xterm/addon-serialize';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { WebLinksAddon } from '@xterm/addon-web-links';
-import { WebglAddon } from '@xterm/addon-webgl';
 import { Terminal, type ITheme, type IWindowsPty } from '@xterm/xterm';
 import { formatHex, parse, wcagContrast } from 'culori';
 import { events, ipc } from '@/ipc';
@@ -117,14 +116,6 @@ export function TerminalTab({
             );
             term.open(hostRef.current);
             if (tab.scrollback) term.write(tab.scrollback);
-
-            try {
-                const webgl = new WebglAddon();
-                webgl.onContextLoss(() => webgl.dispose());
-                term.loadAddon(webgl);
-            } catch {
-                // Keep terminal usable when WebGL2 is unavailable.
-            }
 
             const fitAndResize = () => {
                 fit.fit();
