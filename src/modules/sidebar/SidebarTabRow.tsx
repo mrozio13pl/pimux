@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import type { BrowserTab, WorkspaceTab } from '@/modules/tabs/types';
 import type { SidebarProps } from './types';
 import { TabContextMenuContent } from './SidebarMenus';
-import { StatusLabel } from './SidebarStatus';
+import { StatusLabel, statusPresentation } from './SidebarStatus';
 
 export function TabRow({
     tab,
@@ -72,7 +72,7 @@ export function TabRow({
                         />
                     }
                 >
-                    <TabIcon tab={tab} Icon={Icon} />
+                    <TabIcon tab={tab} Icon={Icon} status={status?.status} />
                     <span
                         className={cn('min-w-0 flex-1 truncate text-[12px]', active && 'font-bold')}
                     >
@@ -92,9 +92,24 @@ export function TabRow({
     );
 }
 
-function TabIcon({ tab, Icon }: { tab: WorkspaceTab; Icon: typeof GlobeIcon }) {
+function TabIcon({
+    tab,
+    Icon,
+    status,
+}: {
+    tab: WorkspaceTab;
+    Icon: typeof GlobeIcon;
+    status?: string;
+}) {
     if (tab.kind === 'browser' && tab.favicon) return <BrowserFavicon tab={tab} />;
-    return <Icon className="size-3.5 shrink-0" />;
+    return (
+        <Icon
+            className={cn(
+                'size-3.5 shrink-0',
+                tab.kind === 'pi' && statusPresentation(status)?.className,
+            )}
+        />
+    );
 }
 
 function BrowserFavicon({ tab }: { tab: BrowserTab }) {

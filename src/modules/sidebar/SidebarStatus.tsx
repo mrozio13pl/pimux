@@ -42,7 +42,7 @@ export function StatusLabel({ status }: { status: string | undefined }) {
     );
 }
 
-function statusPresentation(
+export function statusPresentation(
     status: string | undefined,
 ): { label: string; className: string } | null {
     switch (status) {

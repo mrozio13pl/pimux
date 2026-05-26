@@ -14,6 +14,7 @@ export type AppHotkeyActions = {
     addTab(kind: TabKind): void;
     closeActiveTab(): void;
     terminalZoom(action: TerminalZoomAction): void;
+    toggleSidebar(): void;
     primeWorkspacePreview(): void;
 };
 
@@ -49,6 +50,12 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
                 keys: 'Control+Shift+w',
                 command: 'workspace.delete.active.confirm',
                 description: 'Delete current workspace',
+                allowInInputs: true,
+            },
+            {
+                keys: 'Control+b',
+                command: 'sidebar.toggle',
+                description: 'Toggle sidebar',
                 allowInInputs: true,
             },
             ...[
@@ -102,6 +109,7 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
             'tab.close.active': actions.closeActiveTab,
             'terminal.zoom': (args?: unknown) =>
                 actions.terminalZoom(readTerminalZoomArg(args) ?? 'reset'),
+            'sidebar.toggle': actions.toggleSidebar,
         }),
         [actions],
     );

@@ -10,9 +10,24 @@ import {
     useSensors,
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { FolderPlusIcon, PushPinIcon } from '@phosphor-icons/react';
+import {
+    CaretLineLeftIcon,
+    CaretLineRightIcon,
+    FolderPlusIcon,
+    GitDiffIcon,
+    GlobeIcon,
+    NotePencilIcon,
+    PiIcon,
+    PushPinIcon,
+    TerminalWindowIcon,
+} from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionTrigger } from '@/components/ui/accordion';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
@@ -32,6 +47,7 @@ import {
     shouldConfirmTabDelete,
     SidebarDragPreview,
     SidebarSettingsMenu,
+    statusPresentation,
     StatusLabel,
     SortableWorkspaceItem,
     TabRow,
@@ -50,6 +66,7 @@ export function Sidebar({
     activeTabId,
     piStatuses,
     homeDir,
+    collapsed = false,
     showHotkeyIndicators = false,
     deleteWorkspaceRequest,
     onSelectWorkspace,
@@ -57,6 +74,7 @@ export function Sidebar({
     onMoveWorkspace,
     onSelectTab,
     onCreateWorkspace,
+    onToggleCollapsed,
     onAddTab,
     onToggleWorkspacePin,
     onToggleTabPin,
@@ -254,6 +272,90 @@ export function Sidebar({
         };
     }, [workspaces, workspaceIcons]);
 
+    if (collapsed) {
+        return (
+            <aside className="flex h-full w-full flex-col bg-sidebar py-2">
+                <div className="flex justify-center px-1 pb-2">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="size-7 text-muted-foreground hover:text-foreground"
+                        onClick={onToggleCollapsed}
+                    >
+                        <CaretLineRightIcon />
+                        <span className="sr-only">Expand sidebar</span>
+                    </Button>
+                </div>
+                <ScrollArea className="min-h-0 flex-1 px-1">
+                    <Accordion
+                        multiple
+                        value={openWorkspaceIds}
+                        onValueChange={(value) => setOpenWorkspaceIds(value)}
+                        className="flex flex-col gap-1"
+                    >
+                        {workspaces.map((workspace) => {
+                            const active = workspace.id === activeWorkspaceId;
+                            const workspaceTabs = tabsByWorkspace.get(workspace.id) ?? [];
+
+                            return (
+                                <AccordionItem
+                                    key={workspace.id}
+                                    value={workspace.id}
+                                    className="flex flex-col items-center border-0 bg-transparent not-last:border-b-0 data-open:bg-transparent"
+                                >
+                                    <div
+                                        className={cn(
+                                            'flex h-8 w-full items-center justify-center rounded-md transition-colors',
+                                            active
+                                                ? 'bg-accent/50 text-foreground'
+                                                : 'text-muted-foreground hover:bg-accent/30 hover:text-foreground',
+                                        )}
+                                    >
+                                        <AccordionTrigger
+                                            className="h-7 w-7 flex-none items-center justify-center gap-0 rounded-sm p-0 text-current no-underline hover:bg-accent/50 hover:no-underline **:data-[slot=accordion-trigger-icon]:m-0 **:data-[slot=accordion-trigger-icon]:size-3"
+                                            title={workspace.title}
+                                        >
+                                            <span className="sr-only">
+                                                Toggle {workspace.title}
+                                            </span>
+                                        </AccordionTrigger>
+                                    </div>
+                                    <AccordionContent className="w-full pb-1">
+                                        <ul className="flex flex-col items-center gap-1 pt-1">
+                                            {workspaceTabs.map((tab) => (
+                                                <li key={tab.id}>
+                                                    <button
+                                                        type="button"
+                                                        aria-current={tab.id === activeTabId}
+                                                        onClick={() => onSelectTab(tab.id)}
+                                                        className={cn(
+                                                            'flex size-7 items-center justify-center rounded-md transition-colors',
+                                                            tab.id === activeTabId
+                                                                ? 'bg-accent/60 text-foreground'
+                                                                : 'text-muted-foreground hover:bg-accent/30 hover:text-foreground',
+                                                        )}
+                                                        title={tab.title}
+                                                    >
+                                                        <CollapsedTabIcon
+                                                            tab={tab}
+                                                            status={piStatuses[tab.id]?.status}
+                                                        />
+                                                        <span className="sr-only">{tab.title}</span>
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            );
+                        })}
+                    </Accordion>
+                </ScrollArea>
+            </aside>
+        );
+    }
+
     return (
         <>
             <DndContext
@@ -270,6 +372,16 @@ export function Sidebar({
                                 Projects
                             </h1>
                             <div className="flex items-center gap-0.5">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-7 text-muted-foreground hover:text-foreground"
+                                    onClick={onToggleCollapsed}
+                                >
+                                    <CaretLineLeftIcon />
+                                    <span className="sr-only">Collapse sidebar</span>
+                                </Button>
                                 <Button
                                     type="button"
                                     variant="ghost"
@@ -595,5 +707,31 @@ export function Sidebar({
                 }}
             />
         </>
+    );
+}
+
+function CollapsedTabIcon({ tab, status }: { tab: WorkspaceTab; status?: string }) {
+    if (tab.kind === 'browser' && tab.favicon) {
+        return <img src={tab.favicon} alt="" className="size-3.5 rounded-sm object-contain" />;
+    }
+
+    const Icon =
+        tab.kind === 'pi'
+            ? PiIcon
+            : tab.kind === 'terminal'
+              ? TerminalWindowIcon
+              : tab.kind === 'browser'
+                ? GlobeIcon
+                : tab.kind === 'diffs'
+                  ? GitDiffIcon
+                  : NotePencilIcon;
+
+    return (
+        <Icon
+            className={cn(
+                'size-3.5 shrink-0',
+                tab.kind === 'pi' && statusPresentation(status)?.className,
+            )}
+        />
     );
 }

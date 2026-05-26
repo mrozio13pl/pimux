@@ -9,6 +9,7 @@ export type SidebarProps = {
     activeTabId: string | null;
     piStatuses: Record<string, PiStatusEvent>;
     homeDir: string | null;
+    collapsed?: boolean;
     showHotkeyIndicators?: boolean;
     deleteWorkspaceRequest?: { id: string; nonce: number } | null;
     onSelectWorkspace(workspaceId: string): void;
@@ -16,6 +17,7 @@ export type SidebarProps = {
     onMoveWorkspace?(activeWorkspaceId: string, overWorkspaceId: string): void;
     onSelectTab(tabId: string): void;
     onCreateWorkspace(): void;
+    onToggleCollapsed?(): void;
     onAddTab(workspaceId: string, kind: TabKind): void;
     onToggleWorkspacePin(workspaceId: string): void;
     onToggleTabPin(tabId: string): void;

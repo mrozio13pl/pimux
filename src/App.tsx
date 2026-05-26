@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     closestCenter,
     DndContext,
@@ -10,6 +10,7 @@ import {
     useSensors,
 } from '@dnd-kit/core';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import type { PanelImperativeHandle, PanelSize } from 'react-resizable-panels';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useModifierKeyPressed } from '@/modules/hotkeys';
 import { loadState, STORAGE_KEY, type Workspace, type StoredState } from '@/modules/workspace';
@@ -41,6 +42,38 @@ function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
 import { events, ipc } from './ipc';
 import type { PiStatusEvent, PiThemeEvent } from '../shared/events';
 
+const SIDEBAR_LAYOUT_KEY = 'pimux:sidebar-layout';
+const SIDEBAR_COLLAPSED_WIDTH = 48;
+const SIDEBAR_COLLAPSE_THRESHOLD = 72;
+const DEFAULT_SIDEBAR_WIDTH = 280;
+
+type SidebarLayoutState = {
+    collapsed: boolean;
+    lastExpandedWidth: number;
+};
+
+function loadSidebarLayoutState(): SidebarLayoutState {
+    try {
+        const raw = localStorage.getItem(SIDEBAR_LAYOUT_KEY);
+        if (!raw) return { collapsed: false, lastExpandedWidth: DEFAULT_SIDEBAR_WIDTH };
+        const parsed = JSON.parse(raw) as Partial<SidebarLayoutState>;
+        return {
+            collapsed: parsed.collapsed === true,
+            lastExpandedWidth:
+                typeof parsed.lastExpandedWidth === 'number' &&
+                parsed.lastExpandedWidth > SIDEBAR_COLLAPSE_THRESHOLD
+                    ? parsed.lastExpandedWidth
+                    : DEFAULT_SIDEBAR_WIDTH,
+        };
+    } catch {
+        return { collapsed: false, lastExpandedWidth: DEFAULT_SIDEBAR_WIDTH };
+    }
+}
+
+function persistSidebarLayoutState(layout: SidebarLayoutState) {
+    localStorage.setItem(SIDEBAR_LAYOUT_KEY, JSON.stringify(layout));
+}
+
 function touchWorkspace(state: StoredState, workspaceId: string, updatedAt: number): StoredState {
     return {
         ...state,
@@ -68,6 +101,10 @@ export function App() {
     const [draggingTab, setDraggingTab] = useState<WorkspaceTab | null>(null);
     const [activeGroupId, setActiveGroupId] = useState(DEFAULT_TAB_GROUP_ID);
     const [focusToken, setFocusToken] = useState(0);
+    const [sidebarLayout, setSidebarLayout] = useState<SidebarLayoutState>(() =>
+        loadSidebarLayoutState(),
+    );
+    const sidebarPanelRef = useRef<PanelImperativeHandle | null>(null);
     const [deleteWorkspaceRequest, setDeleteWorkspaceRequest] = useState<{
         id: string;
         nonce: number;
@@ -179,6 +216,40 @@ export function App() {
         };
     }, []);
 
+    function saveSidebarLayout(next: SidebarLayoutState) {
+        setSidebarLayout(next);
+        persistSidebarLayoutState(next);
+    }
+
+    function handleSidebarResize(size: PanelSize) {
+        const collapsed = size.inPixels <= SIDEBAR_COLLAPSE_THRESHOLD;
+        const next = collapsed
+            ? { ...sidebarLayout, collapsed: true }
+            : { collapsed: false, lastExpandedWidth: size.inPixels };
+        if (
+            next.collapsed === sidebarLayout.collapsed &&
+            next.lastExpandedWidth === sidebarLayout.lastExpandedWidth
+        ) {
+            return;
+        }
+        saveSidebarLayout(next);
+    }
+
+    function toggleSidebar() {
+        if (sidebarLayout.collapsed) {
+            const width =
+                sidebarLayout.lastExpandedWidth > SIDEBAR_COLLAPSE_THRESHOLD
+                    ? sidebarLayout.lastExpandedWidth
+                    : DEFAULT_SIDEBAR_WIDTH;
+            saveSidebarLayout({ collapsed: false, lastExpandedWidth: width });
+            sidebarPanelRef.current?.resize(width);
+            return;
+        }
+
+        saveSidebarLayout({ ...sidebarLayout, collapsed: true });
+        sidebarPanelRef.current?.resize(SIDEBAR_COLLAPSED_WIDTH);
+    }
+
     const hotkeyActions = {
         openWorkspacePicker: () => setWorkspacePickerOpen(true),
         focusWorkspace,
@@ -198,6 +269,7 @@ export function App() {
                 }),
             );
         },
+        toggleSidebar,
         primeWorkspacePreview: () => {
             const orderedIds = orderedWorkspaceIds(workspaceOrderIds, state.workspaces);
             const activeIndex = orderedIds.indexOf(state.activeWorkspaceId ?? '');
@@ -649,10 +721,16 @@ export function App() {
             <ResizablePanelGroup orientation="horizontal" className="bg-background text-foreground">
                 <ResizablePanel
                     id="sidebar"
-                    defaultSize="280px"
-                    minSize="220px"
+                    panelRef={sidebarPanelRef}
+                    defaultSize={
+                        sidebarLayout.collapsed
+                            ? SIDEBAR_COLLAPSED_WIDTH
+                            : sidebarLayout.lastExpandedWidth
+                    }
+                    minSize={SIDEBAR_COLLAPSED_WIDTH}
                     maxSize="420px"
                     groupResizeBehavior="preserve-pixel-size"
+                    onResize={handleSidebarResize}
                 >
                     <Sidebar
                         workspaces={state.workspaces}
@@ -661,6 +739,7 @@ export function App() {
                         activeTabId={state.activeTabId}
                         piStatuses={piStatuses}
                         homeDir={homeDir}
+                        collapsed={sidebarLayout.collapsed}
                         showHotkeyIndicators={
                             showHotkeyIndicators || hotkeys.activeTable !== 'root'
                         }
@@ -670,6 +749,7 @@ export function App() {
                         onMoveWorkspace={moveWorkspace}
                         onSelectTab={selectTab}
                         onCreateWorkspace={createWorkspace}
+                        onToggleCollapsed={toggleSidebar}
                         onAddTab={addTabToWorkspace}
                         onToggleWorkspacePin={toggleWorkspacePin}
                         onToggleTabPin={toggleTabPin}
