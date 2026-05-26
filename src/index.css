@@ -80,7 +80,12 @@
         @apply bg-background text-foreground antialiased;
         margin: 0;
         font-family: var(--font-sans);
-        font-feature-settings: 'cv11', 'ss01';
+        font-variant-ligatures: none;
+        font-feature-settings:
+            'liga' 0,
+            'clig' 0,
+            'cv11',
+            'ss01';
         -webkit-font-smoothing: antialiased;
     }
 
