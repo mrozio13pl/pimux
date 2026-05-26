@@ -2,10 +2,13 @@
     "name": "pimux",
     "version": "0.2.0",
     "private": true,
-    "description": "Pimux desktop app",
+    "description": "Pimux multiplexer",
     "author": {
         "name": "mrozio13pl",
         "email": "mrozio13pl@gmail.com"
+    },
+    "bin": {
+        "pimux": "out/cli/index.mjs"
     },
     "main": "out/main/index.js",
     "scripts": {
@@ -14,7 +17,9 @@
         "format": "oxfmt",
         "format:check": "oxfmt --check",
         "dev": "vite",
-        "build": "pnpm icons && vite build",
+        "cli": "vite-node cli/index.ts",
+        "build": "pnpm icons && vite build && vite build --mode cli",
+        "test": "vitest run",
         "preview": "vite preview --outDir out/renderer",
         "prepare": "simple-git-hooks",
         "postinstall": "node scripts/electron-install.mjs",
@@ -43,6 +48,7 @@
         "@xterm/addon-web-links": "^0.12.0",
         "@xterm/xterm": "^6.0.0",
         "class-variance-authority": "^0.7.1",
+        "cleye": "^2.6.0",
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
         "culori": "^4.0.2",
@@ -78,7 +84,9 @@
         "tailwindcss": "^4.3.0",
         "typescript": "^6.0.3",
         "vite": "^8.0.13",
-        "vite-plugin-electron": "^0.29.1"
+        "vite-node": "^6.0.0",
+        "vite-plugin-electron": "^0.29.1",
+        "vitest": "^4.1.7"
     },
     "simple-git-hooks": {
         "commit-msg": "pnpm exec commitlint --edit $1",

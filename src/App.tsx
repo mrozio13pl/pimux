@@ -216,6 +216,26 @@ export function App() {
         };
     }, []);
 
+    useEffect(() => {
+        window.pimux.cli.ready();
+        return window.pimux.cli.onCommand((request) => {
+            try {
+                if (request.action.type === 'openWorkspace') {
+                    openWorkspaceFromCli(request.action.cwd);
+                } else if (request.action.type === 'createTab') {
+                    createTabFromCli(request.action.kind, request.action.cwd);
+                }
+                window.pimux.cli.sendResult({ id: request.id, ok: true });
+            } catch (error) {
+                window.pimux.cli.sendResult({
+                    id: request.id,
+                    ok: false,
+                    error: error instanceof Error ? error.message : String(error),
+                });
+            }
+        });
+    }, []);
+
     function saveSidebarLayout(next: SidebarLayoutState) {
         setSidebarLayout(next);
         persistSidebarLayoutState(next);
@@ -280,6 +300,77 @@ export function App() {
 
     function createWorkspace() {
         setWorkspacePickerOpen(true);
+    }
+
+    function openWorkspaceFromCli(cwd: string) {
+        setWorkspacePickerOpen(false);
+        setState((prev) => {
+            const existing = prev.workspaces.find((workspace) => workspace.cwd === cwd);
+            if (existing) {
+                const workspaceTabs = prev.tabs.filter((tab) => tab.workspaceId === existing.id);
+                const activeTabId = workspaceTabs.some((tab) => tab.id === existing.activeTabId)
+                    ? (existing.activeTabId ?? null)
+                    : (workspaceTabs[0]?.id ?? null);
+                return { ...prev, activeWorkspaceId: existing.id, activeTabId };
+            }
+
+            const id = crypto.randomUUID();
+            const now = Date.now();
+            const title = cwd.split(/[\\/]/).filter(Boolean).at(-1) ?? cwd;
+            const workspace: Workspace = { id, title, cwd, createdAt: now, updatedAt: now };
+            return {
+                ...prev,
+                workspaces: [workspace, ...prev.workspaces],
+                activeWorkspaceId: id,
+                activeTabId: null,
+            };
+        });
+        requestContentFocus();
+    }
+
+    function createTabFromCli(kind: 'terminal' | 'pi' | 'scratch' | 'browser', cwd: string) {
+        setWorkspacePickerOpen(false);
+        setState((prev) => {
+            const existing = prev.workspaces.find((workspace) => workspace.cwd === cwd);
+            const now = Date.now();
+            const workspace =
+                existing ??
+                ({
+                    id: crypto.randomUUID(),
+                    title: cwd.split(/[\\/]/).filter(Boolean).at(-1) ?? cwd,
+                    cwd,
+                    createdAt: now,
+                    updatedAt: now,
+                } satisfies Workspace);
+            const tab = createTab(kind, workspace);
+            const tabs = [...prev.tabs];
+            let lastWorkspaceTabIndex = -1;
+            for (let index = tabs.length - 1; index >= 0; index -= 1) {
+                if (tabs[index].workspaceId === workspace.id) {
+                    lastWorkspaceTabIndex = index;
+                    break;
+                }
+            }
+            tabs.splice(lastWorkspaceTabIndex + 1, 0, tab);
+            const workspaces = existing
+                ? prev.workspaces.map((candidate) =>
+                      candidate.id === workspace.id
+                          ? { ...candidate, activeTabId: tab.id, updatedAt: tab.updatedAt }
+                          : candidate,
+                  )
+                : [
+                      { ...workspace, activeTabId: tab.id, updatedAt: tab.updatedAt },
+                      ...prev.workspaces,
+                  ];
+            return {
+                ...prev,
+                workspaces,
+                activeWorkspaceId: workspace.id,
+                tabs,
+                activeTabId: tab.id,
+            };
+        });
+        requestContentFocus();
     }
 
     function requestContentFocus() {

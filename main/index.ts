@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu, ipcMain } from 'electron';
 import type { Input } from 'electron';
 import { join } from 'node:path';
 import { attachRpc } from './ipc';
+import { installCliIpcHandlers, startCliServer } from './cli-server';
 import { killAllTerminals, router } from './router';
 
 if (process.env.PIMUX_DISABLE_GPU === '1') {
@@ -16,7 +17,7 @@ if (process.env.PIMUX_NO_SANDBOX === '1') {
 
 app.commandLine.appendSwitch('disable-dev-shm-usage');
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
     const win = new BrowserWindow({
         width: 1320,
         height: 860,
@@ -49,6 +50,8 @@ function createWindow(): void {
         win.setMenuBarVisibility(false);
         win.loadFile(join(__dirname, '../renderer/index.html'));
     }
+
+    return win;
 }
 
 function installAppMenu(win: BrowserWindow): void {
@@ -102,14 +105,30 @@ function nativeHotkeyKey(input: Input): string | null {
     return null;
 }
 
-app.whenReady().then(() => {
-    attachRpc(ipcMain, router);
-    createWindow();
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+if (!gotSingleInstanceLock) {
+    app.quit();
+} else {
+    app.on('second-instance', () => {
+        const win = BrowserWindow.getAllWindows()[0];
+        if (!win || win.isDestroyed()) return;
+        if (win.isMinimized()) win.restore();
+        win.show();
+        win.focus();
     });
-});
+
+    app.whenReady().then(() => {
+        attachRpc(ipcMain, router);
+        installCliIpcHandlers();
+        startCliServer();
+        createWindow();
+
+        app.on('activate', () => {
+            if (BrowserWindow.getAllWindows().length === 0) createWindow();
+        });
+    });
+}
 
 app.on('window-all-closed', () => {
     killAllTerminals();
