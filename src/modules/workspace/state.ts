@@ -140,6 +140,19 @@ function migrateTab(value: unknown): WorkspaceTab | null {
         };
     }
 
+    if (value.kind === 'diffs') {
+        return {
+            id: value.id,
+            kind: 'diffs',
+            title: value.title,
+            workspaceId,
+            updatedAt: getUpdatedAt(value),
+            pinned: value.pinned === true,
+            groupId: typeof value.groupId === 'string' ? value.groupId : undefined,
+            source: isDiffSource(value.source) ? value.source : undefined,
+        };
+    }
+
     return null;
 }
 
@@ -179,6 +192,10 @@ function getWorkspaceId(value: Record<string, unknown>): string | undefined {
 
 function getUpdatedAt(value: Record<string, unknown>): number {
     return typeof value.updatedAt === 'number' ? value.updatedAt : 0;
+}
+
+function isDiffSource(value: unknown): value is 'all' | 'staged' | 'unstaged' | 'pi-session' {
+    return value === 'all' || value === 'staged' || value === 'unstaged' || value === 'pi-session';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

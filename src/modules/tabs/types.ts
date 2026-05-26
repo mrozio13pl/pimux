@@ -30,7 +30,13 @@ export type BrowserTab = BaseWorkspaceTab<'browser'> & {
     favicon?: string;
 };
 
-export type WorkspaceTab = TerminalTab | PiTab | ScratchTab | BrowserTab;
+export type DiffSource = 'all' | 'staged' | 'unstaged' | 'pi-session';
+
+export type DiffsTab = BaseWorkspaceTab<'diffs'> & {
+    source?: DiffSource;
+};
+
+export type WorkspaceTab = TerminalTab | PiTab | ScratchTab | BrowserTab | DiffsTab;
 export type TabKind = WorkspaceTab['kind'];
 export type TerminalBackedTabKind = TerminalBackedTab<TabKind & ('terminal' | 'pi')>['kind'];
 

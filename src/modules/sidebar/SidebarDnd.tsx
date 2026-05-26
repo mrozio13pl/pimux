@@ -2,8 +2,10 @@ import { CSSProperties, createContext, useContext, type ReactNode } from 'react'
 import { useDroppable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { DotsSixVerticalIcon, FolderIcon, TextTIcon } from '@phosphor-icons/react';
+import { DotsSixVerticalIcon, FolderIcon } from '@phosphor-icons/react';
 import { AccordionItem } from '@/components/ui/accordion';
+import { getTabDefinition } from '@/modules/tabs/registry';
+import type { TabKind } from '@/modules/tabs/types';
 import { cn } from '@/lib/utils';
 
 const WorkspaceDragHandleContext = createContext<{
@@ -85,14 +87,19 @@ export function WorkspaceTabDropZone({
     );
 }
 
-export function SidebarDragPreview({ title, kind }: { title: string; kind: 'workspace' | 'tab' }) {
+export function SidebarDragPreview({
+    title,
+    kind,
+    tabKind,
+}: {
+    title: string;
+    kind: 'workspace' | 'tab';
+    tabKind?: TabKind;
+}) {
+    const Icon = kind === 'tab' && tabKind ? getTabDefinition(tabKind).Icon : FolderIcon;
     return (
         <div className="flex h-8 max-w-64 items-center gap-2 rounded-md border border-primary/60 bg-popover px-3 text-[12.5px] font-semibold text-popover-foreground shadow-xl">
-            {kind === 'workspace' ? (
-                <FolderIcon className="size-4" />
-            ) : (
-                <TextTIcon className="size-4" />
-            )}
+            <Icon className="size-4" />
             <span className="truncate">{title}</span>
         </div>
     );

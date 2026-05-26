@@ -32,7 +32,7 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
                 description: 'Open workspace picker',
                 allowInInputs: true,
             },
-            ...(['pi', 'terminal', 'scratch', 'browser'] as const).map((kind) => ({
+            ...(['pi', 'terminal', 'scratch', 'browser', 'diffs'] as const).map((kind) => ({
                 keys: `Control+Space ${kind === 'pi' ? 'c' : kind[0]}`,
                 command: 'tab.add',
                 args: { kind },
@@ -47,12 +47,6 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
             },
             {
                 keys: 'Control+Shift+w',
-                command: 'workspace.delete.active.confirm',
-                description: 'Delete current workspace',
-                allowInInputs: true,
-            },
-            {
-                keys: 'Control+Space d',
                 command: 'workspace.delete.active.confirm',
                 description: 'Delete current workspace',
                 allowInInputs: true,
@@ -202,7 +196,11 @@ function terminalZoomHotkeys(): HybridHotkeyBinding[] {
 function readTabKindArg(args: unknown): TabKind | null {
     if (typeof args !== 'object' || args === null || !('kind' in args)) return null;
     const kind = (args as { kind?: unknown }).kind;
-    return kind === 'pi' || kind === 'terminal' || kind === 'scratch' || kind === 'browser'
+    return kind === 'pi' ||
+        kind === 'terminal' ||
+        kind === 'scratch' ||
+        kind === 'browser' ||
+        kind === 'diffs'
         ? kind
         : null;
 }

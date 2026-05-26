@@ -13,10 +13,10 @@ const EDITOR_CANDIDATES = [
     'webstorm',
 ] as const;
 
-export async function openPathInEditor(filePath: string): Promise<void> {
+export async function openPathInEditor(filePath: string, line?: number): Promise<void> {
     const editor = await findEditor();
     if (editor) {
-        await openEditor([filePath], { editor });
+        await openEditor([line ? { file: filePath, line } : filePath], { editor });
         return;
     }
     const error = await shell.openPath(filePath);

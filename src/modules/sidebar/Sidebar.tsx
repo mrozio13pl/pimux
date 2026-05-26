@@ -76,7 +76,7 @@ export function Sidebar({
     const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
     const [dragging, setDragging] = useState<
         | { kind: 'workspace'; id: string; title: string }
-        | { kind: 'tab'; id: string; title: string }
+        | { kind: 'tab'; id: string; title: string; tabKind: WorkspaceTab['kind'] }
         | null
     >(null);
     const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -186,7 +186,7 @@ export function Sidebar({
         if (id.startsWith('tab:')) {
             const tabId = id.slice('tab:'.length);
             const tab = tabs.find((candidate) => candidate.id === tabId);
-            if (tab) setDragging({ kind: 'tab', id: tab.id, title: tab.title });
+            if (tab) setDragging({ kind: 'tab', id: tab.id, title: tab.title, tabKind: tab.kind });
         }
     }
 
@@ -574,7 +574,11 @@ export function Sidebar({
                 </aside>
                 <DragOverlay>
                     {dragging ? (
-                        <SidebarDragPreview title={dragging.title} kind={dragging.kind} />
+                        <SidebarDragPreview
+                            title={dragging.title}
+                            kind={dragging.kind}
+                            tabKind={dragging.kind === 'tab' ? dragging.tabKind : undefined}
+                        />
                     ) : null}
                 </DragOverlay>
             </DndContext>

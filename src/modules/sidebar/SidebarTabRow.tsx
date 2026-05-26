@@ -2,6 +2,7 @@ import { CSSProperties } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
+    GitDiffIcon,
     GlobeIcon,
     NotePencilIcon,
     PiIcon,
@@ -39,7 +40,9 @@ export function TabRow({
               ? TerminalWindowIcon
               : tab.kind === 'browser'
                 ? GlobeIcon
-                : NotePencilIcon;
+                : tab.kind === 'diffs'
+                  ? GitDiffIcon
+                  : NotePencilIcon;
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging, isOver } =
         useSortable({ id: `tab:${tab.id}` });

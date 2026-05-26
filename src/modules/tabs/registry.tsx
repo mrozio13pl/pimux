@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react';
-import { GlobeIcon, NotePencilIcon, PiIcon, TerminalWindowIcon } from '@phosphor-icons/react';
+import {
+    GitDiffIcon,
+    GlobeIcon,
+    NotePencilIcon,
+    PiIcon,
+    TerminalWindowIcon,
+} from '@phosphor-icons/react';
 import type { Workspace } from '@/modules/workspace/types';
 import { BrowserTab } from './builtin/BrowserTab';
+import { DiffsTab } from './builtin/DiffsTab';
 import { ScratchTab } from './builtin/ScratchTab';
 import { TerminalTab } from './builtin/TerminalTab';
 import type { TabDefinition, TabKind, TabOfKind, TabRenderProps, WorkspaceTab } from './types';
@@ -81,6 +88,25 @@ export const tabDefinitionsByKind = {
             return <BrowserTab {...props} />;
         },
     },
+    diffs: {
+        kind: 'diffs',
+        label: 'Diffs',
+        shortcut: 'Ctrl Space D',
+        Icon: GitDiffIcon,
+        create(workspace: Workspace) {
+            return {
+                id: crypto.randomUUID(),
+                kind: 'diffs',
+                title: 'Diffs',
+                workspaceId: workspace.id,
+                updatedAt: Date.now(),
+                source: 'all',
+            };
+        },
+        render(props: TabRenderProps<TabOfKind<'diffs'>>) {
+            return <DiffsTab {...props} />;
+        },
+    },
 } satisfies { [K in TabKind]: TabDefinition<K> };
 
 export const tabDefinitions = Object.values(tabDefinitionsByKind);
@@ -103,5 +129,7 @@ export function renderTab(tab: WorkspaceTab, props: Omit<TabRenderProps, 'tab'>)
             return tabDefinitionsByKind.scratch.render({ ...props, tab });
         case 'browser':
             return tabDefinitionsByKind.browser.render({ ...props, tab });
+        case 'diffs':
+            return tabDefinitionsByKind.diffs.render({ ...props, tab });
     }
 }

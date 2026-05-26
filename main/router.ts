@@ -4,6 +4,7 @@ import { defineRouter, handler, type HandlerContext } from '../shared/rpc';
 import { detectTerminalProfile } from './terminal-profile';
 import { readPiTheme } from './pi-theme';
 import { listDirectories } from './helpers/directories';
+import { getWorkspaceDiff, type DiffSource } from './helpers/diffs';
 import { openPathInEditor } from './helpers/editor';
 import {
     createTerminal,
@@ -49,7 +50,9 @@ export const router = defineRouter({
         homeDir: handler(() => ({ home: os.homedir() })),
         terminalProfile: handler(() => detectTerminalProfile()),
         piTheme: handler((input?: { cwd?: string }) => readPiTheme(input?.cwd)),
-        openEditor: handler((input: { path: string }) => openPathInEditor(input.path)),
+        openEditor: handler((input: { path: string; line?: number }) =>
+            openPathInEditor(input.path, input.line),
+        ),
         revealInFileManager: handler(async (input: { path: string }) => {
             await shell.openPath(input.path);
         }),
@@ -59,6 +62,10 @@ export const router = defineRouter({
             }),
         ),
         listDirectories: handler(listDirectories),
+    },
+
+    diffs: {
+        get: handler((input: { cwd: string; source: DiffSource }) => getWorkspaceDiff(input)),
     },
 });
 
