@@ -10,7 +10,7 @@ const BUILTIN_PROFILES: Record<string, TerminalProfile> = {
         fontFamily:
             "'DejaVu Sans Mono', 'Ubuntu Mono', 'Liberation Mono', 'Noto Sans Mono', monospace",
         fontSize: 14,
-        lineHeight: 1.18,
+        lineHeight: 1,
         theme: {
             background: '#171421',
             foreground: '#d0cfcc',
@@ -39,7 +39,7 @@ const BUILTIN_PROFILES: Record<string, TerminalProfile> = {
         source: 'macos-terminal-default',
         fontFamily: 'Menlo, Monaco, "SF Mono", "DejaVu Sans Mono", monospace',
         fontSize: 13,
-        lineHeight: 1.18,
+        lineHeight: 1,
         theme: {
             background: '#000000',
             foreground: '#c7c7c7',
@@ -68,7 +68,7 @@ const BUILTIN_PROFILES: Record<string, TerminalProfile> = {
         source: 'windows-terminal-default',
         fontFamily: "'Cascadia Mono', Consolas, 'Courier New', monospace",
         fontSize: 14,
-        lineHeight: 1.2,
+        lineHeight: 1,
         theme: {
             background: '#0c0c0c',
             foreground: '#cccccc',

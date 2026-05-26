@@ -1,4 +1,5 @@
 import { useEffect, useRef, type WheelEvent } from 'react';
+import { CanvasAddon } from '@xterm/addon-canvas';
 import { ClipboardAddon } from '@xterm/addon-clipboard';
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
@@ -115,6 +116,11 @@ export function TerminalTab({
                 }),
             );
             term.open(hostRef.current);
+            try {
+                term.loadAddon(new CanvasAddon());
+            } catch {
+                // Fall back to xterm's DOM renderer when canvas is unavailable.
+            }
             if (tab.scrollback) term.write(tab.scrollback);
 
             const fitAndResize = () => {
