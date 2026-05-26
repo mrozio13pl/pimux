@@ -137,7 +137,6 @@ function browserHotkeyKey(input: BrowserHotkeyInput | undefined): string | null 
         return null;
     if (input.key && /^[1-9]$/.test(input.key)) return `Control+${input.key}`;
     if (input.key?.toLowerCase() === 'w') return input.shift ? 'Control+Shift+w' : 'Control+w';
-    if (input.key?.toLowerCase() === 'o') return 'Control+o';
     return null;
 }
 

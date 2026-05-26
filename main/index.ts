@@ -53,7 +53,6 @@ function nativeHotkeyKey(input: Input): string | null {
     if (input.type !== 'keyDown' || !input.control || input.alt || input.meta) return null;
     if (/^[1-9]$/.test(input.key)) return `Control+${input.key}`;
     if (input.key.toLowerCase() === 'w') return input.shift ? 'Control+Shift+w' : 'Control+w';
-    if (input.key.toLowerCase() === 'o') return 'Control+o';
     return null;
 }
 

@@ -22,12 +22,6 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
     const hotkeyBindings = useMemo<HybridHotkeyBinding[]>(
         () => [
             {
-                keys: 'Control+o',
-                command: 'workspace.picker.open',
-                description: 'Open workspace picker',
-                allowInInputs: true,
-            },
-            {
                 keys: 'Control+Space o',
                 command: 'workspace.picker.open',
                 description: 'Open workspace picker',
@@ -142,7 +136,6 @@ export function useAppHotkeys(actions: AppHotkeyActions) {
             }
             if (key === 'Control+w') actions.closeActiveTab();
             if (key === 'Control+Shift+w') actions.confirmDeleteActiveWorkspace();
-            if (key === 'Control+o') actions.openWorkspacePicker();
             if (key === 'Control+=' || key === 'Control++') actions.terminalZoom('in');
             if (key === 'Control+-') actions.terminalZoom('out');
             if (key === 'Control+0') actions.terminalZoom('reset');
