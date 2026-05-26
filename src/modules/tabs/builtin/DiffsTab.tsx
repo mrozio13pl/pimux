@@ -280,15 +280,17 @@ export function DiffsTab({ tab, workspace, updateTab }: TabRenderProps<DiffsTabM
                         />
                     </Button>
                     <DropdownMenu>
-                        <DropdownMenuTrigger>
-                            <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                className="size-7 text-muted-foreground hover:text-foreground"
-                            >
-                                <SlidersHorizontalIcon />
-                            </Button>
-                        </DropdownMenuTrigger>
+                        <DropdownMenuTrigger
+                            render={
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-7 text-muted-foreground hover:text-foreground"
+                                >
+                                    <SlidersHorizontalIcon />
+                                </Button>
+                            }
+                        />
                         <DropdownMenuContent align="end" className="min-w-56">
                             <DropdownMenuGroup>
                                 <DropdownMenuRadioGroup

@@ -56,8 +56,13 @@ export type NativeHotkeyEvent = {
     key: string;
 };
 
+export type TerminalCommandEvent = {
+    command: 'copy' | 'paste' | 'selectAll' | 'find' | 'clear';
+};
+
 export type AppEvents = {
     'native:hotkey': NativeHotkeyEvent;
+    'terminal:command': TerminalCommandEvent;
     'terminal:data': TerminalDataEvent;
     'terminal:exit': TerminalExitEvent;
     'pi:status': PiStatusEvent;

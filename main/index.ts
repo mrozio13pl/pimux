@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain } from 'electron';
 import type { Input } from 'electron';
 import { join } from 'node:path';
 import { attachRpc } from './ipc';
@@ -41,12 +41,58 @@ function createWindow(): void {
         event.preventDefault();
     });
 
+    installAppMenu(win);
+
     if (process.env.VITE_DEV_SERVER_URL) {
         win.loadURL(process.env.VITE_DEV_SERVER_URL);
     } else {
         win.setMenuBarVisibility(false);
         win.loadFile(join(__dirname, '../renderer/index.html'));
     }
+}
+
+function installAppMenu(win: BrowserWindow): void {
+    const sendTerminalCommand = (command: 'copy' | 'paste' | 'selectAll' | 'find' | 'clear') => {
+        if (!win.isDestroyed()) win.webContents.send('terminal:command', { command });
+    };
+    const terminalAccelerator = (mac: string, other: string) =>
+        process.platform === 'darwin' ? mac : other;
+
+    Menu.setApplicationMenu(
+        Menu.buildFromTemplate([
+            { role: 'appMenu' },
+            {
+                label: 'Edit',
+                submenu: [
+                    {
+                        label: 'Copy',
+                        accelerator: terminalAccelerator('Cmd+C', 'Ctrl+Shift+C'),
+                        click: () => sendTerminalCommand('copy'),
+                    },
+                    {
+                        label: 'Paste',
+                        accelerator: terminalAccelerator('Cmd+V', 'Ctrl+Shift+V'),
+                        click: () => sendTerminalCommand('paste'),
+                    },
+                    {
+                        label: 'Select All',
+                        accelerator: terminalAccelerator('Cmd+A', 'Ctrl+Shift+A'),
+                        click: () => sendTerminalCommand('selectAll'),
+                    },
+                    { type: 'separator' },
+                    {
+                        label: 'Find',
+                        accelerator: terminalAccelerator('Cmd+F', 'Ctrl+F'),
+                        click: () => sendTerminalCommand('find'),
+                    },
+                    { type: 'separator' },
+                    { label: 'Clear Scrollback', click: () => sendTerminalCommand('clear') },
+                ],
+            },
+            { role: 'viewMenu' },
+            { role: 'windowMenu' },
+        ]),
+    );
 }
 
 function nativeHotkeyKey(input: Input): string | null {

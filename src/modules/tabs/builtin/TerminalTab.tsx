@@ -1,4 +1,4 @@
-import { useEffect, useRef, type WheelEvent } from 'react';
+import { useEffect, useRef, useState, type WheelEvent } from 'react';
 import { CanvasAddon } from '@xterm/addon-canvas';
 import { ClipboardAddon } from '@xterm/addon-clipboard';
 import { FitAddon } from '@xterm/addon-fit';
@@ -7,7 +7,6 @@ import { SerializeAddon } from '@xterm/addon-serialize';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Terminal, type ITheme, type IWindowsPty } from '@xterm/xterm';
-import { formatHex, parse, wcagContrast } from 'culori';
 import { events, ipc } from '@/ipc';
 import type { TerminalProfile } from '../../../../shared/terminalProfile';
 import type {
@@ -15,6 +14,11 @@ import type {
     TabRenderProps,
     TerminalTab as TerminalTabModel,
 } from '../types';
+import { TerminalContextMenu } from './TerminalContextMenu';
+import { TerminalSearchOverlay } from './TerminalSearchOverlay';
+import { copyTextToClipboard, readClipboardText } from './terminalClipboard';
+import { searchDecorations } from './terminalSearchTheme';
+import type { TerminalCommand, TerminalSearchResults } from './terminalTypes';
 
 const TERMINAL_FONT_SIZE_KEY = 'pimux:terminal-font-size';
 const TERMINAL_FONT_SIZE_VERSION_KEY = 'pimux:terminal-font-size-version';
@@ -38,7 +42,12 @@ export function TerminalTab({
     const activeRef = useRef(active);
     const updateTabRef = useRef(updateTab);
     const fitRef = useRef<FitAddon | null>(null);
+    const searchRef = useRef<SearchAddon | null>(null);
     const fontSizeRef = useRef<number | null>(null);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<TerminalSearchResults | null>(null);
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
     const defaultFontSizeRef = useRef<number>(getNativeTerminalProfile().fontSize);
     const startedRef = useRef(false);
 
@@ -102,6 +111,7 @@ export function TerminalTab({
             const fit = new FitAddon();
             fitRef.current = fit;
             const search = new SearchAddon({ highlightLimit: 2000 });
+            searchRef.current = search;
             const serialize = new SerializeAddon();
             term.loadAddon(fit);
             term.loadAddon(search);
@@ -115,9 +125,13 @@ export function TerminalTab({
                         window.open(uri, '_blank', 'noopener,noreferrer');
                 }),
             );
+            const searchResultDisposable = search.onDidChangeResults((event) => {
+                setSearchResults({ index: event.resultIndex, count: event.resultCount });
+            });
             term.open(hostRef.current);
+            const canvas = new CanvasAddon();
             try {
-                term.loadAddon(new CanvasAddon());
+                term.loadAddon(canvas);
             } catch {
                 // Fall back to xterm's DOM renderer when canvas is unavailable.
             }
@@ -207,28 +221,25 @@ export function TerminalTab({
                 } else if (isZoomResetKey(domEvent)) {
                     domEvent.preventDefault();
                     resetTerminalZoom(defaultFontSize);
-                } else if (domEvent.shiftKey && key === 'f') {
+                } else if (!domEvent.altKey && key === 'f') {
                     domEvent.preventDefault();
-                    const query = window.prompt('Find in terminal');
-                    if (query) search.findNext(query, { decorations: searchDecorations() });
-                } else if (domEvent.shiftKey && key === 'c' && term.hasSelection()) {
+                    openSearch();
+                } else if (
+                    (domEvent.shiftKey || domEvent.metaKey) &&
+                    key === 'c' &&
+                    term.hasSelection()
+                ) {
                     domEvent.preventDefault();
-                    void navigator.clipboard.writeText(term.getSelection());
-                } else if (domEvent.shiftKey && key === 'v') {
+                    void copyTextToClipboard(term.getSelection());
+                } else if ((domEvent.shiftKey || domEvent.metaKey) && key === 'v') {
                     domEvent.preventDefault();
-                    void navigator.clipboard.readText().then((text) => {
-                        const terminalId = terminalIdRef.current;
-                        if (terminalId && text) {
-                            if (isCommandSubmit(text)) markCommandActivity();
-                            void ipc.terminal.write({ terminalId, data: text });
-                        }
-                    });
-                } else if (domEvent.shiftKey && key === 'a') {
+                    void pasteClipboardText(markCommandActivity);
+                } else if ((domEvent.shiftKey || domEvent.metaKey) && key === 'a') {
                     domEvent.preventDefault();
                     term.selectAll();
                 } else if (domEvent.shiftKey && key === 's') {
                     domEvent.preventDefault();
-                    void navigator.clipboard.writeText(serialize.serialize());
+                    void copyTextToClipboard(serialize.serialize());
                 }
             });
             term.attachCustomKeyEventHandler((event) => {
@@ -240,7 +251,12 @@ export function TerminalTab({
                 if (event.ctrlKey || event.metaKey) {
                     if (isZoomInKey(event) || isZoomOutKey(event) || isZoomResetKey(event))
                         return false;
-                    if (event.shiftKey) return !['f', 'c', 'v', 'a', 's'].includes(key);
+                    if (!event.altKey && key === 'f') {
+                        openSearch();
+                        return false;
+                    }
+                    if (event.metaKey && ['c', 'v', 'a'].includes(key)) return false;
+                    if (event.shiftKey) return !['c', 'v', 'a', 's'].includes(key);
                 }
                 return true;
             });
@@ -248,6 +264,7 @@ export function TerminalTab({
                 () => inputDisposable.dispose(),
                 () => titleDisposable.dispose(),
                 () => keyDisposable.dispose(),
+                () => searchResultDisposable.dispose(),
             );
 
             ipc.terminal
@@ -293,7 +310,12 @@ export function TerminalTab({
                     updateTabRef.current({ ...latestTab, scrollback });
                 for (const dispose of disposables) dispose();
                 fitRef.current = null;
+                searchRef.current = null;
                 terminalRef.current = null;
+                // @xterm/addon-canvas 0.7 can crash while restoring DOM renderer during
+                // terminal teardown. Keep canvas renderer during lifetime, skip addon
+                // teardown when whole terminal is being destroyed.
+                canvas.dispose = () => {};
                 term.dispose();
             };
         };
@@ -332,6 +354,103 @@ export function TerminalTab({
         return () => window.removeEventListener('pimux:terminal-zoom', handleTerminalZoom);
     }, [tab.id]);
 
+    useEffect(() => {
+        return events.on('terminal:command', (event) => {
+            if (!activeRef.current) return;
+            executeTerminalCommand(event.command);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!searchOpen) return;
+        const focusSearch = () => {
+            const input = document.getElementById(searchInputId(tab.id));
+            if (input instanceof HTMLInputElement) {
+                input.focus();
+                input.select();
+            }
+        };
+        requestAnimationFrame(focusSearch);
+        window.setTimeout(focusSearch, 0);
+    }, [searchOpen, tab.id]);
+
+    function executeTerminalCommand(command: TerminalCommand) {
+        const term = terminalRef.current;
+        if (!term) return;
+
+        if (command === 'copy') {
+            if (term.hasSelection()) void copyTextToClipboard(term.getSelection());
+            return;
+        }
+        if (command === 'paste') {
+            void pasteClipboardText(markCommandActivityFromCommand);
+            return;
+        }
+        if (command === 'selectAll') {
+            term.selectAll();
+            return;
+        }
+        if (command === 'find') {
+            openSearch();
+            return;
+        }
+        term.write('\x1b[2J\x1b[3J\x1b[H');
+    }
+
+    function markCommandActivityFromCommand() {
+        const latestTab = latestTabRef.current;
+        updateTabRef.current({ ...latestTab, updatedAt: Date.now() });
+    }
+
+    function openSearch() {
+        setSearchOpen(true);
+        const input = document.getElementById(searchInputId(tab.id));
+        if (input instanceof HTMLInputElement) {
+            input.focus();
+            input.select();
+        }
+    }
+
+    function closeSearch() {
+        setSearchOpen(false);
+        setSearchResults(null);
+        searchRef.current?.clearDecorations();
+        terminalRef.current?.focus();
+    }
+
+    function findNext(query = searchQuery) {
+        if (!query) return;
+        searchRef.current?.findNext(query, { decorations: searchDecorations() });
+    }
+
+    function findPrevious(query = searchQuery) {
+        if (!query) return;
+        searchRef.current?.findPrevious(query, { decorations: searchDecorations() });
+    }
+
+    function updateSearchQuery(next: string) {
+        setSearchQuery(next);
+        if (next)
+            searchRef.current?.findNext(next, {
+                incremental: true,
+                decorations: searchDecorations(),
+            });
+        else {
+            setSearchResults(null);
+            searchRef.current?.clearDecorations();
+        }
+    }
+
+    function pasteClipboardText(markActivity: () => void) {
+        return readClipboardText().then((text) => {
+            const terminalId = terminalIdRef.current;
+            if (terminalId && text) {
+                if (isCommandSubmit(text)) markActivity();
+                void ipc.terminal.write({ terminalId, data: text });
+            }
+        });
+    }
+
     function zoomTerminal(delta: number) {
         const current = fontSizeRef.current ?? getNativeTerminalProfile().fontSize;
         setTerminalFontSize(current + delta);
@@ -366,17 +485,46 @@ export function TerminalTab({
     }
 
     return (
-        <div
-            ref={hostRef}
-            tabIndex={-1}
-            className="h-full min-h-0 overflow-hidden p-2"
-            aria-label={tab.title}
-            style={{ backgroundColor: getNativeTerminalProfile().theme.background }}
-            onPointerDown={() => terminalRef.current?.focus()}
-            onFocus={() => terminalRef.current?.focus()}
-            onWheelCapture={handleWheel}
-        />
+        <div className="relative h-full min-h-0 overflow-hidden">
+            <div
+                ref={hostRef}
+                tabIndex={-1}
+                className="h-full min-h-0 overflow-hidden p-2"
+                aria-label={tab.title}
+                style={{ backgroundColor: getNativeTerminalProfile().theme.background }}
+                onPointerDown={() => terminalRef.current?.focus()}
+                onFocus={() => terminalRef.current?.focus()}
+                onWheelCapture={handleWheel}
+                onContextMenu={(event) => {
+                    event.preventDefault();
+                    setContextMenu({ x: event.clientX, y: event.clientY });
+                }}
+            />
+            {searchOpen ? (
+                <TerminalSearchOverlay
+                    inputId={searchInputId(tab.id)}
+                    query={searchQuery}
+                    results={searchResults}
+                    onQueryChange={updateSearchQuery}
+                    onNext={() => findNext()}
+                    onPrevious={() => findPrevious()}
+                    onClose={closeSearch}
+                />
+            ) : null}
+            {contextMenu ? (
+                <TerminalContextMenu
+                    position={contextMenu}
+                    onClose={() => setContextMenu(null)}
+                    onCommand={executeMenuCommand}
+                />
+            ) : null}
+        </div>
     );
+
+    function executeMenuCommand(command: TerminalCommand) {
+        setContextMenu(null);
+        executeTerminalCommand(command);
+    }
 }
 
 type TerminalZoomEvent = {
@@ -549,30 +697,6 @@ function getPlatform(): 'mac' | 'windows' | 'linux' {
     return 'linux';
 }
 
-function searchDecorations() {
-    const primary = cssColorToHex(cssVar('--primary'), '#e8b45b');
-    const secondary = cssColorToHex(cssVar('--secondary'), '#3a3328');
-
-    return {
-        matchBackground: secondary,
-        matchOverviewRuler: primary,
-        activeMatchBackground: primary,
-        activeMatchColorOverviewRuler: primary,
-        activeMatchForeground: readableForeground(primary),
-    };
-}
-
-function cssVar(name: string): string {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function cssColorToHex(value: string, fallback: string): string {
-    const color = parse(value.trim());
-    return color ? formatHex(color) : fallback;
-}
-
-function readableForeground(background: string): string {
-    return wcagContrast(background, '#000000') >= wcagContrast(background, '#ffffff')
-        ? '#000000'
-        : '#ffffff';
+function searchInputId(tabId: string): string {
+    return `terminal-search-${tabId}`;
 }
