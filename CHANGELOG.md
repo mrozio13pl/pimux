@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0](https://github.com/mrozio13pl/pimux/compare/v0.2.0...v0.3.0) (2026-05-27)
+
+
+### Features
+
+* add collapsible sidebar ([a8b7ee0](https://github.com/mrozio13pl/pimux/commit/a8b7ee0e9682e22f12484d8712063a2aee9bd91f))
+* cli ([99260c0](https://github.com/mrozio13pl/pimux/commit/99260c00470328ee45ecd59b5726b8779c189126))
+* diffs tab ([782405d](https://github.com/mrozio13pl/pimux/commit/782405d20d77a549f209786311b06103d42c05bf))
+* improve terminal selection and search ([3c234d4](https://github.com/mrozio13pl/pimux/commit/3c234d49d463a537511118bd1e3cd2c7a83482d9))
+
+
+### Fixes
+
+* avoid ctrl-o hotkey conflict ([4388444](https://github.com/mrozio13pl/pimux/commit/43884442cf6fd97f8ff0903d27f9486ecdc6cf77))
+* font overlap ([1539c4b](https://github.com/mrozio13pl/pimux/commit/1539c4bd141af906dd8b11e90070a25555e733a3))
+* render terminal glyphs with canvas ([ebafc0f](https://github.com/mrozio13pl/pimux/commit/ebafc0fdb32c1235499676064ae6ebbdab38e5ee))
+
 ## [0.2.0](https://github.com/mrozio13pl/pimux/compare/v0.1.0...v0.2.0) (2026-05-25)
 
 
