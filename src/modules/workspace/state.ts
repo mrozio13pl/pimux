@@ -1,7 +1,6 @@
+import { STORAGE_KEY } from '@/lib/constants';
 import type { WorkspaceTab } from '@/modules/tabs/types';
 import type { Workspace } from './types';
-
-export const STORAGE_KEY = 'pimux:v1';
 
 export type StoredState = {
     workspaces: Workspace[];

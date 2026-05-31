@@ -1,13 +1,12 @@
 import { type ReactNode } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { DEFAULT_TAB_GROUP_ID } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { renderTab, type TabKind, type WorkspaceTab } from '@/modules/tabs';
 import { TabStrip } from '@/modules/workbench/TabStrip';
 import type { Workspace, TabLayoutNode } from '@/modules/workspace/types';
 import type { PiStatusEvent } from '../../../shared/events';
-
-export const DEFAULT_TAB_GROUP_ID = 'main';
 
 export type TabSplitDirection = 'left' | 'right' | 'top' | 'bottom';
 
