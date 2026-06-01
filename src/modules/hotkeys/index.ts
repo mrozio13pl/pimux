@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { KEYTABLE_ENTER, ROOT_TABLE } from '@/lib/constants';
 import { tinykeys } from 'tinykeys';
 
 export * from './components';
@@ -36,9 +37,6 @@ export type UseHybridHotkeysOptions = {
     prefixTable?: string;
     timeoutMs?: number;
 };
-
-const ROOT_TABLE = 'root';
-const KEYTABLE_ENTER = 'keytable.enter';
 
 export function compileHybridHotkeys(
     bindings: HybridHotkeyBinding[],

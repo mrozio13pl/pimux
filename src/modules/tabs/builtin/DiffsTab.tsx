@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     parsePatchFiles,
     type CodeViewItem,
@@ -39,6 +39,16 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    defaultDiffsSettings,
+    DIFFS_SETTINGS_KEY,
+    diffIndicatorValues,
+    diffLayoutValues,
+    diffLineDiffValues,
+    diffThemeStyle,
+    diffUnsafeCSS,
+    gitSources,
+} from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { ipc } from '@/ipc';
 import type { DiffsTab as DiffsTabModel, DiffSource, TabRenderProps } from '../types';
@@ -48,14 +58,6 @@ type LoadState =
     | { status: 'loading'; patch: string; error?: undefined }
     | { status: 'loaded'; patch: string; error?: undefined }
     | { status: 'error'; patch: string; error: string };
-
-const gitSources: Array<{ value: DiffSource; label: string }> = [
-    { value: 'all', label: 'All' },
-    { value: 'staged', label: 'Staged' },
-    { value: 'unstaged', label: 'Unstaged' },
-];
-
-const DIFFS_SETTINGS_KEY = 'pimux:diffs-settings';
 
 type DiffsLayout = 'split' | 'stacked';
 type DiffsLineDiff = LineDiffTypes;
@@ -68,32 +70,6 @@ interface DiffsSettings {
     lineNumbers: boolean;
     characters: DiffsLineDiff;
 }
-
-const defaultDiffsSettings: DiffsSettings = {
-    layout: 'split',
-    indicators: 'bars',
-    backgrounds: true,
-    wrapping: true,
-    lineNumbers: true,
-    characters: 'none',
-};
-
-const diffLayoutValues = new Set<DiffsLayout>(['split', 'stacked']);
-const diffIndicatorValues = new Set<DiffIndicators>(['bars', 'classic', 'none']);
-const diffLineDiffValues = new Set<DiffsLineDiff>(['word-alt', 'word', 'char', 'none']);
-
-const diffThemeStyle = {
-    '--diffs-dark-bg': 'var(--background)',
-    '--diffs-dark': 'var(--foreground)',
-    '--diffs-font-family': 'var(--font-mono)',
-    '--diffs-header-font-family': 'var(--font-sans)',
-    '--diffs-bg-context-override': 'var(--background)',
-    '--diffs-bg-context-gutter-override': 'var(--background)',
-    '--diffs-bg-separator-override': 'var(--border)',
-    '--diffs-fg-number-override': 'var(--muted-foreground)',
-    // '--diffs-addition-color-override': 'oklch(0.72 0.14 155)',
-    // '--diffs-deletion-color-override': 'oklch(0.7 0.18 25)',
-} as CSSProperties;
 
 function loadDiffsSettings(): DiffsSettings {
     try {
@@ -131,43 +107,6 @@ function loadDiffsSettings(): DiffsSettings {
 function persistDiffsSettings(settings: DiffsSettings) {
     localStorage.setItem(DIFFS_SETTINGS_KEY, JSON.stringify(settings));
 }
-
-const diffUnsafeCSS = `
-[data-separator=simple] { min-height: 1px; background-color: var(--border); }
-[data-diffs-header] {
-    min-height: 36px;
-    background-color: var(--card);
-    border-bottom: 1px solid var(--border);
-    padding-inline: 8px;
-    cursor: pointer;
-}
-pre, code, [data-gutter], [data-content] { background-color: var(--background); }
-[data-gutter] [data-gutter-buffer], [data-gutter] [data-column-number] {
-    border-right: 1px solid var(--border);
-}
-[data-diff-type=split][data-overflow=scroll] [data-additions],
-[data-diff-type=split][data-overflow=wrap] [data-additions] [data-gutter] {
-    border-left-color: var(--border);
-}
-[data-diff-type=split][data-overflow=scroll] [data-deletions],
-[data-diff-type=split][data-overflow=wrap] [data-deletions] [data-content] {
-    border-right-color: var(--border);
-}
-[data-column-number] { color: var(--muted-foreground); }
-[data-title] {
-    cursor: pointer;
-    text-underline-offset: 2px;
-}
-[data-title]:hover { text-decoration: underline; }
-[data-metadata] > slot[name='header-metadata'] { order: -1; }
-[data-code] {
-    padding-top: 0;
-    padding-bottom: 0;
-}
-[data-line], [data-column-number], [data-no-newline] {
-    padding-inline: 1ch;
-}
-`;
 
 export function DiffsTab({ tab, workspace, updateTab }: TabRenderProps<DiffsTabModel>) {
     const [isGit, setIsGit] = useState<boolean | null>(null);

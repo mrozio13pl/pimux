@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { DEFAULT_SIDEBAR_SETTINGS, SIDEBAR_SETTINGS_KEY } from '@/lib/constants';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,16 +23,6 @@ export type SidebarSettings = {
     autoOrderTabs: boolean;
     visibleTabs: number;
     projectGroup: ProjectGroupMode;
-};
-
-const SIDEBAR_SETTINGS_KEY = 'pimux:sidebar-settings';
-const DEFAULT_SIDEBAR_SETTINGS: SidebarSettings = {
-    projectSort: 'manual',
-    tabSort: 'manual',
-    autoOrderWorkspaces: false,
-    autoOrderTabs: false,
-    visibleTabs: 3,
-    projectGroup: 'separate',
 };
 
 export function loadSidebarSettings(): SidebarSettings {

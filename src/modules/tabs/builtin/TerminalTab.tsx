@@ -8,6 +8,15 @@ import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { Terminal, type ITheme, type IWindowsPty } from '@xterm/xterm';
 import { events, ipc } from '@/ipc';
+import {
+    MAX_TERMINAL_FONT_SIZE,
+    MIN_DEFAULT_TERMINAL_FONT_SIZE,
+    MIN_TERMINAL_FONT_SIZE,
+    MIN_TERMINAL_LINE_HEIGHT,
+    TERMINAL_FONT_SIZE_KEY,
+    TERMINAL_FONT_SIZE_VERSION,
+    TERMINAL_FONT_SIZE_VERSION_KEY,
+} from '@/lib/constants';
 import type { TerminalProfile } from '../../../../shared/terminalProfile';
 import type {
     PiTab as PiTabModel,
@@ -19,14 +28,6 @@ import { TerminalSearchOverlay } from './TerminalSearchOverlay';
 import { copyTextToClipboard, readClipboardText } from './terminalClipboard';
 import { searchDecorations } from './terminalSearchTheme';
 import type { TerminalCommand, TerminalSearchResults } from './terminalTypes';
-
-const TERMINAL_FONT_SIZE_KEY = 'pimux:terminal-font-size';
-const TERMINAL_FONT_SIZE_VERSION_KEY = 'pimux:terminal-font-size-version';
-const TERMINAL_FONT_SIZE_VERSION = '3';
-const MIN_TERMINAL_FONT_SIZE = 9;
-const MIN_DEFAULT_TERMINAL_FONT_SIZE = 16;
-const MIN_TERMINAL_LINE_HEIGHT = 1;
-const MAX_TERMINAL_FONT_SIZE = 32;
 
 export function TerminalTab({
     tab,

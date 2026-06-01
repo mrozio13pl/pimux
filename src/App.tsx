@@ -12,15 +12,22 @@ import {
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import type { PanelImperativeHandle, PanelSize } from 'react-resizable-panels';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import {
+    DEFAULT_SIDEBAR_WIDTH,
+    DEFAULT_TAB_GROUP_ID,
+    SIDEBAR_COLLAPSED_WIDTH,
+    SIDEBAR_COLLAPSE_THRESHOLD,
+    SIDEBAR_LAYOUT_KEY,
+    STORAGE_KEY,
+} from '@/lib/constants';
 import { useModifierKeyPressed } from '@/modules/hotkeys';
-import { loadState, STORAGE_KEY, type Workspace, type StoredState } from '@/modules/workspace';
+import { loadState, type Workspace, type StoredState } from '@/modules/workspace';
 import { WorkspacePicker } from '@/modules/workspace/WorkspacePicker';
 import { WorkspacePreviewOverlay } from '@/modules/workspace/WorkspacePreviewOverlay';
 import { Sidebar } from '@/modules/sidebar';
 import { createTab, isTerminalBackedTab, type TabKind, type WorkspaceTab } from '@/modules/tabs';
 import { EmptyApp, EmptyTabs, TabDragPreview } from '@/modules/workbench';
 import {
-    DEFAULT_TAB_GROUP_ID,
     ensureTabLayout,
     insertGroupInLayout,
     tabGroupId,
@@ -32,6 +39,8 @@ import {
     useAppHotkeys,
     type TerminalZoomAction,
 } from '@/modules/app/useAppHotkeys';
+import { events, ipc } from './ipc';
+import type { PiStatusEvent, PiThemeEvent } from '../shared/events';
 
 function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
     const next = [...items];
@@ -39,13 +48,6 @@ function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
     next.splice(toIndex, 0, item);
     return next;
 }
-import { events, ipc } from './ipc';
-import type { PiStatusEvent, PiThemeEvent } from '../shared/events';
-
-const SIDEBAR_LAYOUT_KEY = 'pimux:sidebar-layout';
-const SIDEBAR_COLLAPSED_WIDTH = 48;
-const SIDEBAR_COLLAPSE_THRESHOLD = 72;
-const DEFAULT_SIDEBAR_WIDTH = 280;
 
 type SidebarLayoutState = {
     collapsed: boolean;
