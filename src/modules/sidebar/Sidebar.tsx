@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ipc } from '@/ipc';
 import { HotkeyIndicatorBadge } from '@/modules/hotkeys';
@@ -276,16 +277,23 @@ export function Sidebar({
         return (
             <aside className="flex h-full w-full flex-col bg-sidebar py-2">
                 <div className="flex justify-center px-1 pb-2">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="size-7 text-muted-foreground hover:text-foreground"
-                        onClick={onToggleCollapsed}
-                    >
-                        <CaretLineRightIcon />
-                        <span className="sr-only">Expand sidebar</span>
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-7 text-muted-foreground hover:text-foreground"
+                                    onClick={onToggleCollapsed}
+                                >
+                                    <CaretLineRightIcon />
+                                    <span className="sr-only">Expand sidebar</span>
+                                </Button>
+                            }
+                        />
+                        <TooltipContent side="right">Expand sidebar</TooltipContent>
+                    </Tooltip>
                 </div>
                 <ScrollArea className="min-h-0 flex-1 px-1">
                     <Accordion
@@ -312,37 +320,60 @@ export function Sidebar({
                                                 : 'text-muted-foreground hover:bg-accent/30 hover:text-foreground',
                                         )}
                                     >
-                                        <AccordionTrigger
-                                            className="h-7 w-7 flex-none items-center justify-center gap-0 rounded-sm p-0 text-current no-underline hover:bg-accent/50 hover:no-underline **:data-[slot=accordion-trigger-icon]:m-0 **:data-[slot=accordion-trigger-icon]:size-3"
-                                            title={workspace.title}
-                                        >
-                                            <span className="sr-only">
-                                                Toggle {workspace.title}
-                                            </span>
-                                        </AccordionTrigger>
+                                        <Tooltip>
+                                            <TooltipTrigger
+                                                render={
+                                                    <AccordionTrigger className="h-7 w-7 flex-none items-center justify-center gap-0 rounded-sm p-0 text-current no-underline hover:bg-accent/50 hover:no-underline **:data-[slot=accordion-trigger-icon]:m-0 **:data-[slot=accordion-trigger-icon]:size-3">
+                                                        <span className="sr-only">
+                                                            Toggle {workspace.title}
+                                                        </span>
+                                                    </AccordionTrigger>
+                                                }
+                                            />
+                                            <TooltipContent side="right">
+                                                {workspace.title}
+                                            </TooltipContent>
+                                        </Tooltip>
                                     </div>
                                     <AccordionContent className="w-full pb-1">
                                         <ul className="flex flex-col items-center gap-1 pt-1">
                                             {workspaceTabs.map((tab) => (
                                                 <li key={tab.id}>
-                                                    <button
-                                                        type="button"
-                                                        aria-current={tab.id === activeTabId}
-                                                        onClick={() => onSelectTab(tab.id)}
-                                                        className={cn(
-                                                            'flex size-7 items-center justify-center rounded-md transition-colors',
-                                                            tab.id === activeTabId
-                                                                ? 'bg-accent/60 text-foreground'
-                                                                : 'text-muted-foreground hover:bg-accent/30 hover:text-foreground',
-                                                        )}
-                                                        title={tab.title}
-                                                    >
-                                                        <CollapsedTabIcon
-                                                            tab={tab}
-                                                            status={piStatuses[tab.id]?.status}
+                                                    <Tooltip>
+                                                        <TooltipTrigger
+                                                            render={
+                                                                <button
+                                                                    type="button"
+                                                                    aria-current={
+                                                                        tab.id === activeTabId
+                                                                    }
+                                                                    onClick={() =>
+                                                                        onSelectTab(tab.id)
+                                                                    }
+                                                                    className={cn(
+                                                                        'flex size-7 items-center justify-center rounded-md transition-colors',
+                                                                        tab.id === activeTabId
+                                                                            ? 'bg-accent/60 text-foreground'
+                                                                            : 'text-muted-foreground hover:bg-accent/30 hover:text-foreground',
+                                                                    )}
+                                                                >
+                                                                    <CollapsedTabIcon
+                                                                        tab={tab}
+                                                                        status={
+                                                                            piStatuses[tab.id]
+                                                                                ?.status
+                                                                        }
+                                                                    />
+                                                                    <span className="sr-only">
+                                                                        {tab.title}
+                                                                    </span>
+                                                                </button>
+                                                            }
                                                         />
-                                                        <span className="sr-only">{tab.title}</span>
-                                                    </button>
+                                                        <TooltipContent side="right">
+                                                            {tab.title}
+                                                        </TooltipContent>
+                                                    </Tooltip>
                                                 </li>
                                             ))}
                                         </ul>
@@ -372,26 +403,40 @@ export function Sidebar({
                                 Projects
                             </h1>
                             <div className="flex items-center gap-0.5">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="size-7 text-muted-foreground hover:text-foreground"
-                                    onClick={onToggleCollapsed}
-                                >
-                                    <CaretLineLeftIcon />
-                                    <span className="sr-only">Collapse sidebar</span>
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="size-7 text-muted-foreground hover:text-foreground"
-                                    onClick={onCreateWorkspace}
-                                >
-                                    <FolderPlusIcon />
-                                    <span className="sr-only">New workspace</span>
-                                </Button>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                className="size-7 text-muted-foreground hover:text-foreground"
+                                                onClick={onToggleCollapsed}
+                                            >
+                                                <CaretLineLeftIcon />
+                                                <span className="sr-only">Collapse sidebar</span>
+                                            </Button>
+                                        }
+                                    />
+                                    <TooltipContent>Collapse sidebar</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                className="size-7 text-muted-foreground hover:text-foreground"
+                                                onClick={onCreateWorkspace}
+                                            >
+                                                <FolderPlusIcon />
+                                                <span className="sr-only">New workspace</span>
+                                            </Button>
+                                        }
+                                    />
+                                    <TooltipContent>New workspace</TooltipContent>
+                                </Tooltip>
                                 <SidebarSettingsMenu settings={settings} onChange={setSettings} />
                             </div>
                         </div>

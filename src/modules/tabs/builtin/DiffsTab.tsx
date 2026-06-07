@@ -39,6 +39,7 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     defaultDiffsSettings,
     DIFFS_SETTINGS_KEY,
@@ -206,132 +207,148 @@ export function DiffsTab({ tab, workspace, updateTab }: TabRenderProps<DiffsTabM
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <div className="ml-auto text-xs text-muted-foreground flex items-center gap-0.5">
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className="size-7 text-muted-foreground hover:text-foreground"
-                        onClick={refresh}
-                        disabled={state.status === 'loading'}
-                    >
-                        <ArrowClockwiseIcon
-                            data-icon="inline-start"
-                            className={cn(state.status === 'loading' && 'animate-spin')}
-                        />
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
+                    <Tooltip>
+                        <TooltipTrigger
                             render={
                                 <Button
                                     variant="ghost"
                                     size="icon-sm"
                                     className="size-7 text-muted-foreground hover:text-foreground"
+                                    onClick={refresh}
+                                    disabled={state.status === 'loading'}
                                 >
-                                    <SlidersHorizontalIcon />
+                                    <ArrowClockwiseIcon
+                                        data-icon="inline-start"
+                                        className={cn(state.status === 'loading' && 'animate-spin')}
+                                    />
                                 </Button>
                             }
                         />
-                        <DropdownMenuContent align="end" className="min-w-56">
-                            <DropdownMenuGroup>
-                                <DropdownMenuRadioGroup
-                                    value={settings.layout}
-                                    onValueChange={(value) =>
-                                        updateSettings({ layout: value as DiffsLayout })
-                                    }
-                                >
-                                    <DropdownMenuLabel>Layout</DropdownMenuLabel>
-                                    <DropdownMenuRadioItem value="split">
-                                        <ArrowsOutLineHorizontalIcon />
-                                        Split
-                                    </DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="stacked">
-                                        <ArrowsOutLineVerticalIcon />
-                                        Stacked
-                                    </DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuGroup>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                                <DropdownMenuRadioGroup
-                                    value={settings.indicators}
-                                    onValueChange={(value) =>
-                                        updateSettings({ indicators: value as DiffIndicators })
-                                    }
-                                >
-                                    <DropdownMenuLabel>Vertical bars</DropdownMenuLabel>
-                                    <DropdownMenuRadioItem value="bars">
-                                        <ListIcon />
-                                        Bars
-                                    </DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="classic">
-                                        <PlusMinusIcon />
-                                        Classic
-                                    </DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="none">
-                                        <PlaceholderIcon />
-                                        None
-                                    </DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuGroup>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                                <DropdownMenuLabel>Changes</DropdownMenuLabel>
-                                <DropdownMenuCheckboxItem
-                                    checked={settings.backgrounds}
-                                    onCheckedChange={(checked) =>
-                                        updateSettings({ backgrounds: checked === true })
-                                    }
-                                >
-                                    <TextAlignLeftIcon weight="fill" />
-                                    Backgrounds
-                                </DropdownMenuCheckboxItem>
-                                <DropdownMenuCheckboxItem
-                                    checked={settings.wrapping}
-                                    onCheckedChange={(checked) =>
-                                        updateSettings({ wrapping: checked === true })
-                                    }
-                                >
-                                    <TextOutdentIcon />
-                                    Wrapping
-                                </DropdownMenuCheckboxItem>
-                                <DropdownMenuCheckboxItem
-                                    checked={settings.lineNumbers}
-                                    onCheckedChange={(checked) =>
-                                        updateSettings({ lineNumbers: checked === true })
-                                    }
-                                >
-                                    <ListNumbersIcon />
-                                    Line numbers
-                                </DropdownMenuCheckboxItem>
-                            </DropdownMenuGroup>
-                            <DropdownMenuSub>
-                                <DropdownMenuSubTrigger>
-                                    <ExcludeSquareIcon />
-                                    Characters
-                                </DropdownMenuSubTrigger>
-                                <DropdownMenuSubContent>
+                        <TooltipContent>Refresh diffs</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                render={
+                                    <TooltipTrigger
+                                        render={
+                                            <Button
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                className="size-7 text-muted-foreground hover:text-foreground"
+                                            >
+                                                <SlidersHorizontalIcon />
+                                            </Button>
+                                        }
+                                    />
+                                }
+                            />
+                            <DropdownMenuContent align="end" className="min-w-56">
+                                <DropdownMenuGroup>
                                     <DropdownMenuRadioGroup
-                                        value={settings.characters}
+                                        value={settings.layout}
                                         onValueChange={(value) =>
-                                            updateSettings({ characters: value as DiffsLineDiff })
+                                            updateSettings({ layout: value as DiffsLayout })
                                         }
                                     >
-                                        <DropdownMenuRadioItem value="word-alt">
-                                            Word-alt
+                                        <DropdownMenuLabel>Layout</DropdownMenuLabel>
+                                        <DropdownMenuRadioItem value="split">
+                                            <ArrowsOutLineHorizontalIcon />
+                                            Split
                                         </DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="word">
-                                            Word
+                                        <DropdownMenuRadioItem value="stacked">
+                                            <ArrowsOutLineVerticalIcon />
+                                            Stacked
                                         </DropdownMenuRadioItem>
-                                        <DropdownMenuRadioItem value="char">
-                                            Character
+                                    </DropdownMenuRadioGroup>
+                                </DropdownMenuGroup>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                    <DropdownMenuRadioGroup
+                                        value={settings.indicators}
+                                        onValueChange={(value) =>
+                                            updateSettings({ indicators: value as DiffIndicators })
+                                        }
+                                    >
+                                        <DropdownMenuLabel>Vertical bars</DropdownMenuLabel>
+                                        <DropdownMenuRadioItem value="bars">
+                                            <ListIcon />
+                                            Bars
+                                        </DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="classic">
+                                            <PlusMinusIcon />
+                                            Classic
                                         </DropdownMenuRadioItem>
                                         <DropdownMenuRadioItem value="none">
+                                            <PlaceholderIcon />
                                             None
                                         </DropdownMenuRadioItem>
                                     </DropdownMenuRadioGroup>
-                                </DropdownMenuSubContent>
-                            </DropdownMenuSub>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                </DropdownMenuGroup>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                    <DropdownMenuLabel>Changes</DropdownMenuLabel>
+                                    <DropdownMenuCheckboxItem
+                                        checked={settings.backgrounds}
+                                        onCheckedChange={(checked) =>
+                                            updateSettings({ backgrounds: checked === true })
+                                        }
+                                    >
+                                        <TextAlignLeftIcon weight="fill" />
+                                        Backgrounds
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={settings.wrapping}
+                                        onCheckedChange={(checked) =>
+                                            updateSettings({ wrapping: checked === true })
+                                        }
+                                    >
+                                        <TextOutdentIcon />
+                                        Wrapping
+                                    </DropdownMenuCheckboxItem>
+                                    <DropdownMenuCheckboxItem
+                                        checked={settings.lineNumbers}
+                                        onCheckedChange={(checked) =>
+                                            updateSettings({ lineNumbers: checked === true })
+                                        }
+                                    >
+                                        <ListNumbersIcon />
+                                        Line numbers
+                                    </DropdownMenuCheckboxItem>
+                                </DropdownMenuGroup>
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger>
+                                        <ExcludeSquareIcon />
+                                        Characters
+                                    </DropdownMenuSubTrigger>
+                                    <DropdownMenuSubContent>
+                                        <DropdownMenuRadioGroup
+                                            value={settings.characters}
+                                            onValueChange={(value) =>
+                                                updateSettings({
+                                                    characters: value as DiffsLineDiff,
+                                                })
+                                            }
+                                        >
+                                            <DropdownMenuRadioItem value="word-alt">
+                                                Word-alt
+                                            </DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="word">
+                                                Word
+                                            </DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="char">
+                                                Character
+                                            </DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="none">
+                                                None
+                                            </DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <TooltipContent>Diff settings</TooltipContent>
+                    </Tooltip>
                 </div>
             </div>
             <div className="min-h-0 flex-1">

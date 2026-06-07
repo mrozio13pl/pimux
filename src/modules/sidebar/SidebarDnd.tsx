@@ -6,6 +6,7 @@ import { DotsSixVerticalIcon, FolderIcon } from '@phosphor-icons/react';
 import { AccordionItem } from '@/components/ui/accordion';
 import { getTabDefinition } from '@/modules/tabs/registry';
 import type { TabKind } from '@/modules/tabs/types';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 const WorkspaceDragHandleContext = createContext<{
@@ -53,16 +54,23 @@ export function SortableWorkspaceItem({
 export function WorkspaceDragHandle() {
     const handle = useContext(WorkspaceDragHandleContext);
     return (
-        <button
-            type="button"
-            aria-label="Drag workspace"
-            className="grid size-6 shrink-0 cursor-grab place-items-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground active:cursor-grabbing"
-            onClick={(event) => event.stopPropagation()}
-            {...handle?.attributes}
-            {...handle?.listeners}
-        >
-            <DotsSixVerticalIcon className="size-4" />
-        </button>
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <button
+                        type="button"
+                        aria-label="Drag workspace"
+                        className="grid size-6 shrink-0 cursor-grab place-items-center rounded-md text-muted-foreground hover:bg-accent/50 hover:text-foreground active:cursor-grabbing"
+                        onClick={(event) => event.stopPropagation()}
+                        {...handle?.attributes}
+                        {...handle?.listeners}
+                    >
+                        <DotsSixVerticalIcon className="size-4" />
+                    </button>
+                }
+            />
+            <TooltipContent>Drag workspace</TooltipContent>
+        </Tooltip>
     );
 }
 

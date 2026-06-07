@@ -24,6 +24,7 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { copyText } from '@/lib/utils';
 import { ipc } from '@/ipc';
 import { tabDefinitions } from '@/modules/tabs/registry';
@@ -39,38 +40,53 @@ export function AddTabMenu({
     trigger?: ReactElement;
     align?: 'start' | 'center' | 'end';
 }) {
+    const content = (
+        <DropdownMenuContent align={align} className="min-w-58">
+            {tabDefinitions.map((definition) => (
+                <DropdownMenuItem key={definition.kind} onClick={() => onAddTab(definition.kind)}>
+                    <definition.Icon />
+                    {definition.label}
+                    {definition.shortcut ? (
+                        <DropdownMenuShortcut>{definition.shortcut}</DropdownMenuShortcut>
+                    ) : null}
+                </DropdownMenuItem>
+            ))}
+        </DropdownMenuContent>
+    );
+
+    if (trigger) {
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger render={trigger} />
+                {content}
+            </DropdownMenu>
+        );
+    }
+
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    trigger ?? (
-                        <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
-                            onClick={(event) => event.stopPropagation()}
-                        >
-                            <PlusIcon />
-                            <span className="sr-only">Add tab</span>
-                        </Button>
-                    )
-                }
-            />
-            <DropdownMenuContent align={align} className="min-w-58">
-                {tabDefinitions.map((definition) => (
-                    <DropdownMenuItem
-                        key={definition.kind}
-                        onClick={() => onAddTab(definition.kind)}
-                    >
-                        <definition.Icon />
-                        {definition.label}
-                        {definition.shortcut ? (
-                            <DropdownMenuShortcut>{definition.shortcut}</DropdownMenuShortcut>
-                        ) : null}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <Tooltip>
+            <DropdownMenu>
+                <DropdownMenuTrigger
+                    render={
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+                                    onClick={(event) => event.stopPropagation()}
+                                >
+                                    <PlusIcon />
+                                    <span className="sr-only">Add tab</span>
+                                </Button>
+                            }
+                        />
+                    }
+                />
+                {content}
+            </DropdownMenu>
+            <TooltipContent>Add tab</TooltipContent>
+        </Tooltip>
     );
 }
 

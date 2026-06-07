@@ -40,6 +40,7 @@ import {
     ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn, copyText } from '@/lib/utils';
 import { HotkeyIndicator } from '@/modules/hotkeys';
 import { getTabDefinition, tabDefinitions } from '@/modules/tabs/registry';
@@ -114,32 +115,43 @@ export function TabStrip({
                         })}
                     </SortableContext>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <Button variant="ghost" size="icon-sm" className="ml-1 shrink-0">
-                                    <PlusIcon />
-                                    <span className="sr-only">Add tab</span>
-                                </Button>
-                            }
-                        />
-                        <DropdownMenuContent align="start" className="min-w-56">
-                            {tabDefinitions.map((definition) => (
-                                <DropdownMenuItem
-                                    key={definition.kind}
-                                    onClick={() => onAddTab(definition.kind)}
-                                >
-                                    <definition.Icon />
-                                    {definition.label}
-                                    {definition.shortcut ? (
-                                        <DropdownMenuShortcut>
-                                            {definition.shortcut}
-                                        </DropdownMenuShortcut>
-                                    ) : null}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Tooltip>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                render={
+                                    <TooltipTrigger
+                                        render={
+                                            <Button
+                                                variant="ghost"
+                                                size="icon-sm"
+                                                className="ml-1 shrink-0"
+                                            >
+                                                <PlusIcon />
+                                                <span className="sr-only">Add tab</span>
+                                            </Button>
+                                        }
+                                    />
+                                }
+                            />
+                            <DropdownMenuContent align="start" className="min-w-56">
+                                {tabDefinitions.map((definition) => (
+                                    <DropdownMenuItem
+                                        key={definition.kind}
+                                        onClick={() => onAddTab(definition.kind)}
+                                    >
+                                        <definition.Icon />
+                                        {definition.label}
+                                        {definition.shortcut ? (
+                                            <DropdownMenuShortcut>
+                                                {definition.shortcut}
+                                            </DropdownMenuShortcut>
+                                        ) : null}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <TooltipContent>Add tab</TooltipContent>
+                    </Tooltip>
                 </TabsList>
             </Tabs>
             <DeleteConfirmDialog
@@ -219,24 +231,31 @@ function SortableHeaderTab({
                     keys={`Ctrl+${index + 1}`}
                     className="ml-1 shrink-0"
                 />
-                <span
-                    role="button"
-                    tabIndex={-1}
-                    aria-label={`Close ${tab.title}`}
-                    className={cn(
-                        'grid size-5 shrink-0 place-items-center rounded-md transition-all hover:bg-foreground/10',
-                        active
-                            ? 'opacity-70 hover:opacity-100'
-                            : 'opacity-0 group-hover:opacity-60',
-                    )}
-                    onPointerDown={(event) => event.stopPropagation()}
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        onCloseTab(tab.id);
-                    }}
-                >
-                    <XIcon />
-                </span>
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <span
+                                role="button"
+                                tabIndex={-1}
+                                aria-label={`Close ${tab.title}`}
+                                className={cn(
+                                    'grid size-5 shrink-0 place-items-center rounded-md transition-all hover:bg-foreground/10',
+                                    active
+                                        ? 'opacity-70 hover:opacity-100'
+                                        : 'opacity-0 group-hover:opacity-60',
+                                )}
+                                onPointerDown={(event) => event.stopPropagation()}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    onCloseTab(tab.id);
+                                }}
+                            >
+                                <XIcon />
+                            </span>
+                        }
+                    />
+                    <TooltipContent>Close {tab.title}</TooltipContent>
+                </Tooltip>
             </ContextMenuTrigger>
             <TabContextMenuContent
                 tab={tab}

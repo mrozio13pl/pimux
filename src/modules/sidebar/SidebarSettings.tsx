@@ -11,6 +11,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SlidersHorizontalIcon } from '@phosphor-icons/react';
 import type { ProjectGroupMode, ProjectSortMode } from './grouping';
 
@@ -92,128 +93,159 @@ export function SidebarSettingsMenu({
     onChange(update: SidebarSettings | ((current: SidebarSettings) => SidebarSettings)): void;
 }) {
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="size-7 text-muted-foreground hover:text-foreground"
-                    >
-                        <SlidersHorizontalIcon />
-                        <span className="sr-only">Sidebar settings</span>
-                    </Button>
-                }
-            />
-            <DropdownMenuContent align="start" className="min-w-56">
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel>Recent activity</DropdownMenuLabel>
-                    <DropdownMenuCheckboxItem
-                        checked={settings.autoOrderWorkspaces}
-                        onCheckedChange={(checked) =>
+        <Tooltip>
+            <DropdownMenu>
+                <DropdownMenuTrigger
+                    render={
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-7 text-muted-foreground hover:text-foreground"
+                                >
+                                    <SlidersHorizontalIcon />
+                                    <span className="sr-only">Sidebar settings</span>
+                                </Button>
+                            }
+                        />
+                    }
+                />
+                <DropdownMenuContent align="start" className="min-w-56">
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Recent activity</DropdownMenuLabel>
+                        <DropdownMenuCheckboxItem
+                            checked={settings.autoOrderWorkspaces}
+                            onCheckedChange={(checked) =>
+                                onChange((current) => ({
+                                    ...current,
+                                    autoOrderWorkspaces: checked === true,
+                                }))
+                            }
+                        >
+                            Auto-order workspaces
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuCheckboxItem
+                            checked={settings.autoOrderTabs}
+                            onCheckedChange={(checked) =>
+                                onChange((current) => ({
+                                    ...current,
+                                    autoOrderTabs: checked === true,
+                                }))
+                            }
+                        >
+                            Auto-order tabs
+                        </DropdownMenuCheckboxItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup
+                        value={
+                            settings.projectSort === 'last-used' ? 'manual' : settings.projectSort
+                        }
+                        onValueChange={(value) =>
                             onChange((current) => ({
                                 ...current,
-                                autoOrderWorkspaces: checked === true,
+                                projectSort: value as ProjectSortMode,
                             }))
                         }
                     >
-                        Auto-order workspaces
-                    </DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem
-                        checked={settings.autoOrderTabs}
-                        onCheckedChange={(checked) =>
+                        <DropdownMenuLabel>Workspace fallback order</DropdownMenuLabel>
+                        <DropdownMenuRadioItem value="created">Created at</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="manual">Manual</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup
+                        value={settings.tabSort === 'last-used' ? 'manual' : settings.tabSort}
+                        onValueChange={(value) =>
+                            onChange((current) => ({ ...current, tabSort: value as TabSortMode }))
+                        }
+                    >
+                        <DropdownMenuLabel>Tab fallback order</DropdownMenuLabel>
+                        <DropdownMenuRadioItem value="created">Created at</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="manual">Manual</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel>Visible tabs</DropdownMenuLabel>
+                        <div className="mx-2 mb-1 flex h-8 items-center justify-between rounded-lg border border-ring px-1 text-sm">
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon-xs"
+                                            disabled={settings.visibleTabs <= 1}
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                onChange((current) => ({
+                                                    ...current,
+                                                    visibleTabs: Math.max(
+                                                        1,
+                                                        current.visibleTabs - 1,
+                                                    ),
+                                                }));
+                                            }}
+                                        >
+                                            −
+                                        </Button>
+                                    }
+                                />
+                                <TooltipContent>Show fewer tabs</TooltipContent>
+                            </Tooltip>
+                            <span>{settings.visibleTabs}</span>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon-xs"
+                                            disabled={settings.visibleTabs >= 12}
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                onChange((current) => ({
+                                                    ...current,
+                                                    visibleTabs: Math.min(
+                                                        12,
+                                                        current.visibleTabs + 1,
+                                                    ),
+                                                }));
+                                            }}
+                                        >
+                                            +
+                                        </Button>
+                                    }
+                                />
+                                <TooltipContent>Show more tabs</TooltipContent>
+                            </Tooltip>
+                        </div>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup
+                        value={settings.projectGroup}
+                        onValueChange={(value) =>
                             onChange((current) => ({
                                 ...current,
-                                autoOrderTabs: checked === true,
+                                projectGroup: value as ProjectGroupMode,
                             }))
                         }
                     >
-                        Auto-order tabs
-                    </DropdownMenuCheckboxItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup
-                    value={settings.projectSort === 'last-used' ? 'manual' : settings.projectSort}
-                    onValueChange={(value) =>
-                        onChange((current) => ({
-                            ...current,
-                            projectSort: value as ProjectSortMode,
-                        }))
-                    }
-                >
-                    <DropdownMenuLabel>Workspace fallback order</DropdownMenuLabel>
-                    <DropdownMenuRadioItem value="created">Created at</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="manual">Manual</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup
-                    value={settings.tabSort === 'last-used' ? 'manual' : settings.tabSort}
-                    onValueChange={(value) =>
-                        onChange((current) => ({ ...current, tabSort: value as TabSortMode }))
-                    }
-                >
-                    <DropdownMenuLabel>Tab fallback order</DropdownMenuLabel>
-                    <DropdownMenuRadioItem value="created">Created at</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="manual">Manual</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel>Visible tabs</DropdownMenuLabel>
-                    <div className="mx-2 mb-1 flex h-8 items-center justify-between rounded-lg border border-ring px-1 text-sm">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            disabled={settings.visibleTabs <= 1}
-                            onClick={(event) => {
-                                event.preventDefault();
-                                onChange((current) => ({
-                                    ...current,
-                                    visibleTabs: Math.max(1, current.visibleTabs - 1),
-                                }));
-                            }}
-                        >
-                            −
-                        </Button>
-                        <span>{settings.visibleTabs}</span>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            disabled={settings.visibleTabs >= 12}
-                            onClick={(event) => {
-                                event.preventDefault();
-                                onChange((current) => ({
-                                    ...current,
-                                    visibleTabs: Math.min(12, current.visibleTabs + 1),
-                                }));
-                            }}
-                        >
-                            +
-                        </Button>
-                    </div>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup
-                    value={settings.projectGroup}
-                    onValueChange={(value) =>
-                        onChange((current) => ({
-                            ...current,
-                            projectGroup: value as ProjectGroupMode,
-                        }))
-                    }
-                >
-                    <DropdownMenuLabel>Group projects</DropdownMenuLabel>
-                    <DropdownMenuRadioItem value="repository">
-                        Group by repository
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="repository-path">
-                        Group by repository path
-                    </DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="separate">Keep separate</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                        <DropdownMenuLabel>Group projects</DropdownMenuLabel>
+                        <DropdownMenuRadioItem value="repository">
+                            Group by repository
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="repository-path">
+                            Group by repository path
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="separate">
+                            Keep separate
+                        </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <TooltipContent>Sidebar settings</TooltipContent>
+        </Tooltip>
     );
 }

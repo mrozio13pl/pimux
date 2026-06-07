@@ -111,10 +111,22 @@ export function BrowserTab({
                         placeholder="Enter a URL"
                     />
                 </div>
-                <Button type="submit" variant="secondary" size="sm" className="shrink-0">
-                    <ArrowUpIcon data-icon="inline-start" className="-rotate-45" />
-                    Go
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <Button
+                                type="submit"
+                                variant="secondary"
+                                size="sm"
+                                className="shrink-0"
+                            >
+                                <ArrowUpIcon data-icon="inline-start" className="-rotate-45" />
+                                Go
+                            </Button>
+                        }
+                    />
+                    <TooltipContent>Navigate to URL</TooltipContent>
+                </Tooltip>
             </form>
             <div className="min-h-0 flex-1 bg-sidebar">
                 <webview ref={webviewRef} src={src} />

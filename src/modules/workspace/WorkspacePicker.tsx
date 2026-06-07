@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowElbowLeftUpIcon, ArrowLeftIcon, FolderIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Command, CommandGroup, CommandInput, CommandList } from '@/components/ui/command';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ipc } from '@/ipc';
 import { Kbd } from '@/components/ui/kbd';
 
@@ -126,16 +127,23 @@ export function WorkspacePicker({ open, initialCwd, onClose, onAdd }: WorkspaceP
                 className="mx-auto h-auto max-h-[min(380px,calc(100vh-72px))] w-[min(620px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-border/70 bg-popover shadow-2xl"
             >
                 <div className="flex h-12 items-center gap-2 border-b px-3">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        className="shrink-0 text-muted-foreground hover:text-foreground"
-                        onClick={() => (parent ? chooseDirectory(parent) : onClose())}
-                    >
-                        <ArrowLeftIcon className="size-4" />
-                        <span className="sr-only">Back</span>
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-xs"
+                                    className="shrink-0 text-muted-foreground hover:text-foreground"
+                                    onClick={() => (parent ? chooseDirectory(parent) : onClose())}
+                                >
+                                    <ArrowLeftIcon className="size-4" />
+                                    <span className="sr-only">Back</span>
+                                </Button>
+                            }
+                        />
+                        <TooltipContent>{parent ? 'Parent directory' : 'Close'}</TooltipContent>
+                    </Tooltip>
                     <CommandInput
                         value={draft}
                         onValueChange={setDraft}
@@ -174,15 +182,22 @@ export function WorkspacePicker({ open, initialCwd, onClose, onAdd }: WorkspaceP
                         className="h-9 px-1 font-mono text-[13px]"
                         placeholder="Path to workspace"
                     />
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="xs"
-                        className="text-xs! shrink-0 rounded-full font-semibold!"
-                        onClick={() => onAdd(cleanPath(draft || cwd))}
-                    >
-                        Add
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="xs"
+                                    className="text-xs! shrink-0 rounded-full font-semibold!"
+                                    onClick={() => onAdd(cleanPath(draft || cwd))}
+                                >
+                                    Add
+                                </Button>
+                            }
+                        />
+                        <TooltipContent>Add selected workspace</TooltipContent>
+                    </Tooltip>
                 </div>
                 <CommandList className="max-h-72 min-h-0">
                     <CommandGroup heading="Directories">

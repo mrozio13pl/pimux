@@ -1,5 +1,6 @@
 import { ArrowDownIcon, ArrowUpIcon, XIcon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { searchDecorations } from './terminalSearchTheme';
 import type { TerminalSearchResults } from './terminalTypes';
 
@@ -78,13 +79,20 @@ function TerminalToolButton({
     onClick?(): void;
 }) {
     return (
-        <button
-            type={type}
-            aria-label={label}
-            className="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 hover:bg-accent hover:text-accent-foreground"
-            onClick={onClick}
-        >
-            {children}
-        </button>
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <button
+                        type={type}
+                        aria-label={label}
+                        className="flex h-8 min-w-8 items-center justify-center rounded-lg px-2 hover:bg-accent hover:text-accent-foreground"
+                        onClick={onClick}
+                    >
+                        {children}
+                    </button>
+                }
+            />
+            <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
     );
 }
