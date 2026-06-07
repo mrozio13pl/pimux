@@ -461,7 +461,7 @@ function DiffCodeView({
     return (
         <CodeView
             items={items}
-            className="h-full overflow-auto bg-background text-sm"
+            className="h-full overflow-auto bg-sidebar text-sm"
             style={diffThemeStyle}
             containerRef={containerRef}
             renderHeaderPrefix={(item) => {

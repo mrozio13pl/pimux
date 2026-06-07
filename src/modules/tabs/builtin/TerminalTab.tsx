@@ -72,7 +72,13 @@ export function TerminalTab({
             );
             if (disposed || !hostRef.current) return;
 
-            hostRef.current.style.backgroundColor = terminalProfile.theme.background ?? '#000000';
+            const terminalBackground = resolveCssColor('var(--sidebar)', '#161513');
+            const terminalTheme = {
+                ...terminalProfile.theme,
+                background: terminalBackground,
+                cursorAccent: terminalBackground,
+            };
+            hostRef.current.style.backgroundColor = terminalBackground;
             const defaultFontSize = normalizeDefaultFontSize(terminalProfile.fontSize);
             defaultFontSizeRef.current = defaultFontSize;
             const initialFontSize = getStoredTerminalFontSize(defaultFontSize);
@@ -104,7 +110,7 @@ export function TerminalTab({
                 scrollSensitivity: 1,
                 smoothScrollDuration: 0,
                 tabStopWidth: 8,
-                theme: terminalProfile.theme,
+                theme: terminalTheme,
                 windowsPty: terminalProfile.windowsPty,
             });
             terminalRef.current = term;
@@ -486,13 +492,12 @@ export function TerminalTab({
     }
 
     return (
-        <div className="relative h-full min-h-0 overflow-hidden">
+        <div className="relative h-full min-h-0 overflow-hidden bg-sidebar">
             <div
                 ref={hostRef}
                 tabIndex={-1}
-                className="h-full min-h-0 overflow-hidden p-2"
+                className="h-full min-h-0 overflow-hidden bg-sidebar p-2"
                 aria-label={tab.title}
-                style={{ backgroundColor: getNativeTerminalProfile().theme.background }}
                 onPointerDown={() => terminalRef.current?.focus()}
                 onFocus={() => terminalRef.current?.focus()}
                 onWheelCapture={handleWheel}
@@ -649,6 +654,16 @@ function getNativeTerminalProfile(): NativeTerminalProfile {
             brightWhite: '#ffffff',
         },
     };
+}
+
+function resolveCssColor(color: string, fallback: string): string {
+    if (typeof document === 'undefined') return fallback;
+    const probe = document.createElement('div');
+    probe.style.backgroundColor = color;
+    document.body.appendChild(probe);
+    const resolved = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return resolved || fallback;
 }
 
 function normalizeTerminalTitle(title: string): string | null {

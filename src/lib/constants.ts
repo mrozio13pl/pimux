@@ -52,12 +52,12 @@ export const diffIndicatorValues = new Set(['bars', 'classic', 'none']);
 export const diffLineDiffValues = new Set(['word-alt', 'word', 'char', 'none']);
 
 export const diffThemeStyle = {
-    '--diffs-dark-bg': 'var(--background)',
+    '--diffs-dark-bg': 'var(--sidebar)',
     '--diffs-dark': 'var(--foreground)',
     '--diffs-font-family': 'var(--font-mono)',
     '--diffs-header-font-family': 'var(--font-sans)',
-    '--diffs-bg-context-override': 'var(--background)',
-    '--diffs-bg-context-gutter-override': 'var(--background)',
+    '--diffs-bg-context-override': 'var(--sidebar)',
+    '--diffs-bg-context-gutter-override': 'var(--sidebar)',
     '--diffs-bg-separator-override': 'var(--border)',
     '--diffs-fg-number-override': 'var(--muted-foreground)',
     // '--diffs-addition-color-override': 'oklch(0.72 0.14 155)',
@@ -73,7 +73,7 @@ export const diffUnsafeCSS = `
     padding-inline: 8px;
     cursor: pointer;
 }
-pre, code, [data-gutter], [data-content] { background-color: var(--background); }
+pre, code, [data-gutter], [data-content] { background-color: var(--sidebar); }
 [data-gutter] [data-gutter-buffer], [data-gutter] [data-column-number] {
     border-right: 1px solid var(--border);
 }
