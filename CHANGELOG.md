@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.1](https://github.com/mrozio13pl/pimux/compare/v0.3.0...v0.3.1) (2026-06-07)
+
+
+### Improvements
+
+* add tooltips ([cd4e5fb](https://github.com/mrozio13pl/pimux/commit/cd4e5fb1612296e32486995a18a47ec5714a0e75))
+* align tab backgrounds ([b1a40bb](https://github.com/mrozio13pl/pimux/commit/b1a40bb0ae6788b4e9227a28b43ae9b414de14c3))
+* centralize renderer constants ([d2df841](https://github.com/mrozio13pl/pimux/commit/d2df841567d054147e2fc11316fcdd641f11d2ab))
+* centralize renderer constants ([8a9f900](https://github.com/mrozio13pl/pimux/commit/8a9f90083854603091e1af8175b1c66b8dbbc661))
+
 ## [0.3.0](https://github.com/mrozio13pl/pimux/compare/v0.2.0...v0.3.0) (2026-05-27)
 
 
