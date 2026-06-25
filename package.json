@@ -81,7 +81,7 @@
         "png2icons": "^2.0.1",
         "sharp": "^0.34.5",
         "simple-git-hooks": "^2.13.1",
-        "tailwindcss": "^4.3.0",
+        "tailwindcss": "^4.3.1",
         "typescript": "^6.0.3",
         "vite": "^8.0.14",
         "vite-node": "^6.0.0",
