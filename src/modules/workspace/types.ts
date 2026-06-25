@@ -9,6 +9,7 @@ export type Workspace = {
     createdAt: number;
     updatedAt: number;
     pinned?: boolean;
+    icon?: string | null;
     activeTabId?: string;
     tabLayout?: TabLayoutNode;
 };

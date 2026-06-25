@@ -13,7 +13,7 @@ import {
     resizeTerminal,
     writeTerminal,
 } from './helpers/terminal';
-import { findWorkspaceIcon } from './helpers/workspace-icon';
+import { findWorkspaceIcon, readIcon } from './helpers/workspace-icon';
 
 export const router = defineRouter({
     dialog: {
@@ -23,6 +23,20 @@ export const router = defineRouter({
                 title: 'Choose workspace directory',
             });
             return result.canceled ? null : (result.filePaths[0] ?? null);
+        }),
+        chooseIcon: handler(async () => {
+            const result = await dialog.showOpenDialog({
+                properties: ['openFile'],
+                title: 'Choose workspace icon',
+                filters: [
+                    {
+                        name: 'Images',
+                        extensions: ['svg', 'png', 'ico', 'jpg', 'jpeg', 'webp', 'gif'],
+                    },
+                ],
+            });
+            const file = result.filePaths[0];
+            return result.canceled || !file ? null : readIcon(file);
         }),
     },
 

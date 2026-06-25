@@ -78,6 +78,7 @@ export function Sidebar({
     onToggleCollapsed,
     onAddTab,
     onToggleWorkspacePin,
+    onSetWorkspaceIcon,
     onToggleTabPin,
     onMoveTab,
     onRemoveWorkspace,
@@ -539,6 +540,7 @@ export function Sidebar({
                                                                     >
                                                                         <WorkspaceIcon
                                                                             src={
+                                                                                workspace.icon ??
                                                                                 workspaceIcons[
                                                                                     workspace.id
                                                                                 ]
@@ -597,6 +599,23 @@ export function Sidebar({
                                                                     onTogglePin={() =>
                                                                         onToggleWorkspacePin(
                                                                             workspace.id,
+                                                                        )
+                                                                    }
+                                                                    onSetIcon={() =>
+                                                                        void ipc.dialog
+                                                                            .chooseIcon()
+                                                                            .then((icon) => {
+                                                                                if (icon)
+                                                                                    onSetWorkspaceIcon(
+                                                                                        workspace.id,
+                                                                                        icon,
+                                                                                    );
+                                                                            })
+                                                                    }
+                                                                    onClearIcon={() =>
+                                                                        onSetWorkspaceIcon(
+                                                                            workspace.id,
+                                                                            null,
                                                                         )
                                                                     }
                                                                     onDelete={() =>

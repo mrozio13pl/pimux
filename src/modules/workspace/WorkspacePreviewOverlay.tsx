@@ -77,7 +77,9 @@ export function WorkspacePreviewOverlay({
                         const workspace = orderedWorkspaces[index];
                         const active = workspace?.id === activeWorkspaceId;
                         const selected = index === selectedIndex;
-                        const workspaceIcon = workspace ? workspaceIcons[workspace.id] : null;
+                        const workspaceIcon = workspace
+                            ? (workspace.icon ?? workspaceIcons[workspace.id])
+                            : null;
                         return (
                             <button
                                 key={workspace?.id ?? index}

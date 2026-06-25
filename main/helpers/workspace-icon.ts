@@ -87,7 +87,7 @@ function resolveIconHref(cwd: string, sourceFile: string, href: string): string[
     return [path.resolve(path.dirname(sourceFile), cleanHref), path.resolve(cwd, cleanHref)];
 }
 
-async function readIcon(file: string): Promise<string | null> {
+export async function readIcon(file: string): Promise<string | null> {
     try {
         const info = await stat(file);
         if (!info.isFile() || info.size > 512 * 1024) return null;
@@ -104,6 +104,13 @@ function iconMime(file: string): string {
             return 'image/svg+xml';
         case '.png':
             return 'image/png';
+        case '.jpg':
+        case '.jpeg':
+            return 'image/jpeg';
+        case '.webp':
+            return 'image/webp';
+        case '.gif':
+            return 'image/gif';
         case '.ico':
             return 'image/x-icon';
         default:

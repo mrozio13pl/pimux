@@ -617,6 +617,15 @@ export function App() {
         }));
     }
 
+    function setWorkspaceIcon(workspaceId: string, icon: string | null) {
+        setState((prev) => ({
+            ...prev,
+            workspaces: prev.workspaces.map((workspace) =>
+                workspace.id === workspaceId ? { ...workspace, icon } : workspace,
+            ),
+        }));
+    }
+
     function toggleTabPin(tabId: string) {
         setState((prev) => ({
             ...prev,
@@ -845,6 +854,7 @@ export function App() {
                         onToggleCollapsed={toggleSidebar}
                         onAddTab={addTabToWorkspace}
                         onToggleWorkspacePin={toggleWorkspacePin}
+                        onSetWorkspaceIcon={setWorkspaceIcon}
                         onToggleTabPin={toggleTabPin}
                         onMoveTab={moveTab}
                         onRemoveWorkspace={removeWorkspace}

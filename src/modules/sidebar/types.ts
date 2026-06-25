@@ -20,6 +20,7 @@ export type SidebarProps = {
     onToggleCollapsed?(): void;
     onAddTab(workspaceId: string, kind: TabKind): void;
     onToggleWorkspacePin(workspaceId: string): void;
+    onSetWorkspaceIcon(workspaceId: string, icon: string | null): void;
     onToggleTabPin(tabId: string): void;
     onMoveTab?(tabId: string, overTabId: string | null, targetWorkspaceId: string): void;
     onRemoveWorkspace(workspaceId: string): void;

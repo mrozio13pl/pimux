@@ -107,10 +107,14 @@ export function WorkspaceIcon({ src }: { src: string | null | undefined }) {
 export function WorkspaceContextMenuContent({
     workspace,
     onTogglePin,
+    onSetIcon,
+    onClearIcon,
     onDelete,
 }: {
     workspace: SidebarProps['workspaces'][number];
     onTogglePin(): void;
+    onSetIcon(): void;
+    onClearIcon(): void;
     onDelete(): void;
 }) {
     return (
@@ -120,6 +124,16 @@ export function WorkspaceContextMenuContent({
                     {workspace.pinned ? <PushPinSlashIcon /> : <PushPinIcon />}
                     {workspace.pinned ? 'Unpin project' : 'Pin project'}
                 </ContextMenuItem>
+                <ContextMenuItem onClick={onSetIcon}>
+                    <FolderOpenIcon />
+                    Set icon…
+                </ContextMenuItem>
+                {workspace.icon ? (
+                    <ContextMenuItem onClick={onClearIcon}>
+                        <TrashIcon />
+                        Clear icon
+                    </ContextMenuItem>
+                ) : null}
                 <ContextMenuItem onClick={() => copyText(workspace.cwd)}>
                     <CopyIcon />
                     Copy path
