@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/mrozio13pl/pimux/compare/v0.3.1...v0.4.0) (2026-07-01)
+
+
+### Features
+
+* add custom workspace icons ([54efeb6](https://github.com/mrozio13pl/pimux/commit/54efeb60c2f7acf1e6117f1e97a2b68d3d5e6ef5))
+
 ## [0.3.1](https://github.com/mrozio13pl/pimux/compare/v0.3.0...v0.3.1) (2026-06-07)
 
 
