@@ -1,0 +1,39 @@
+{
+    "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+    "productName": "Pimux",
+    "version": "0.4.0",
+    "identifier": "com.pimux.app",
+    "build": {
+        "frontendDist": "../dist",
+        "devUrl": "http://localhost:5173",
+        "beforeDevCommand": "pnpm dev",
+        "beforeBuildCommand": "pnpm build"
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "Pimux",
+                "width": 800,
+                "height": 600,
+                "resizable": true,
+                "fullscreen": false
+            }
+        ],
+        "security": {
+            "assetProtocol": {
+                "enable": true,
+                "scope": ["$APPDATA/custom-source-icons/**"]
+            },
+            "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost http://localhost:5173 ws://localhost:5173; img-src 'self' asset: http://asset.localhost data: https://unpkg.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'"
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "resources": ["resources/pi-extension.ts"],
+        "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+        "android": {
+            "debugApplicationIdSuffix": ".debug"
+        }
+    }
+}
