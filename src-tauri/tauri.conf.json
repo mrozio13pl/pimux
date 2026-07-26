@@ -24,7 +24,7 @@
                 "enable": true,
                 "scope": ["$APPDATA/custom-source-icons/**"]
             },
-            "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost http://localhost:5173 ws://localhost:5173; img-src 'self' asset: http://asset.localhost data: https://unpkg.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'"
+            "csp": "default-src 'self'; connect-src 'self' data: ipc: http://ipc.localhost http://localhost:5173 ws://localhost:5173; img-src 'self' asset: http://asset.localhost data: https://unpkg.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'"
         }
     },
     "bundle": {
