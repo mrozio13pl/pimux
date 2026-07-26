@@ -16,8 +16,18 @@ export type ViewStatusType = NonNullable<VariantProps<typeof statusVariants>['va
 
 export function ViewStatus({
     variant = 'idle',
+    showIdle = false,
     className,
     ...props
-}: React.ComponentProps<'span'> & VariantProps<typeof statusVariants>) {
-    return <span className={cn(statusVariants({ variant }), className)} {...props} />;
+}: React.ComponentProps<'span'> & VariantProps<typeof statusVariants> & { showIdle?: boolean }) {
+    return (
+        <span
+            className={cn(
+                statusVariants({ variant }),
+                showIdle && variant === 'idle' && 'block bg-muted-foreground/50',
+                className,
+            )}
+            {...props}
+        />
+    );
 }

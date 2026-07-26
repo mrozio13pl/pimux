@@ -3,7 +3,7 @@ import { Text } from '@earendil-works/pi-tui';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 type Status = 'idle' | 'error' | 'finished' | 'working';
-type SidebarState = { title: string; description: string; status: Status; sessionId: string };
+type SidebarState = { title: string; description: string; status: Status; sessionId: string; model: string };
 
 const PREFIX = 'pimux:';
 const TITLE_TOOL = 'set_view_title';
@@ -62,6 +62,7 @@ export default function pimuxExtension(pi: ExtensionAPI) {
         description: 'New Pi instance',
         status: 'idle',
         sessionId: '',
+        model: '',
     };
     let timer: ReturnType<typeof setTimeout> | undefined;
     let pending: Partial<SidebarState> | undefined;
@@ -119,6 +120,7 @@ export default function pimuxExtension(pi: ExtensionAPI) {
     pi.on('session_start', (_event, ctx) => {
         const sessionId = ctx.sessionManager.getSessionId();
         state.sessionId = sessionId;
+        state.model = ctx.model?.id || '';
         const entry = ctx.sessionManager
             .getEntries()
             .toReversed()
@@ -126,11 +128,13 @@ export default function pimuxExtension(pi: ExtensionAPI) {
         const title = entry?.type === 'custom' && (entry.data as { title?: unknown })?.title;
         if (typeof title === 'string') {
             state.title = title;
-            emit({ title, sessionId });
+            emit({ title, sessionId, model: state.model });
         } else {
-            emit({ sessionId });
+            emit({ sessionId, model: state.model });
         }
     });
+
+    pi.on('model_select', (event) => update({ model: event.model.id }));
 
     pi.on('before_agent_start', (event) => {
         update({ description: clip(event.prompt), status: 'working' }, { userSubmitted: true });

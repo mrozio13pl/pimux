@@ -8,10 +8,11 @@ import {
     type DragEndEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import stripAnsi from 'strip-ansi';
 import { AppCommands } from '@/components/commands';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { FolderPicker } from '@/components/folder-picker';
 import type { SessionSearchResult } from '@/components/view-finder';
 import { ViewButton } from '@/components/sidebar/view-button';
@@ -60,6 +61,8 @@ export function App() {
         moveView,
         promoteView,
         toggleViewPin,
+        toggleViewArchive,
+        archiveInactiveViews,
         loading: loadingViews,
         error,
     } = useViews();
@@ -98,7 +101,9 @@ export function App() {
         () => sourceMenuSources.filter((source) => !('planned' in source)),
         [sourceMenuSources],
     );
-    const defaultSource = useSettings((state) => state.values.defaultSource);
+    const { defaultSource, autoArchiveDays } = useSettings((state) => state.values);
+    const [settingsHydrated, setSettingsHydrated] = useState(useSettings.persist.hasHydrated());
+    useEffect(() => useSettings.persist.onFinishHydration(() => setSettingsHydrated(true)), []);
     const handleTerminalKey = useCallback((event: KeyboardEvent) => isAppHotkey(event), []);
     const [reorderRevision, setReorderRevision] = useState(0);
     const promoteRecentView = useCallback(
@@ -119,8 +124,35 @@ export function App() {
     const [folderPickerOpen, setFolderPickerOpen] = useState(false);
     const [folderPickerSourceId, setFolderPickerSourceId] = useState<ExecutableSource['id']>();
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const currentViewId = views.some((view) => view.id === activeViewId) ? activeViewId : views[0]?.id;
+    const activeViews = useMemo(() => views.filter((view) => !view.archived), [views]);
+    const archivedViews = useMemo(
+        () => views.filter((view) => view.archived).sort((a, b) => (b.lastActiveAt ?? 0) - (a.lastActiveAt ?? 0)),
+        [views],
+    );
+    const currentViewId = views.some((view) => view.id === activeViewId) ? activeViewId : activeViews[0]?.id;
     const currentView = views.find((view) => view.id === currentViewId);
+
+    useEffect(() => {
+        if (!settingsHydrated) return;
+
+        const archiveExpired = () => {
+            const cutoff = Date.now() - autoArchiveDays * 86_400_000;
+            archiveInactiveViews(cutoff);
+            if (
+                currentView &&
+                !currentView.archived &&
+                currentView.lastActiveAt !== undefined &&
+                currentView.lastActiveAt <= cutoff
+            ) {
+                setActiveViewId(undefined);
+            }
+        };
+
+        archiveExpired();
+        const timer = window.setInterval(archiveExpired, 60_000);
+        return () => window.clearInterval(timer);
+    }, [archiveInactiveViews, autoArchiveDays, currentView, settingsHydrated]);
+
     const terminalViewIds = useRef<string[]>([]);
     const viewIds = new Set(views.map((view) => view.id));
     for (const id of shellOutput.current.keys()) {
@@ -134,14 +166,11 @@ export function App() {
         const view = views.find((candidate) => candidate.id === id);
         return view ? [view] : [];
     });
-    const touchView = useCallback((id: string) => updateView(id, { lastActiveAt: Date.now() }), [updateView]);
-    const activateView = useCallback(
-        (id: string) => {
-            touchView(id);
-            setActiveViewId(id);
-        },
-        [touchView],
+    const touchViewFromUser = useCallback(
+        (id: string) => updateView(id, { archived: false, lastActiveAt: Date.now() }),
+        [updateView],
     );
+    const activateView = useCallback((id: string) => setActiveViewId(id), []);
 
     const openViewInDirectory = useCallback(
         (cwd: string) => {
@@ -229,12 +258,17 @@ export function App() {
         setReorderRevision((revision) => revision + 1);
     }
 
+    function toggleArchivedView(id: string) {
+        if (currentViewId === id && !views.find((view) => view.id === id)?.archived) setActiveViewId(undefined);
+        toggleViewArchive(id);
+    }
+
     const switchView = useCallback(
         (index: number) => {
-            const view = index < 0 ? views[views.length - 1] : views[index];
+            const view = index < 0 ? activeViews[activeViews.length - 1] : activeViews[index];
             if (view) activateView(view.id);
         },
-        [activateView, views],
+        [activateView, activeViews],
     );
 
     useAppHotkey('view.open', 'Control+Shift+N', () => openViewFromPicker());
@@ -272,10 +306,10 @@ export function App() {
                         <div className="flex gap-2">
                             <AppCommands
                                 sources={executableSources}
-                                views={views}
+                                views={activeViews}
                                 currentViewId={currentViewId}
                                 currentCwd={currentView?.cwd || defaultCwd}
-                                openProjects={views.map((view) => view.cwd)}
+                                openProjects={activeViews.map((view) => view.cwd)}
                                 shellOutput={shellOutput.current}
                                 onSelectView={activateView}
                                 onOpenSession={openSearchSession}
@@ -296,10 +330,10 @@ export function App() {
                                 onDragEnd={moveDraggedView}
                             >
                                 <SortableContext
-                                    items={views.map((view) => view.id)}
+                                    items={activeViews.map((view) => view.id)}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    {views.map((view) => (
+                                    {activeViews.map((view) => (
                                         <ViewButton
                                             key={view.id}
                                             view={view}
@@ -307,6 +341,7 @@ export function App() {
                                             onClick={() => activateView(view.id)}
                                             onDelete={deleteView}
                                             onTogglePin={togglePinnedView}
+                                            onToggleArchive={toggleArchivedView}
                                             onTitleChange={(id, title, lockTitle) =>
                                                 updateView(id, { title, lockTitle })
                                             }
@@ -314,6 +349,32 @@ export function App() {
                                         />
                                     ))}
                                 </SortableContext>
+                                {archivedViews.length > 0 && (
+                                    <Accordion>
+                                        <AccordionItem value="archive">
+                                            <AccordionTrigger className="px-3 text-xs text-muted-foreground">
+                                                Archive ({archivedViews.length})
+                                            </AccordionTrigger>
+                                            <AccordionContent className="flex flex-col gap-2 pb-2">
+                                                {archivedViews.map((view) => (
+                                                    <ViewButton
+                                                        key={view.id}
+                                                        view={view}
+                                                        active={view.id === currentViewId}
+                                                        onClick={() => activateView(view.id)}
+                                                        onDelete={deleteView}
+                                                        onTogglePin={togglePinnedView}
+                                                        onToggleArchive={toggleArchivedView}
+                                                        onTitleChange={(id, title, lockTitle) =>
+                                                            updateView(id, { title, lockTitle })
+                                                        }
+                                                        reorderRevision={reorderRevision}
+                                                    />
+                                                ))}
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                )}
                             </DndContext>
                         </div>
                     </div>
@@ -339,7 +400,7 @@ export function App() {
                 </div>
             </aside>
             <div className="relative min-w-0 flex-1">
-                {views.length === 0 && (
+                {!currentViewId && (
                     <Terminal
                         className="absolute inset-0 size-full"
                         pty={false}
@@ -368,7 +429,7 @@ export function App() {
                                     const { userSubmitted, ...viewPatch } = patch;
                                     updateViewFromSource(view.id, viewPatch);
                                     if (userSubmitted) {
-                                        touchView(view.id);
+                                        touchViewFromUser(view.id);
                                         promoteRecentView(view.id);
                                     }
                                 })
@@ -385,7 +446,7 @@ export function App() {
                             onSubmit={
                                 view.sourceId === BUILTIN_SOURCES.shell.id
                                     ? () => {
-                                          touchView(view.id);
+                                          touchViewFromUser(view.id);
                                           promoteRecentView(view.id);
                                       }
                                     : undefined

@@ -3,13 +3,14 @@ import { invoke } from '@tauri-apps/api/core';
 import useSWR from 'swr';
 
 interface WorkspaceInfo {
+    cwd: string;
     icon: string | null;
     path: string;
     branch: string | null;
     isGit: boolean;
 }
 
-function useWorkspace(cwd?: string) {
+export function useWorkspace(cwd?: string) {
     return useSWR<WorkspaceInfo>(['workspace-info', cwd ?? null], ([, path]) =>
         invoke('workspace_info', { cwd: path }),
     );
@@ -24,16 +25,17 @@ export function WorkspaceIcon({ cwd }: { cwd?: string }) {
     );
 }
 
-export function ViewFooter({ cwd }: { cwd?: string }) {
+export function ViewFooter({ cwd, showIcon = true }: { cwd?: string; showIcon?: boolean }) {
     const { data: workspace } = useWorkspace(cwd);
 
     return (
         <div className="flex min-w-0 items-center gap-1 overflow-hidden pt-1 text-xs text-muted-foreground">
-            {workspace?.icon ? (
-                <img src={workspace.icon} alt="" className="size-4 shrink-0 rounded-sm" />
-            ) : (
-                <FolderSimpleIcon className="size-4 shrink-0" weight="bold" />
-            )}
+            {showIcon &&
+                (workspace?.icon ? (
+                    <img src={workspace.icon} alt="" className="size-4 shrink-0 rounded-sm" />
+                ) : (
+                    <FolderSimpleIcon className="size-4 shrink-0" weight="bold" />
+                ))}
             <span className="truncate" title={workspace?.path}>
                 {workspace?.path ?? cwd}
             </span>

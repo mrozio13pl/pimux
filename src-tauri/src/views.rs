@@ -11,8 +11,10 @@ pub(crate) struct View {
     pub(crate) cwd: Option<String>,
     pub(crate) source_id: Option<String>,
     pub(crate) session_id: Option<String>,
+    pub(crate) model: Option<String>,
     pub(crate) lock_title: Option<bool>,
     pub(crate) pinned: Option<bool>,
+    pub(crate) archived: Option<bool>,
     pub(crate) last_active_at: Option<u64>,
 }
 
@@ -52,8 +54,14 @@ mod tests {
         assert!(view.cwd.is_none());
         assert!(view.source_id.is_none());
         assert!(view.session_id.is_none());
+        assert!(view.model.is_none());
         assert!(view.lock_title.is_none());
         assert!(view.pinned.is_none());
+        assert!(view.archived.is_none());
         assert!(view.last_active_at.is_none());
+
+        let archived: View =
+            serde_json::from_str(r#"{"id":"2","title":"Archived","archived":true}"#).unwrap();
+        assert_eq!(archived.archived, Some(true));
     }
 }

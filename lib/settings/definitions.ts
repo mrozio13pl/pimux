@@ -9,6 +9,7 @@ type SettingMetadata = {
 type SettingDefinition = SettingMetadata &
     (
         | { type: 'boolean'; default: boolean }
+        | { type: 'number'; default: number; min?: number; max?: number; step?: number }
         | {
               type: 'select';
               default: string;
@@ -40,6 +41,15 @@ export const settingDefinitions = {
         default: false,
         label: 'Auto-sort views',
         description: 'Move recently active views to the top.',
+    },
+    autoArchiveDays: {
+        type: 'number',
+        default: 3,
+        min: 1,
+        max: 3650,
+        step: 1,
+        label: 'Archive inactive views',
+        description: 'Days without activity before moving a view to archive.',
     },
     reduceMotion: {
         type: 'boolean',
@@ -85,13 +95,15 @@ export type SettingValue<Id extends SettingId> = (typeof settingDefinitions)[Id]
     type: 'boolean';
 }
     ? boolean
-    : (typeof settingDefinitions)[Id] extends { options: 'sources' }
-      ? SourceId
-      : (typeof settingDefinitions)[Id] extends {
-              options: ReadonlyArray<{ value: infer Value }>;
-          }
-        ? Value
-        : never;
+    : (typeof settingDefinitions)[Id] extends { type: 'number' }
+      ? number
+      : (typeof settingDefinitions)[Id] extends { options: 'sources' }
+        ? SourceId
+        : (typeof settingDefinitions)[Id] extends {
+                options: ReadonlyArray<{ value: infer Value }>;
+            }
+          ? Value
+          : never;
 export type SettingValues = { [Id in SettingId]: SettingValue<Id> };
 export type Theme = SettingValue<'theme'>;
 

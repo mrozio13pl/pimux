@@ -26,8 +26,12 @@ test('Pi extension emits valid sidebar updates', async () => {
     try {
         handlers.get('session_start')(
             {},
-            { sessionManager: { getSessionId: () => 'session-1234', getEntries: () => [] } },
+            {
+                model: { id: 'gpt-start' },
+                sessionManager: { getSessionId: () => 'session-1234', getEntries: () => [] },
+            },
         );
+        handlers.get('model_select')({ model: { id: 'gpt-next' } });
         await titleTool.execute('valid', { title: 'Implement Pi Extension' });
         await titleTool.execute('invalid', { title: 'Invalid' }).then(
             () => {
@@ -49,6 +53,8 @@ test('Pi extension emits valid sidebar updates', async () => {
     if (
         startup?.title !== undefined ||
         startup?.sessionId !== 'session-1234' ||
+        startup?.model !== 'gpt-start' ||
+        !updates.some((update) => update.model === 'gpt-next') ||
         !updates.some((update) => update.title === 'Implement Pi Extension') ||
         updates.at(-1)?.userSubmitted !== true ||
         parsePiSidebarUpdate(`pimux:${payloads.at(-1)}`)?.userSubmitted !== true

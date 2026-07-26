@@ -21,6 +21,7 @@ export function parsePiSidebarUpdate(title: string): SourceViewUpdate | undefine
         if (typeof payload.sessionId === 'string' && payload.sessionId) {
             update.sessionId = payload.sessionId.slice(0, 128);
         }
+        if (typeof payload.model === 'string' && payload.model) update.model = payload.model.slice(0, 128);
         if (payload.userSubmitted === true) update.userSubmitted = true;
         return Object.keys(update).length ? update : undefined;
     } catch {

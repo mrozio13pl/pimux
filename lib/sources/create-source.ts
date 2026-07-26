@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Terminal } from 'ghostty-web';
+import type { ViewStatusType } from '@/components/sidebar/view-status';
 
 export const DEFAULT_SOURCE_ID = 'builtin:pi' as const;
 export type BuiltinSourceId = 'builtin:pi' | 'builtin:shell';
@@ -13,8 +14,9 @@ export interface SourceExecutionContext {
 export interface SourceViewUpdate {
     title?: string;
     description?: string;
-    status?: 'idle' | 'error' | 'finished' | 'working';
+    status?: ViewStatusType;
     sessionId?: string;
+    model?: string;
     userSubmitted?: boolean;
 }
 

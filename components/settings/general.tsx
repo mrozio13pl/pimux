@@ -11,6 +11,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import type { ExecutableSource, SourceId } from '@/lib/sources';
@@ -37,11 +38,30 @@ function SettingField({ id, sourceOptions }: { id: SettingId; sourceOptions: Sou
                 <FieldLabel htmlFor={controlId}>{definition.label}</FieldLabel>
                 {'description' in definition && <FieldDescription>{definition.description}</FieldDescription>}
             </FieldContent>
-            {!('options' in definition) ? (
+            {definition.type === 'boolean' ? (
                 <Switch
                     id={controlId}
                     checked={value as boolean}
                     onCheckedChange={(checked) => setSetting(id, checked as SettingValue<typeof id>)}
+                />
+            ) : definition.type === 'number' ? (
+                <Input
+                    id={controlId}
+                    type="number"
+                    className="w-24"
+                    min={definition.min}
+                    max={definition.max}
+                    step={definition.step}
+                    value={value as number}
+                    onChange={(event) => {
+                        const number = event.currentTarget.valueAsNumber;
+                        if (!Number.isFinite(number)) return;
+                        const clamped = Math.min(
+                            definition.max ?? Infinity,
+                            Math.max(definition.min ?? -Infinity, number),
+                        );
+                        setSetting(id, Math.round(clamped) as SettingValue<typeof id>);
+                    }}
                 />
             ) : (
                 <Select

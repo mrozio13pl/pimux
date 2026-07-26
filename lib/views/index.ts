@@ -3,6 +3,7 @@ import { BUILTIN_SOURCES, getExecutableSource, type SourceId } from '@/lib/sourc
 import { invoke } from '@tauri-apps/api/core';
 import { useSettings } from '@/lib/settings';
 import { useCallback, useEffect, useState } from 'react';
+import { archiveInactive } from './archive';
 
 export interface View {
     id: string;
@@ -12,9 +13,11 @@ export interface View {
     cwd: string;
     sourceId: SourceId;
     sessionId?: string;
+    model?: string;
     resumeSession?: boolean;
     lockTitle?: boolean;
     pinned?: boolean;
+    archived?: boolean;
     lastActiveAt?: number;
 }
 
@@ -132,11 +135,11 @@ export function useViews() {
 
     const promoteView = useCallback((id: string) => {
         setViews((current) => {
-            const unpinned = current.filter((view) => !view.pinned);
+            const unpinned = current.filter((view) => !view.pinned && !view.archived);
             const index = unpinned.findIndex((view) => view.id === id);
             if (index <= 0) return current;
             unpinned.unshift(unpinned.splice(index, 1)[0]);
-            return current.map((view) => (view.pinned ? view : unpinned.shift()!));
+            return current.map((view) => (view.pinned || view.archived ? view : unpinned.shift()!));
         });
     }, []);
 
@@ -152,6 +155,20 @@ export function useViews() {
         });
     }, []);
 
+    const toggleViewArchive = useCallback((id: string) => {
+        setViews((current) =>
+            current.map((view) =>
+                view.id === id
+                    ? { ...view, archived: !view.archived, pinned: view.archived ? view.pinned : false }
+                    : view,
+            ),
+        );
+    }, []);
+
+    const archiveInactiveViews = useCallback((cutoff: number) => {
+        setViews((current) => archiveInactive(current, cutoff));
+    }, []);
+
     return {
         views,
         defaultCwd,
@@ -162,6 +179,8 @@ export function useViews() {
         moveView,
         promoteView,
         toggleViewPin,
+        toggleViewArchive,
+        archiveInactiveViews,
         loading: loadState === 'loading',
         error,
     };
