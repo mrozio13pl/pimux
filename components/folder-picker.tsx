@@ -184,7 +184,7 @@ export function FolderPicker({ initialCwd, open, onOpenChange, onSelect }: Folde
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent ref={content} className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Open folder</DialogTitle>
+                    <DialogTitle>Add project</DialogTitle>
                     <DialogDescription>Choose the working directory for the new view.</DialogDescription>
                 </DialogHeader>
 
@@ -300,7 +300,7 @@ export function FolderPicker({ initialCwd, open, onOpenChange, onSelect }: Folde
                         }}
                     >
                         <FolderOpenIcon data-icon="inline-start" />
-                        Open folder
+                        Add project
                     </Button>
                 </DialogFooter>
             </DialogContent>

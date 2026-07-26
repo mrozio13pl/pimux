@@ -10,8 +10,8 @@ import {
 import { sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { AppCommands } from '@/components/commands';
 import { FolderPicker } from '@/components/folder-picker';
-import { NewViewButton } from '@/components/sidebar/new-view-button';
 import { ViewButton } from '@/components/sidebar/view-button';
 import { BUILTIN_SOURCES, SOURCES, type CustomSourceId, type ExecutableSource } from '@/lib/sources';
 import { applySourceOverride, customSource, useCustomSources } from '@/lib/sources/custom';
@@ -115,6 +115,7 @@ export function App() {
     const [activeViewId, setActiveViewId] = useState<string>();
     const [folderPickerOpen, setFolderPickerOpen] = useState(false);
     const [folderPickerSourceId, setFolderPickerSourceId] = useState<ExecutableSource['id']>();
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const currentViewId = views.some((view) => view.id === activeViewId) ? activeViewId : views[0]?.id;
     const currentView = views.find((view) => view.id === currentViewId);
     const terminalViewIds = useRef<string[]>([]);
@@ -149,7 +150,7 @@ export function App() {
                 defaultPath: currentView?.cwd || defaultCwd,
                 directory: true,
                 multiple: false,
-                title: 'Open folder',
+                title: 'Add project',
             })
                 .then((cwd) => {
                     if (typeof cwd !== 'string') return;
@@ -239,11 +240,13 @@ export function App() {
                 <div className="flex h-full w-sm flex-col justify-between space-y-2">
                     <div className="flex min-h-0 flex-1 flex-col space-y-2">
                         <div className="flex gap-2">
-                            <NewViewButton
+                            <AppCommands
                                 sources={executableSources}
                                 currentCwd={currentView?.cwd || defaultCwd}
                                 openProjects={views.map((view) => view.cwd)}
                                 onOpenView={openSourceAt}
+                                onOpenFolder={() => openViewFromPicker()}
+                                onOpenSettings={() => setSettingsOpen(true)}
                             />
                         </div>
 
@@ -281,7 +284,11 @@ export function App() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <GeneralSettingsDialog sources={executableSources} />
+                        <GeneralSettingsDialog
+                            sources={executableSources}
+                            open={settingsOpen}
+                            onOpenChange={setSettingsOpen}
+                        />
                         <SourcesDialog
                             sources={availableSources}
                             customSources={custom.sources}

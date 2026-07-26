@@ -6,9 +6,13 @@ export type HotkeyOverrides = Record<string, Hotkey | null | undefined>;
 
 const activeHotkeys = new Map<symbol, Hotkey>();
 
-export function useAppHotkey(id: string, defaultHotkey: string | undefined, handler: () => void) {
+export function useAppHotkeyValue(id: string, defaultHotkey: string | undefined) {
     const override = useSettings((state) => state.hotkeys[id]);
-    const hotkey = (override === null ? undefined : (override ?? defaultHotkey)) as Hotkey | undefined;
+    return (override === null ? undefined : (override ?? defaultHotkey)) as Hotkey | undefined;
+}
+
+export function useAppHotkey(id: string, defaultHotkey: string | undefined, handler: () => void) {
+    const hotkey = useAppHotkeyValue(id, defaultHotkey);
 
     useEffect(() => {
         if (!hotkey) return;
@@ -24,6 +28,8 @@ export function useAppHotkey(id: string, defaultHotkey: string | undefined, hand
         stopPropagation: true,
         requireReset: true,
     });
+
+    return hotkey;
 }
 
 export function isAppHotkey(event: KeyboardEvent) {

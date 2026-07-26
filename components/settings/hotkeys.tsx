@@ -69,7 +69,7 @@ export function HotkeysDialog() {
                         <FieldLegend variant="label">View actions</FieldLegend>
                         <FieldGroup className="gap-2">
                             <HotkeyButton id="view.new" label="New view" defaultHotkey="Mod+N" />
-                            <HotkeyButton id="view.open" label="Open folder" defaultHotkey="Control+Shift+N" />
+                            <HotkeyButton id="view.open" label="Add project" defaultHotkey="Control+Shift+N" />
                             <HotkeyButton id="view.delete" label="Delete view" defaultHotkey="Mod+D" />
                             <HotkeyButton id="view.change-title" label="Change title" defaultHotkey="F2" />
                         </FieldGroup>
@@ -90,6 +90,7 @@ export function HotkeysDialog() {
                     <FieldSet>
                         <FieldLegend variant="label">Pimux management</FieldLegend>
                         <FieldGroup className="gap-2">
+                            <HotkeyButton id="pimux.commands" label="Open command palette" defaultHotkey="Mod+K" />
                             <HotkeyButton id="pimux.open-settings" label="Open settings" defaultHotkey="Mod+I" />
                             <HotkeyButton id="pimux.open-sources" label="Open sources" defaultHotkey="Mod+S" />
                             <HotkeyButton id="pimux.open-hotkeys" label="Open hotkeys" defaultHotkey="Mod+/" />

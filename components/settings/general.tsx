@@ -1,5 +1,5 @@
 import { GearIcon } from '@phosphor-icons/react';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -67,10 +67,15 @@ function SettingField({ id, sourceOptions }: { id: SettingId; sourceOptions: Sou
     );
 }
 
-export function GeneralSettingsDialog({ sources }: { sources: ReadonlyArray<ExecutableSource> }) {
-    const [open, setOpen] = useState(false);
+interface GeneralSettingsDialogProps {
+    sources: ReadonlyArray<ExecutableSource>;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
+export function GeneralSettingsDialog({ sources, open, onOpenChange }: GeneralSettingsDialogProps) {
     const resetSettings = useSettings((state) => state.resetSettings);
-    useAppHotkey('pimux.open-settings', 'Mod+I', () => setOpen(true));
+    useAppHotkey('pimux.open-settings', 'Mod+I', () => onOpenChange(true));
     const sourceOptions = sources.map((source) => ({
         value: source.id,
         label: (
@@ -82,7 +87,7 @@ export function GeneralSettingsDialog({ sources }: { sources: ReadonlyArray<Exec
     }));
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTrigger render={<Button variant="outline" size="icon-lg" aria-label="General settings" />}>
                 <GearIcon data-icon="inline-start" weight="bold" />
             </DialogTrigger>
