@@ -15,6 +15,7 @@ export interface View {
     resumeSession?: boolean;
     lockTitle?: boolean;
     pinned?: boolean;
+    lastActiveAt?: number;
 }
 
 type SavedView = Omit<View, 'cwd' | 'sourceId'> & {
@@ -22,7 +23,7 @@ type SavedView = Omit<View, 'cwd' | 'sourceId'> & {
     sourceId?: string | null;
 };
 type NewView = Omit<View, 'id'>;
-type OpenView = Pick<View, 'cwd' | 'sourceId'>;
+type OpenView = Pick<View, 'cwd' | 'sourceId'> & Partial<Pick<View, 'sessionId' | 'resumeSession' | 'title'>>;
 
 export function useViews() {
     const [views, setViews] = useState<View[]>([]);
@@ -72,20 +73,25 @@ export function useViews() {
     }, []);
 
     const openView = useCallback(
-        ({ cwd, sourceId }: OpenView) => {
+        ({ cwd, sourceId, sessionId, resumeSession, title: requestedTitle }: OpenView) => {
             const source = getExecutableSource(sourceId) || BUILTIN_SOURCES.shell;
             const resolvedSourceId: SourceId = sourceId.startsWith('custom:') ? sourceId : source.id;
             useSettings.getState().rememberRecentView({ cwd, sourceId: resolvedSourceId });
             const title =
+                requestedTitle ||
                 cwd
                     .replace(/[\\/]+$/, '')
                     .split(/[\\/]/)
-                    .pop() || 'View';
+                    .pop() ||
+                'View';
             return addView({
                 title,
                 ...source.viewButton.initial,
                 cwd,
                 sourceId: resolvedSourceId,
+                lastActiveAt: Date.now(),
+                sessionId,
+                resumeSession,
             });
         },
         [addView],

@@ -1,5 +1,6 @@
 mod custom_sources;
 mod pty;
+mod search;
 mod views;
 mod workspace;
 
@@ -8,6 +9,7 @@ use custom_sources::{
     lobehub_icon_stage, lobehub_icons_load,
 };
 use pty::{close_window_sessions, pty_close, pty_resize, pty_spawn, pty_write, PtyState};
+use search::{sessions_refresh, sessions_search, SearchState};
 use tauri::Manager;
 use views::{views_load, views_save};
 use workspace::{directory_children, workspace_info};
@@ -22,6 +24,7 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 window.set_decorations(false)?;
             }
+            app.manage(SearchState::new(app.handle())?);
             Ok(())
         })
         .manage(PtyState::default())
@@ -30,6 +33,8 @@ pub fn run() {
             pty_write,
             pty_resize,
             pty_close,
+            sessions_refresh,
+            sessions_search,
             views_load,
             views_save,
             workspace_info,

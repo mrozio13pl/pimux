@@ -19,14 +19,21 @@ import { InputGroupButton } from '@/components/ui/input-group';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import type { ExecutableSource } from '@/lib/sources';
 import { useAppHotkey, useAppHotkeyValue, useSettings } from '@/lib/settings';
+import type { View } from '@/lib/views';
+import { ViewFinder, type SessionSearchResult } from '@/components/view-finder';
 
 const useNativeFolderPicker = /Windows|Macintosh|Mac OS X/.test(navigator.userAgent);
 type CommandPage = 'commands' | 'project' | 'source';
 
 interface AppCommandsProps {
     sources: ReadonlyArray<ExecutableSource>;
+    views: ReadonlyArray<View>;
+    currentViewId?: string;
     currentCwd: string;
     openProjects: ReadonlyArray<string>;
+    shellOutput: ReadonlyMap<string, string>;
+    onSelectView: (id: string) => void;
+    onOpenSession: (session: SessionSearchResult) => void;
     onOpenView: (cwd: string, source: ExecutableSource) => void;
     onOpenFolder: () => void;
     onOpenSettings: () => void;
@@ -81,8 +88,13 @@ function CommandFooter({ back }: { back: boolean }) {
 
 export function AppCommands({
     sources,
+    views,
+    currentViewId,
     currentCwd,
     openProjects,
+    shellOutput,
+    onSelectView,
+    onOpenSession,
     onOpenView,
     onOpenFolder,
     onOpenSettings,
@@ -95,6 +107,7 @@ export function AppCommands({
     const [page, setPage] = useState<CommandPage>('commands');
     const [folderPickerOpen, setFolderPickerOpen] = useState(false);
     const [cwd, setCwd] = useState(currentCwd);
+    const [commandQuery, setCommandQuery] = useState('');
     const projects = useMemo(
         () => [...new Set([currentCwd, ...openProjects, ...recentViews.map((recent) => recent.cwd)].filter(Boolean))],
         [currentCwd, openProjects, recentViews],
@@ -104,12 +117,12 @@ export function AppCommands({
             [...sources].sort((left, right) => Number(right.id === defaultSource) - Number(left.id === defaultSource)),
         [defaultSource, sources],
     );
-
     function showCommands() {
         if (open && page === 'commands') {
             setOpen(false);
             return;
         }
+        setCommandQuery('');
         setPage('commands');
         setOpen(true);
     }
@@ -118,6 +131,16 @@ export function AppCommands({
         setCwd(currentCwd);
         setPage('project');
         setOpen(true);
+    }
+
+    function selectView(id: string) {
+        onSelectView(id);
+        setOpen(false);
+    }
+
+    function selectSession(session: SessionSearchResult) {
+        onOpenSession(session);
+        setOpen(false);
     }
 
     function goBack() {
@@ -164,13 +187,15 @@ export function AppCommands({
 
     return (
         <>
-            <NewViewButton open={open && page !== 'commands'} onClick={showNewView} />
+            <NewViewButton open={open && (page === 'project' || page === 'source')} onClick={showNewView} />
             <CommandDialog
                 open={open}
                 onOpenChange={setOpen}
                 title={page === 'commands' ? 'Commands' : 'New view'}
                 description={
-                    page === 'commands' ? 'Search for a command to run.' : 'Choose a project, then choose a source.'
+                    page === 'commands'
+                        ? 'Search commands, open views, and local agent sessions.'
+                        : 'Choose a project, then choose a source.'
                 }
                 className="sm:max-w-xl"
             >
@@ -183,7 +208,12 @@ export function AppCommands({
                             goBack();
                             return;
                         }
-                        if (page === 'commands' || !event.ctrlKey || !/^Digit[1-9]$/.test(event.code)) return;
+                        if (
+                            (page !== 'project' && page !== 'source') ||
+                            !event.ctrlKey ||
+                            !/^Digit[1-9]$/.test(event.code)
+                        )
+                            return;
                         event.preventDefault();
                         event.stopPropagation();
                         event.currentTarget
@@ -193,9 +223,11 @@ export function AppCommands({
                 >
                     <CommandInput
                         autoFocus
+                        value={page === 'commands' ? commandQuery : undefined}
+                        onValueChange={page === 'commands' ? setCommandQuery : undefined}
                         placeholder={
                             page === 'commands'
-                                ? 'Search commands…'
+                                ? 'Search commands, views, and sessions…'
                                 : page === 'project'
                                   ? 'Search projects…'
                                   : 'Search sources…'
@@ -208,26 +240,37 @@ export function AppCommands({
                             ) : undefined
                         }
                     />
-                    <CommandList className="max-h-96">
-                        <CommandEmpty>{page === 'commands' ? 'No commands found.' : 'No results found.'}</CommandEmpty>
+                    <CommandList className="max-h-96 scroll-fade-b">
+                        <CommandEmpty>No results found.</CommandEmpty>
                         {page === 'commands' ? (
-                            <CommandGroup heading="Actions">
-                                <CommandItem value="New view project source" onSelect={showNewView}>
-                                    <PenIcon />
-                                    New View
-                                    <HotkeyShortcut hotkey={newViewHotkey} />
-                                </CommandItem>
-                                <CommandItem value="Add project folder directory" onSelect={openFolder}>
-                                    <FolderOpenIcon />
-                                    Add project
-                                    <HotkeyShortcut hotkey={openFolderHotkey} />
-                                </CommandItem>
-                                <CommandItem value="Open settings preferences" onSelect={openSettings}>
-                                    <GearIcon />
-                                    Open settings
-                                    <HotkeyShortcut hotkey={openSettingsHotkey} />
-                                </CommandItem>
-                            </CommandGroup>
+                            <>
+                                <CommandGroup heading="Actions">
+                                    <CommandItem value="New view project source" onSelect={showNewView}>
+                                        <PenIcon />
+                                        New View
+                                        <HotkeyShortcut hotkey={newViewHotkey} />
+                                    </CommandItem>
+                                    <CommandItem value="Add project folder directory" onSelect={openFolder}>
+                                        <FolderOpenIcon />
+                                        Add project
+                                        <HotkeyShortcut hotkey={openFolderHotkey} />
+                                    </CommandItem>
+                                    <CommandItem value="Open settings preferences" onSelect={openSettings}>
+                                        <GearIcon />
+                                        Open settings
+                                        <HotkeyShortcut hotkey={openSettingsHotkey} />
+                                    </CommandItem>
+                                </CommandGroup>
+                                <ViewFinder
+                                    sources={sources}
+                                    views={views}
+                                    currentViewId={currentViewId}
+                                    shellOutput={shellOutput}
+                                    query={commandQuery}
+                                    onSelectView={selectView}
+                                    onSelectSession={selectSession}
+                                />
+                            </>
                         ) : page === 'project' ? (
                             <CommandGroup heading="Projects">
                                 {projects.map((project, index) => (

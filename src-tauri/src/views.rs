@@ -13,6 +13,7 @@ pub(crate) struct View {
     pub(crate) session_id: Option<String>,
     pub(crate) lock_title: Option<bool>,
     pub(crate) pinned: Option<bool>,
+    pub(crate) last_active_at: Option<u64>,
 }
 
 fn views_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
@@ -53,5 +54,6 @@ mod tests {
         assert!(view.session_id.is_none());
         assert!(view.lock_title.is_none());
         assert!(view.pinned.is_none());
+        assert!(view.last_active_at.is_none());
     }
 }

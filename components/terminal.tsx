@@ -51,6 +51,7 @@ interface TerminalProps extends React.ComponentProps<'div'> {
     connectSource?: (terminal: GhosttyTerminal) => SourceTerminalBinding | void;
     onReady?: (terminal: GhosttyTerminal) => void | (() => void);
     onKeyEvent?: (event: KeyboardEvent) => boolean;
+    onOutput?: (text: string) => void;
     onSubmit?: () => void;
     pty?: boolean;
 }
@@ -65,6 +66,7 @@ export function Terminal({
     connectSource,
     onReady,
     onKeyEvent,
+    onOutput,
     onSubmit,
     className,
     ...props
@@ -77,9 +79,11 @@ export function Terminal({
     const launchWithResume = useRef(resumeSession);
     const activeRef = useRef(active);
     const connectSourceRef = useRef(connectSource);
+    const onOutputRef = useRef(onOutput);
     const onSubmitRef = useRef(onSubmit);
     activeRef.current = active;
     connectSourceRef.current = connectSource;
+    onOutputRef.current = onOutput;
     onSubmitRef.current = onSubmit;
 
     useLayoutEffect(() => {
@@ -156,7 +160,9 @@ export function Terminal({
             output.onmessage = (data) => {
                 if (cancelled || !terminal) return;
                 const currentTerminal = terminal;
-                currentTerminal.write(decoder.decode(new Uint8Array(data), { stream: true }), () => {
+                const text = decoder.decode(new Uint8Array(data), { stream: true });
+                onOutputRef.current?.(text);
+                currentTerminal.write(text, () => {
                     if (currentTerminal === shownTerminal) renderTerminal(currentTerminal);
                 });
             };

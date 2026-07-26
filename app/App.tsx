@@ -10,8 +10,10 @@ import {
 import { sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import stripAnsi from 'strip-ansi';
 import { AppCommands } from '@/components/commands';
 import { FolderPicker } from '@/components/folder-picker';
+import type { SessionSearchResult } from '@/components/view-finder';
 import { ViewButton } from '@/components/sidebar/view-button';
 import { BUILTIN_SOURCES, SOURCES, type CustomSourceId, type ExecutableSource } from '@/lib/sources';
 import { applySourceOverride, customSource, useCustomSources } from '@/lib/sources/custom';
@@ -113,6 +115,7 @@ export function App() {
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
     );
     const [activeViewId, setActiveViewId] = useState<string>();
+    const shellOutput = useRef(new Map<string, string>());
     const [folderPickerOpen, setFolderPickerOpen] = useState(false);
     const [folderPickerSourceId, setFolderPickerSourceId] = useState<ExecutableSource['id']>();
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -120,6 +123,9 @@ export function App() {
     const currentView = views.find((view) => view.id === currentViewId);
     const terminalViewIds = useRef<string[]>([]);
     const viewIds = new Set(views.map((view) => view.id));
+    for (const id of shellOutput.current.keys()) {
+        if (!viewIds.has(id)) shellOutput.current.delete(id);
+    }
     terminalViewIds.current = [
         ...terminalViewIds.current.filter((id) => viewIds.has(id)),
         ...views.map((view) => view.id).filter((id) => !terminalViewIds.current.includes(id)),
@@ -128,14 +134,22 @@ export function App() {
         const view = views.find((candidate) => candidate.id === id);
         return view ? [view] : [];
     });
+    const touchView = useCallback((id: string) => updateView(id, { lastActiveAt: Date.now() }), [updateView]);
+    const activateView = useCallback(
+        (id: string) => {
+            touchView(id);
+            setActiveViewId(id);
+        },
+        [touchView],
+    );
 
     const openViewInDirectory = useCallback(
         (cwd: string) => {
             const view = openView({ cwd, sourceId: folderPickerSourceId || currentView?.sourceId || defaultSource });
-            setActiveViewId(view.id);
+            activateView(view.id);
             setFolderPickerSourceId(undefined);
         },
-        [currentView, defaultSource, folderPickerSourceId, openView],
+        [activateView, currentView, defaultSource, folderPickerSourceId, openView],
     );
 
     const openViewFromPicker = useCallback(
@@ -155,19 +169,19 @@ export function App() {
                 .then((cwd) => {
                     if (typeof cwd !== 'string') return;
                     const view = openView({ cwd, sourceId });
-                    setActiveViewId(view.id);
+                    activateView(view.id);
                 })
                 .catch(console.error);
         },
-        [currentView, defaultCwd, defaultSource, openView],
+        [activateView, currentView, defaultCwd, defaultSource, openView],
     );
 
     const openSourceAt = useCallback(
         (cwd: string, source: ExecutableSource) => {
             const view = openView(source.executable({ cwd }));
-            setActiveViewId(view.id);
+            activateView(view.id);
         },
-        [openView],
+        [activateView, openView],
     );
 
     const openSourceHere = useCallback(
@@ -176,6 +190,22 @@ export function App() {
             if (cwd) openSourceAt(cwd, source);
         },
         [currentView, defaultCwd, openSourceAt],
+    );
+
+    const openSearchSession = useCallback(
+        (session: SessionSearchResult) => {
+            const source = executableSources.find((candidate) => candidate.id === session.sourceId);
+            if (!source) return;
+            const view = openView({
+                cwd: session.cwd,
+                sourceId: source.id,
+                sessionId: session.sessionId,
+                resumeSession: true,
+                title: session.title,
+            });
+            activateView(view.id);
+        },
+        [activateView, executableSources, openView],
     );
 
     async function removeCustomSource(id: CustomSourceId) {
@@ -202,9 +232,9 @@ export function App() {
     const switchView = useCallback(
         (index: number) => {
             const view = index < 0 ? views[views.length - 1] : views[index];
-            if (view) setActiveViewId(view.id);
+            if (view) activateView(view.id);
         },
-        [views],
+        [activateView, views],
     );
 
     useAppHotkey('view.open', 'Control+Shift+N', () => openViewFromPicker());
@@ -242,8 +272,13 @@ export function App() {
                         <div className="flex gap-2">
                             <AppCommands
                                 sources={executableSources}
+                                views={views}
+                                currentViewId={currentViewId}
                                 currentCwd={currentView?.cwd || defaultCwd}
                                 openProjects={views.map((view) => view.cwd)}
+                                shellOutput={shellOutput.current}
+                                onSelectView={activateView}
+                                onOpenSession={openSearchSession}
                                 onOpenView={openSourceAt}
                                 onOpenFolder={() => openViewFromPicker()}
                                 onOpenSettings={() => setSettingsOpen(true)}
@@ -269,7 +304,7 @@ export function App() {
                                             key={view.id}
                                             view={view}
                                             active={view.id === currentViewId}
-                                            onClick={() => setActiveViewId(view.id)}
+                                            onClick={() => activateView(view.id)}
                                             onDelete={deleteView}
                                             onTogglePin={togglePinnedView}
                                             onTitleChange={(id, title, lockTitle) =>
@@ -332,13 +367,27 @@ export function App() {
                                 source.viewButton.connect(terminal, (patch) => {
                                     const { userSubmitted, ...viewPatch } = patch;
                                     updateViewFromSource(view.id, viewPatch);
-                                    if (userSubmitted) promoteRecentView(view.id);
+                                    if (userSubmitted) {
+                                        touchView(view.id);
+                                        promoteRecentView(view.id);
+                                    }
                                 })
                             }
                             onKeyEvent={handleTerminalKey}
+                            onOutput={
+                                view.sourceId === BUILTIN_SOURCES.shell.id
+                                    ? (text) => {
+                                          const output = `${shellOutput.current.get(view.id) || ''}${stripAnsi(text)}`;
+                                          shellOutput.current.set(view.id, output.slice(-65_536));
+                                      }
+                                    : undefined
+                            }
                             onSubmit={
                                 view.sourceId === BUILTIN_SOURCES.shell.id
-                                    ? () => promoteRecentView(view.id)
+                                    ? () => {
+                                          touchView(view.id);
+                                          promoteRecentView(view.id);
+                                      }
                                     : undefined
                             }
                         />

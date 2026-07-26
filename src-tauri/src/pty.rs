@@ -209,17 +209,21 @@ pub(crate) fn pty_spawn(
         None
     };
     let session_exists = session_id.as_deref().is_some_and(|session_id| {
-        let agent_dir = std::env::var_os("PI_CODING_AGENT_DIR")
+        let sessions_dir = std::env::var_os("PI_CODING_AGENT_SESSION_DIR")
             .map(PathBuf::from)
             .or_else(|| {
-                window
-                    .path()
-                    .home_dir()
-                    .ok()
-                    .map(|home| home.join(".pi/agent"))
+                std::env::var_os("PI_CODING_AGENT_DIR")
+                    .map(PathBuf::from)
+                    .or_else(|| {
+                        window
+                            .path()
+                            .home_dir()
+                            .ok()
+                            .map(|home| home.join(".pi/agent"))
+                    })
+                    .map(|directory| directory.join("sessions"))
             });
-        agent_dir
-            .is_some_and(|directory| pi_session_exists(&directory.join("sessions"), session_id))
+        sessions_dir.is_some_and(|directory| pi_session_exists(&directory, session_id))
     });
     let mut command = if source_id.starts_with("custom:") {
         CommandBuilder::new(custom_source_executable(window.app_handle(), &source_id)?)
