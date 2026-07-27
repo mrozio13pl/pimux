@@ -19,6 +19,7 @@ import { ViewButton } from '@/components/sidebar/view-button';
 import { BUILTIN_SOURCES, SOURCES, type CustomSourceId, type ExecutableSource } from '@/lib/sources';
 import { applySourceOverride, customSource, useCustomSources } from '@/lib/sources/custom';
 import { useViews } from '@/lib/views';
+import { previousView } from '@/lib/views/history';
 import { Terminal } from '@/components/terminal';
 import { GeneralSettingsDialog } from '@/components/settings/general';
 import { HotkeysDialog } from '@/components/settings/hotkeys';
@@ -120,6 +121,7 @@ export function App() {
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
     );
     const [activeViewId, setActiveViewId] = useState<string>();
+    const viewHistory = useRef<string[]>([]);
     const shellOutput = useRef(new Map<string, string>());
     const [folderPickerOpen, setFolderPickerOpen] = useState(false);
     const [folderPickerSourceId, setFolderPickerSourceId] = useState<ExecutableSource['id']>();
@@ -131,6 +133,14 @@ export function App() {
     );
     const currentViewId = views.some((view) => view.id === activeViewId) ? activeViewId : activeViews[0]?.id;
     const currentView = views.find((view) => view.id === currentViewId);
+    const restorePreviousActiveView = useCallback(
+        (id: string) => {
+            const previous = previousView(viewHistory.current, new Set(activeViews.map((view) => view.id)), id);
+            viewHistory.current = previous.history;
+            setActiveViewId(previous.id);
+        },
+        [activeViews],
+    );
 
     useEffect(() => {
         if (!settingsHydrated) return;
@@ -144,14 +154,14 @@ export function App() {
                 currentView.lastActiveAt !== undefined &&
                 currentView.lastActiveAt <= cutoff
             ) {
-                setActiveViewId(undefined);
+                restorePreviousActiveView(currentView.id);
             }
         };
 
         archiveExpired();
         const timer = window.setInterval(archiveExpired, 60_000);
         return () => window.clearInterval(timer);
-    }, [archiveInactiveViews, autoArchiveDays, currentView, settingsHydrated]);
+    }, [archiveInactiveViews, autoArchiveDays, currentView, restorePreviousActiveView, settingsHydrated]);
 
     const terminalViewIds = useRef<string[]>([]);
     const viewIds = new Set(views.map((view) => view.id));
@@ -170,7 +180,18 @@ export function App() {
         (id: string) => updateView(id, { archived: false, lastActiveAt: Date.now() }),
         [updateView],
     );
-    const activateView = useCallback((id: string) => setActiveViewId(id), []);
+    const activateView = useCallback(
+        (id: string) => {
+            if (currentViewId && currentViewId !== id) {
+                viewHistory.current = [
+                    ...viewHistory.current.filter((item) => item !== currentViewId && item !== id),
+                    currentViewId,
+                ];
+            }
+            setActiveViewId(id);
+        },
+        [currentViewId],
+    );
 
     const openViewInDirectory = useCallback(
         (cwd: string) => {
@@ -245,8 +266,8 @@ export function App() {
     }
 
     function deleteView(id: string) {
+        if (currentViewId === id) restorePreviousActiveView(id);
         removeView(id);
-        if (currentViewId === id) setActiveViewId(undefined);
     }
 
     function moveDraggedView(event: DragEndEvent) {
@@ -259,7 +280,7 @@ export function App() {
     }
 
     function toggleArchivedView(id: string) {
-        if (currentViewId === id && !views.find((view) => view.id === id)?.archived) setActiveViewId(undefined);
+        if (currentViewId === id && !views.find((view) => view.id === id)?.archived) restorePreviousActiveView(id);
         toggleViewArchive(id);
     }
 

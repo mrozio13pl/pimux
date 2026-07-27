@@ -22,3 +22,16 @@ test('inactive views are archived without touching fresh or legacy views', async
         await vite.close();
     }
 });
+
+test('closing a view restores the latest active view', async () => {
+    const vite = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
+    try {
+        const { previousView } = await vite.ssrLoadModule('/lib/views/history.ts');
+        assert.deepEqual(previousView(['one', 'two'], new Set(['one', 'two', 'three']), 'three'), {
+            id: 'two',
+            history: ['one'],
+        });
+    } finally {
+        await vite.close();
+    }
+});
