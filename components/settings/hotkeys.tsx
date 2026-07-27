@@ -71,6 +71,7 @@ export function HotkeysDialog() {
                             <HotkeyButton id="view.new" label="New view" defaultHotkey="Mod+N" />
                             <HotkeyButton id="view.open" label="Add project" defaultHotkey="Control+Shift+N" />
                             <HotkeyButton id="view.delete" label="Delete view" defaultHotkey="Mod+D" />
+                            <HotkeyButton id="view.archive" label="Archive current view" defaultHotkey="Mod+Shift+A" />
                             <HotkeyButton id="view.change-title" label="Change title" defaultHotkey="F2" />
                         </FieldGroup>
                     </FieldSet>

@@ -263,6 +263,10 @@ export function App() {
         toggleViewArchive(id);
     }
 
+    useAppHotkey('view.archive', 'Mod+Shift+A', () => {
+        if (currentView) toggleArchivedView(currentView.id);
+    });
+
     const switchView = useCallback(
         (index: number) => {
             const view = index < 0 ? activeViews[activeViews.length - 1] : activeViews[index];
