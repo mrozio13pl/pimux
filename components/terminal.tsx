@@ -159,12 +159,9 @@ export function Terminal({
             const output = new Channel<number[]>();
             output.onmessage = (data) => {
                 if (cancelled || !terminal) return;
-                const currentTerminal = terminal;
                 const text = decoder.decode(new Uint8Array(data), { stream: true });
                 onOutputRef.current?.(text);
-                currentTerminal.write(text, () => {
-                    if (currentTerminal === shownTerminal) renderTerminal(currentTerminal);
-                });
+                terminal.write(text);
             };
             const process = new Channel<SourceProcessEvent>();
             process.onmessage = (event) => {
