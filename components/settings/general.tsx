@@ -112,7 +112,7 @@ export function GeneralSettings({
                 {settingsForSection(section)
                     .filter((id) => {
                         const definition = settingDefinitions[id];
-                        return `${definition.label} ${definition.description || ''}`
+                        return `${definition.label} ${'description' in definition ? definition.description : ''}`
                             .toLowerCase()
                             .includes(query.toLowerCase());
                     })

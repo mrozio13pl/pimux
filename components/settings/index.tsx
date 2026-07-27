@@ -108,7 +108,7 @@ export function SettingsDialog({
             settingsForSection(section)
                 .map((id) => {
                     const definition = settingDefinitions[id];
-                    return `${definition.label} ${definition.description || ''}`;
+                    return `${definition.label} ${'description' in definition ? definition.description : ''}`;
                 })
                 .join(' ');
         const sourceText = [

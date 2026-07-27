@@ -41,7 +41,7 @@ export function useAppHotkey(id: string, defaultHotkey: string | undefined, hand
 
     useEffect(() => {
         const registration = Symbol(id);
-        activeHotkeys.set(registration, { id, label, defaultHotkey, hotkey });
+        activeHotkeys.set(registration, { id, label, defaultHotkey: defaultHotkey as Hotkey | undefined, hotkey });
         publishHotkeys();
         return () => {
             activeHotkeys.delete(registration);
