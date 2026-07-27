@@ -1,7 +1,10 @@
 import { DEFAULT_SOURCE_ID, type SourceId } from '@/lib/sources/create-source';
 import type { ITerminalOptions } from 'ghostty-web';
 
+export type GeneralSection = 'appearance' | 'views' | 'terminal';
+
 type SettingMetadata = {
+    section: GeneralSection;
     label: string;
     description?: string;
 };
@@ -19,6 +22,7 @@ type SettingDefinition = SettingMetadata &
 
 export const settingDefinitions = {
     defaultSource: {
+        section: 'views',
         type: 'select',
         default: DEFAULT_SOURCE_ID,
         options: 'sources',
@@ -26,6 +30,7 @@ export const settingDefinitions = {
         description: 'Used when no current view provides a source.',
     },
     theme: {
+        section: 'appearance',
         type: 'select',
         default: 'system',
         label: 'Theme',
@@ -37,12 +42,14 @@ export const settingDefinitions = {
         ],
     },
     autoSortViews: {
+        section: 'views',
         type: 'boolean',
         default: false,
         label: 'Auto-sort views',
         description: 'Move recently active views to the top.',
     },
     autoArchiveDays: {
+        section: 'views',
         type: 'number',
         default: 3,
         min: 1,
@@ -52,12 +59,14 @@ export const settingDefinitions = {
         description: 'Days without activity before moving a view to archive.',
     },
     reduceMotion: {
+        section: 'appearance',
         type: 'boolean',
         default: false,
         label: 'Reduce motion',
         description: 'Disable nonessential interface animation.',
     },
     cursorStyle: {
+        section: 'terminal',
         type: 'select',
         default: 'bar',
         label: 'Cursor style',
@@ -78,11 +87,13 @@ export const settingDefinitions = {
         ] satisfies ReadonlyArray<{ value: ITerminalOptions['cursorStyle']; label: string }>,
     },
     cursorBlink: {
+        section: 'terminal',
         type: 'boolean',
         default: false,
         label: 'Cursor blink',
     },
     showSourceIcons: {
+        section: 'appearance',
         type: 'boolean',
         default: false,
         label: 'Show source icons',

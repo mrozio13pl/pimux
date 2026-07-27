@@ -21,9 +21,7 @@ import { applySourceOverride, customSource, useCustomSources } from '@/lib/sourc
 import { useViews } from '@/lib/views';
 import { previousView } from '@/lib/views/history';
 import { Terminal } from '@/components/terminal';
-import { GeneralSettingsDialog } from '@/components/settings/general';
-import { HotkeysDialog } from '@/components/settings/hotkeys';
-import { SourcesDialog } from '@/components/settings/sources';
+import { SettingsDialog } from '@/components/settings';
 import { cn } from '@/lib/utils';
 import { renderHeroAscii } from '@/lib/hero-ascii';
 import { isAppHotkey, useAppHotkey } from '@/lib/settings/hotkeys';
@@ -33,7 +31,12 @@ import { version } from '../package.json';
 const useNativeFolderPicker = /Windows|Macintosh|Mac OS X/.test(navigator.userAgent);
 
 function ViewSwitchHotkey({ index, switchView }: { index: number; switchView: (index: number) => void }) {
-    useAppHotkey(`view.switch.${index + 1}`, `Ctrl+${index + 1}`, () => switchView(index === 8 ? -1 : index));
+    useAppHotkey(
+        `view.switch.${index + 1}`,
+        `Ctrl+${index + 1}`,
+        () => switchView(index === 8 ? -1 : index),
+        index === 8 ? 'Last view' : `View ${index + 1}`,
+    );
     return null;
 }
 
@@ -46,8 +49,13 @@ function SourceHotkeys({
     openHere: (source: ExecutableSource) => void;
     chooseFolder: (source: ExecutableSource) => void;
 }) {
-    useAppHotkey(`source.open:${source.id}`, undefined, () => openHere(source));
-    useAppHotkey(`source.open-folder:${source.id}`, undefined, () => chooseFolder(source));
+    useAppHotkey(`source.open:${source.id}`, undefined, () => openHere(source), `Open ${source.title}`);
+    useAppHotkey(
+        `source.open-folder:${source.id}`,
+        undefined,
+        () => chooseFolder(source),
+        `Open ${source.title} in folder`,
+    );
     return null;
 }
 
@@ -284,9 +292,14 @@ export function App() {
         toggleViewArchive(id);
     }
 
-    useAppHotkey('view.archive', 'Mod+Shift+A', () => {
-        if (currentView) toggleArchivedView(currentView.id);
-    });
+    useAppHotkey(
+        'view.archive',
+        'Mod+Shift+A',
+        () => {
+            if (currentView) toggleArchivedView(currentView.id);
+        },
+        'Archive current view',
+    );
 
     const switchView = useCallback(
         (index: number) => {
@@ -296,7 +309,7 @@ export function App() {
         [activateView, activeViews],
     );
 
-    useAppHotkey('view.open', 'Control+Shift+N', () => openViewFromPicker());
+    useAppHotkey('view.open', 'Control+Shift+N', () => openViewFromPicker(), 'Add project');
 
     if (loadingViews || custom.loading) return null;
 
@@ -405,21 +418,18 @@ export function App() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <GeneralSettingsDialog
+                        <SettingsDialog
                             sources={executableSources}
-                            open={settingsOpen}
-                            onOpenChange={setSettingsOpen}
-                        />
-                        <SourcesDialog
-                            sources={availableSources}
+                            availableSources={availableSources}
                             customSources={custom.sources}
                             addSource={custom.add}
                             updateSource={custom.update}
                             sourceOverrides={sourceOverrides}
                             updateSourceOverride={setSourceOverride}
                             removeSource={removeCustomSource}
+                            open={settingsOpen}
+                            onOpenChange={setSettingsOpen}
                         />
-                        <HotkeysDialog />
                         <p className="text-muted-foreground">Pimux v{version}</p>
                     </div>
                 </div>

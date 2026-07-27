@@ -24,9 +24,11 @@ interface SettingsState {
     recentViews: RecentView[];
     setSetting: <Id extends SettingId>(id: Id, value: SettingValue<Id>) => void;
     resetSettings: () => void;
+    resetSettingGroup: (ids: SettingId[]) => void;
     setHotkey: (id: string, hotkey: Hotkey | null) => void;
     resetHotkeys: () => void;
     setSourceOverride: (id: string, override: SourceOverride) => void;
+    resetSourceOverrides: () => void;
     rememberRecentView: (view: RecentView) => void;
 }
 
@@ -46,10 +48,15 @@ export const useSettings = create<SettingsState>()(
             recentViews: [],
             setSetting: (id, value) => set((state) => ({ values: { ...state.values, [id]: value } })),
             resetSettings: () => set({ values: { ...defaultSettings } }),
+            resetSettingGroup: (ids) =>
+                set((state) => ({
+                    values: { ...state.values, ...Object.fromEntries(ids.map((id) => [id, defaultSettings[id]])) },
+                })),
             setHotkey: (id, hotkey) => set((state) => ({ hotkeys: { ...state.hotkeys, [id]: hotkey } })),
             resetHotkeys: () => set({ hotkeys: {} }),
             setSourceOverride: (id, override) =>
                 set((state) => ({ sourceOverrides: { ...state.sourceOverrides, [id]: override } })),
+            resetSourceOverrides: () => set({ sourceOverrides: {} }),
             rememberRecentView: (view) =>
                 set((state) => ({
                     recentViews: [

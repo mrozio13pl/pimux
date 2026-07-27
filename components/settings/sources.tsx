@@ -1,36 +1,21 @@
-import {
-    ArrowLeftIcon,
-    FolderOpenIcon,
-    ImageIcon,
-    PlusIcon,
-    TerminalWindowIcon,
-    TrashIcon,
-} from '@phosphor-icons/react';
+import { ArrowLeftIcon, FolderOpenIcon, ImageIcon, PlusIcon, TrashIcon } from '@phosphor-icons/react';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { lazy, Suspense, useState, type SubmitEvent } from 'react';
+import { lazy, Suspense, useEffect, useState, type SubmitEvent } from 'react';
 import { HotkeyButton } from '@/components/settings/hotkeys';
 import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
+import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import type { AvailableSource, CustomSourceId } from '@/lib/sources';
 import type { CustomSourceRecord } from '@/lib/sources/custom';
-import { useAppHotkey, type SourceOverride } from '@/lib/settings';
+import { useSettings, type SourceOverride } from '@/lib/settings';
 
 const LobeHubIconDialog = lazy(() =>
     import('@/components/settings/lobehub-icon-dialog').then((module) => ({ default: module.LobeHubIconDialog })),
 );
 
-interface SourcesDialogProps {
+interface SourcesSettingsProps {
     sources: ReadonlyArray<AvailableSource>;
     customSources: CustomSourceRecord[];
     addSource: (
@@ -49,9 +34,11 @@ interface SourcesDialogProps {
     sourceOverrides: Record<string, SourceOverride>;
     updateSourceOverride: (id: string, override: SourceOverride) => void;
     removeSource: (id: CustomSourceId) => Promise<void>;
+    open: boolean;
+    query: string;
 }
 
-export function SourcesDialog({
+export function SourcesSettings({
     sources,
     customSources,
     addSource,
@@ -59,8 +46,9 @@ export function SourcesDialog({
     sourceOverrides,
     updateSourceOverride,
     removeSource,
-}: SourcesDialogProps) {
-    const [open, setOpen] = useState(false);
+    open,
+    query,
+}: SourcesSettingsProps) {
     const [creating, setCreating] = useState(false);
     const [editing, setEditing] = useState<{ id: string; custom?: CustomSourceRecord }>();
     const [title, setTitle] = useState('');
@@ -69,7 +57,14 @@ export function SourcesDialog({
     const [iconMonochrome, setIconMonochrome] = useState(false);
     const [error, setError] = useState<string>();
     const [saving, setSaving] = useState(false);
-    useAppHotkey('pimux.open-sources', 'Mod+S', () => setOpen(true));
+    const resetSourceOverrides = useSettings((state) => state.resetSourceOverrides);
+
+    useEffect(() => {
+        if (!open) {
+            setCreating(false);
+            setEditing(undefined);
+        }
+    }, [open]);
 
     async function chooseExecutable() {
         const path = await openDialog({ directory: false, multiple: false, title: 'Choose executable' });
@@ -137,153 +132,136 @@ export function SourcesDialog({
     }
 
     return (
-        <Dialog
-            open={open}
-            onOpenChange={(nextOpen) => {
-                setOpen(nextOpen);
-                if (!nextOpen) {
-                    setCreating(false);
-                    setEditing(undefined);
-                }
-            }}
-        >
-            <DialogTrigger render={<Button variant="outline" size="icon-lg" aria-label="Sources" />}>
-                <TerminalWindowIcon data-icon="inline-start" weight="bold" />
-            </DialogTrigger>
-            <DialogContent className="max-h-[calc(100svh-2rem)] sm:max-w-lg">
-                {creating ? (
-                    <form className="flex min-h-0 flex-col gap-4" onSubmit={(event) => void submit(event)}>
-                        <DialogHeader>
-                            <DialogTitle>{editing ? 'Edit source' : 'Create source'}</DialogTitle>
-                            <DialogDescription>
-                                {editing
-                                    ? 'Update this terminal source.'
-                                    : 'Add a trusted local executable as a terminal source.'}
-                            </DialogDescription>
-                        </DialogHeader>
-                        <FieldGroup className="overflow-y-auto pr-1">
+        <>
+            {creating ? (
+                <form className="flex min-h-0 flex-col gap-4" onSubmit={(event) => void submit(event)}>
+                    <DialogHeader>
+                        <DialogTitle>{editing ? 'Edit source' : 'Create source'}</DialogTitle>
+                        <DialogDescription>
+                            {editing
+                                ? 'Update this terminal source.'
+                                : 'Add a trusted local executable as a terminal source.'}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <FieldGroup className="overflow-y-auto pr-1">
+                        <Field>
+                            <FieldLabel htmlFor="source-title">Name</FieldLabel>
+                            <Input
+                                id="source-title"
+                                value={title}
+                                maxLength={64}
+                                onChange={(event) => setTitle(event.target.value)}
+                                placeholder="Random Agentic CLI"
+                                autoFocus
+                            />
+                        </Field>
+                        {(!editing || editing.custom) && (
                             <Field>
-                                <FieldLabel htmlFor="source-title">Name</FieldLabel>
-                                <Input
-                                    id="source-title"
-                                    value={title}
-                                    maxLength={64}
-                                    onChange={(event) => setTitle(event.target.value)}
-                                    placeholder="Random Agentic CLI"
-                                    autoFocus
-                                />
-                            </Field>
-                            {(!editing || editing.custom) && (
-                                <Field>
-                                    <FieldLabel htmlFor="source-executable">Command or executable</FieldLabel>
-                                    <ButtonGroup className="w-full">
-                                        <Input
-                                            id="source-executable"
-                                            value={executable}
-                                            onChange={(event) => setExecutable(event.target.value)}
-                                            placeholder="some_cli.sh"
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="icon"
-                                            aria-label="Choose executable"
-                                            onClick={() =>
-                                                void chooseExecutable().catch((reason) => setError(String(reason)))
-                                            }
-                                        >
-                                            <FolderOpenIcon />
-                                        </Button>
-                                    </ButtonGroup>
-                                </Field>
-                            )}
-                            <Field>
-                                <FieldLabel htmlFor="source-icon">Icon</FieldLabel>
+                                <FieldLabel htmlFor="source-executable">Command or executable</FieldLabel>
                                 <ButtonGroup className="w-full">
                                     <Input
-                                        id="source-icon"
-                                        value={icon}
-                                        onChange={(event) => {
-                                            setIcon(event.target.value);
-                                            setIconMonochrome(false);
-                                        }}
-                                        placeholder="Optional image path"
+                                        id="source-executable"
+                                        value={executable}
+                                        onChange={(event) => setExecutable(event.target.value)}
+                                        placeholder="some_cli.sh"
                                     />
                                     <Button
                                         type="button"
                                         variant="outline"
                                         size="icon"
-                                        aria-label="Choose icon"
-                                        onClick={() => void chooseIcon().catch((reason) => setError(String(reason)))}
-                                    >
-                                        <ImageIcon />
-                                    </Button>
-                                    <Suspense
-                                        fallback={
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="icon"
-                                                aria-label="Loading LobeHub icons"
-                                                disabled
-                                            >
-                                                <ImageIcon />
-                                            </Button>
+                                        aria-label="Choose executable"
+                                        onClick={() =>
+                                            void chooseExecutable().catch((reason) => setError(String(reason)))
                                         }
                                     >
-                                        <LobeHubIconDialog
-                                            onSelect={(path, monochrome) => {
-                                                setIcon(path);
-                                                setIconMonochrome(monochrome);
-                                            }}
-                                        />
-                                    </Suspense>
+                                        <FolderOpenIcon />
+                                    </Button>
                                 </ButtonGroup>
                             </Field>
-                            {editing && (
-                                <>
-                                    <HotkeyButton id={`source.open:${editing.id}`} label="Open with current path" />
-                                    <HotkeyButton
-                                        id={`source.open-folder:${editing.id}`}
-                                        label="Choose folder and open"
+                        )}
+                        <Field>
+                            <FieldLabel htmlFor="source-icon">Icon</FieldLabel>
+                            <ButtonGroup className="w-full">
+                                <Input
+                                    id="source-icon"
+                                    value={icon}
+                                    onChange={(event) => {
+                                        setIcon(event.target.value);
+                                        setIconMonochrome(false);
+                                    }}
+                                    placeholder="Optional image path"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    aria-label="Choose icon"
+                                    onClick={() => void chooseIcon().catch((reason) => setError(String(reason)))}
+                                >
+                                    <ImageIcon />
+                                </Button>
+                                <Suspense
+                                    fallback={
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            aria-label="Loading LobeHub icons"
+                                            disabled
+                                        >
+                                            <ImageIcon />
+                                        </Button>
+                                    }
+                                >
+                                    <LobeHubIconDialog
+                                        onSelect={(path, monochrome) => {
+                                            setIcon(path);
+                                            setIconMonochrome(monochrome);
+                                        }}
                                     />
-                                </>
-                            )}
-                        </FieldGroup>
-                        {error && <p className="text-sm text-destructive">{error}</p>}
-                        <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                    setCreating(false);
-                                    setEditing(undefined);
-                                }}
-                            >
-                                <ArrowLeftIcon data-icon="inline-start" />
-                                Back
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={
-                                    saving || !title.trim() || ((!editing || editing.custom) && !executable.trim())
-                                }
-                            >
-                                {!editing && <PlusIcon data-icon="inline-start" />}
-                                {editing ? 'Save changes' : 'Add source'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                ) : (
-                    <>
-                        <DialogHeader>
-                            <DialogTitle>Sources</DialogTitle>
-                            <DialogDescription>
-                                Manage available terminal sources and their shortcuts.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1">
-                            {sources.map((source) => {
+                                </Suspense>
+                            </ButtonGroup>
+                        </Field>
+                        {editing && (
+                            <>
+                                <HotkeyButton id={`source.open:${editing.id}`} label="Open with current path" />
+                                <HotkeyButton id={`source.open-folder:${editing.id}`} label="Choose folder and open" />
+                            </>
+                        )}
+                    </FieldGroup>
+                    {error && <p className="text-sm text-destructive">{error}</p>}
+                    <div className="flex justify-end gap-2 border-t pt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setCreating(false);
+                                setEditing(undefined);
+                            }}
+                        >
+                            <ArrowLeftIcon data-icon="inline-start" />
+                            Back
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={saving || !title.trim() || ((!editing || editing.custom) && !executable.trim())}
+                        >
+                            {!editing && <PlusIcon data-icon="inline-start" />}
+                            {editing ? 'Save changes' : 'Add source'}
+                        </Button>
+                    </div>
+                </form>
+            ) : (
+                <>
+                    <div className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1">
+                        {sources
+                            .filter((source) => {
+                                const customSource = customSources.find((candidate) => candidate.id === source.id);
+                                return `${source.title} ${customSource?.executable || ''}`
+                                    .toLowerCase()
+                                    .includes(query.toLowerCase());
+                            })
+                            .map((source) => {
                                 const customSource = customSources.find((candidate) => candidate.id === source.id);
                                 return (
                                     <div
@@ -330,28 +308,30 @@ export function SourcesDialog({
                                     </div>
                                 );
                             })}
-                        </div>
-                        {error && <p className="text-sm text-destructive">{error}</p>}
-                        <DialogFooter>
-                            <Button
-                                type="button"
-                                onClick={() => {
-                                    setEditing(undefined);
-                                    setTitle('');
-                                    setExecutable('');
-                                    setIcon('');
-                                    setIconMonochrome(false);
-                                    setError(undefined);
-                                    setCreating(true);
-                                }}
-                            >
-                                <PlusIcon data-icon="inline-start" />
-                                Create source
-                            </Button>
-                        </DialogFooter>
-                    </>
-                )}
-            </DialogContent>
-        </Dialog>
+                    </div>
+                    {error && <p className="text-sm text-destructive">{error}</p>}
+                    <div className="flex items-center justify-between border-t pt-4">
+                        <Button type="button" variant="outline" onClick={resetSourceOverrides}>
+                            Reset source customizations
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setEditing(undefined);
+                                setTitle('');
+                                setExecutable('');
+                                setIcon('');
+                                setIconMonochrome(false);
+                                setError(undefined);
+                                setCreating(true);
+                            }}
+                        >
+                            <PlusIcon data-icon="inline-start" />
+                            Create source
+                        </Button>
+                    </div>
+                </>
+            )}
+        </>
     );
 }

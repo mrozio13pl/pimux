@@ -1,26 +1,16 @@
-import { CommandIcon } from '@phosphor-icons/react';
 import { formatForDisplay, type Hotkey, useHotkeyRecorder } from '@tanstack/react-hotkeys';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import { useAppHotkey, useSettings } from '@/lib/settings';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { useRegisteredHotkeys, useSettings } from '@/lib/settings';
 
 interface HotkeyButtonProps {
     id: string;
     label: string;
     defaultHotkey?: Hotkey;
+    query?: string;
 }
 
-export function HotkeyButton({ id, label, defaultHotkey }: HotkeyButtonProps) {
+export function HotkeyButton({ id, label, defaultHotkey, query = '' }: HotkeyButtonProps) {
     const hotkey = useSettings((state) => (Object.hasOwn(state.hotkeys, id) ? state.hotkeys[id] : defaultHotkey));
     const setHotkey = useSettings((state) => state.setHotkey);
     const recorder = useHotkeyRecorder({
@@ -31,6 +21,8 @@ export function HotkeyButton({ id, label, defaultHotkey }: HotkeyButtonProps) {
         ignoreInputs: false,
     });
     const controlId = `hotkey-${id}`;
+
+    if (!`${label} ${defaultHotkey || ''} ${hotkey || ''}`.toLowerCase().includes(query.toLowerCase())) return null;
 
     return (
         <Field orientation="horizontal">
@@ -49,61 +41,22 @@ export function HotkeyButton({ id, label, defaultHotkey }: HotkeyButtonProps) {
     );
 }
 
-export function HotkeysDialog() {
-    const [open, setOpen] = useState(false);
+export function HotkeySettings({ query }: { query: string }) {
     const resetHotkeys = useSettings((state) => state.resetHotkeys);
-    useAppHotkey('pimux.open-hotkeys', 'Mod+/', () => setOpen(true));
+    const hotkeys = useRegisteredHotkeys();
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger render={<Button variant="outline" size="icon-lg" aria-label="Keyboard shortcuts" />}>
-                <CommandIcon data-icon="inline-start" weight="bold" />
-            </DialogTrigger>
-            <DialogContent className="max-h-[calc(100svh-2rem)] sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Keyboard shortcuts</DialogTitle>
-                    <DialogDescription>Click to record. Press Delete to unassign.</DialogDescription>
-                </DialogHeader>
-                <div className="flex min-h-0 flex-col gap-5 overflow-y-auto pr-1">
-                    <FieldSet>
-                        <FieldLegend variant="label">View actions</FieldLegend>
-                        <FieldGroup className="gap-2">
-                            <HotkeyButton id="view.new" label="New view" defaultHotkey="Mod+N" />
-                            <HotkeyButton id="view.open" label="Add project" defaultHotkey="Control+Shift+N" />
-                            <HotkeyButton id="view.delete" label="Delete view" defaultHotkey="Mod+D" />
-                            <HotkeyButton id="view.archive" label="Archive current view" defaultHotkey="Mod+Shift+A" />
-                            <HotkeyButton id="view.change-title" label="Change title" defaultHotkey="F2" />
-                        </FieldGroup>
-                    </FieldSet>
-                    <FieldSet>
-                        <FieldLegend variant="label">View navigation</FieldLegend>
-                        <FieldGroup className="gap-2">
-                            {Array.from({ length: 9 }, (_, index) => (
-                                <HotkeyButton
-                                    key={index}
-                                    id={`view.switch.${index + 1}`}
-                                    label={index === 8 ? 'Last view' : `View ${index + 1}`}
-                                    defaultHotkey={`Ctrl+${index + 1}` as Hotkey}
-                                />
-                            ))}
-                        </FieldGroup>
-                    </FieldSet>
-                    <FieldSet>
-                        <FieldLegend variant="label">Pimux management</FieldLegend>
-                        <FieldGroup className="gap-2">
-                            <HotkeyButton id="pimux.commands" label="Open command palette" defaultHotkey="Mod+K" />
-                            <HotkeyButton id="pimux.open-settings" label="Open settings" defaultHotkey="Mod+I" />
-                            <HotkeyButton id="pimux.open-sources" label="Open sources" defaultHotkey="Mod+S" />
-                            <HotkeyButton id="pimux.open-hotkeys" label="Open hotkeys" defaultHotkey="Mod+/" />
-                        </FieldGroup>
-                    </FieldSet>
-                </div>
-                <DialogFooter>
-                    <Button type="button" variant="outline" onClick={resetHotkeys}>
-                        Reset shortcuts
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <div className="flex flex-col gap-5">
+            <FieldGroup className="gap-2">
+                {hotkeys.map((hotkey) => (
+                    <HotkeyButton key={hotkey.id} {...hotkey} query={query} />
+                ))}
+            </FieldGroup>
+            <div>
+                <Button type="button" variant="outline" onClick={resetHotkeys}>
+                    Reset shortcuts
+                </Button>
+            </div>
+        </div>
     );
 }

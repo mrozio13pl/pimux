@@ -182,8 +182,8 @@ export function AppCommands({
         onOpenSettings();
     }
 
-    useAppHotkey('pimux.commands', 'Mod+K', showCommands);
-    const newViewHotkey = useAppHotkey('view.new', 'Mod+N', showNewView);
+    useAppHotkey('pimux.commands', 'Mod+K', showCommands, 'Open command palette');
+    const newViewHotkey = useAppHotkey('view.new', 'Mod+N', showNewView, 'New view');
 
     return (
         <>

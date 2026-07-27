@@ -116,12 +116,22 @@ export function ViewButton({
         setTitleDialogOpen(true);
     }, [view.title, view.lockTitle]);
 
-    useAppHotkey('view.delete', 'Mod+D', () => {
-        if (active) onDelete(view.id);
-    });
-    useAppHotkey('view.change-title', 'F2', () => {
-        if (active) openTitleDialog();
-    });
+    useAppHotkey(
+        'view.delete',
+        'Mod+D',
+        () => {
+            if (active) onDelete(view.id);
+        },
+        'Delete view',
+    );
+    useAppHotkey(
+        'view.change-title',
+        'F2',
+        () => {
+            if (active) openTitleDialog();
+        },
+        'Change title',
+    );
 
     return (
         <>

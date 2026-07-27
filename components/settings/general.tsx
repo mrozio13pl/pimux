@@ -1,24 +1,22 @@
-import { GearIcon } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import type { ExecutableSource, SourceId } from '@/lib/sources';
-import { settingDefinitions, useAppHotkey, useSettings, type SettingId, type SettingValue } from '@/lib/settings';
+import {
+    settingDefinitions,
+    useSettings,
+    type GeneralSection,
+    type SettingId,
+    type SettingValue,
+} from '@/lib/settings';
 
 type SourceOption = { value: SourceId; label: ReactNode };
-const settingIds = Object.keys(settingDefinitions) as SettingId[];
+export function settingsForSection(section: GeneralSection) {
+    return (Object.keys(settingDefinitions) as SettingId[]).filter((id) => settingDefinitions[id].section === section);
+}
 
 function SettingField({ id, sourceOptions }: { id: SettingId; sourceOptions: SourceOption[] }) {
     const definition = settingDefinitions[id];
@@ -56,11 +54,12 @@ function SettingField({ id, sourceOptions }: { id: SettingId; sourceOptions: Sou
                     onChange={(event) => {
                         const number = event.currentTarget.valueAsNumber;
                         if (!Number.isFinite(number)) return;
-                        const clamped = Math.min(
-                            definition.max ?? Infinity,
-                            Math.max(definition.min ?? -Infinity, number),
+                        setSetting(
+                            id,
+                            Math.round(
+                                Math.min(definition.max ?? Infinity, Math.max(definition.min ?? -Infinity, number)),
+                            ) as SettingValue<typeof id>,
                         );
-                        setSetting(id, Math.round(clamped) as SettingValue<typeof id>);
                     }}
                 />
             ) : (
@@ -87,15 +86,16 @@ function SettingField({ id, sourceOptions }: { id: SettingId; sourceOptions: Sou
     );
 }
 
-interface GeneralSettingsDialogProps {
+export function GeneralSettings({
+    sources,
+    section,
+    query,
+}: {
     sources: ReadonlyArray<ExecutableSource>;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
-
-export function GeneralSettingsDialog({ sources, open, onOpenChange }: GeneralSettingsDialogProps) {
-    const resetSettings = useSettings((state) => state.resetSettings);
-    useAppHotkey('pimux.open-settings', 'Mod+I', () => onOpenChange(true));
+    section: GeneralSection;
+    query: string;
+}) {
+    const resetSettingGroup = useSettings((state) => state.resetSettingGroup);
     const sourceOptions = sources.map((source) => ({
         value: source.id,
         label: (
@@ -107,26 +107,24 @@ export function GeneralSettingsDialog({ sources, open, onOpenChange }: GeneralSe
     }));
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogTrigger render={<Button variant="outline" size="icon-lg" aria-label="General settings" />}>
-                <GearIcon data-icon="inline-start" weight="bold" />
-            </DialogTrigger>
-            <DialogContent className="min-w-2xl">
-                <DialogHeader>
-                    <DialogTitle>General settings</DialogTitle>
-                    <DialogDescription>Changes save automatically.</DialogDescription>
-                </DialogHeader>
-                <FieldGroup>
-                    {settingIds.map((id) => (
+        <div className="flex flex-col gap-5">
+            <FieldGroup>
+                {settingsForSection(section)
+                    .filter((id) => {
+                        const definition = settingDefinitions[id];
+                        return `${definition.label} ${definition.description || ''}`
+                            .toLowerCase()
+                            .includes(query.toLowerCase());
+                    })
+                    .map((id) => (
                         <SettingField key={id} id={id} sourceOptions={sourceOptions} />
                     ))}
-                </FieldGroup>
-                <DialogFooter>
-                    <Button type="button" variant="outline" onClick={resetSettings}>
-                        Reset settings
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            </FieldGroup>
+            <div>
+                <Button type="button" variant="outline" onClick={() => resetSettingGroup(settingsForSection(section))}>
+                    Reset {section}
+                </Button>
+            </div>
+        </div>
     );
 }
