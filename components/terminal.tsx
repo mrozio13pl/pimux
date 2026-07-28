@@ -86,6 +86,7 @@ export function Terminal({
 
     const terminalElement = useRef<HTMLDivElement>(null);
     const terminalInstance = useRef<GhosttyTerminal>(null);
+    const terminalOptions = useRef({ cursorBlink, cursorStyle });
     const launchSessionId = useRef(sessionId);
     const launchWithResume = useRef(resumeSession);
     const activeRef = useRef(active);
@@ -93,6 +94,7 @@ export function Terminal({
     const onOutputRef = useRef(onOutput);
     const onSubmitRef = useRef(onSubmit);
     activeRef.current = active;
+    terminalOptions.current = { cursorBlink, cursorStyle };
     connectSourceRef.current = connectSource;
     onOutputRef.current = onOutput;
     onSubmitRef.current = onSubmit;
@@ -100,6 +102,12 @@ export function Terminal({
     useLayoutEffect(() => {
         if (terminalInstance.current) setTerminalActive(terminalInstance.current, active);
     }, [active]);
+
+    useEffect(() => {
+        if (!terminalInstance.current) return;
+        terminalInstance.current.options.cursorBlink = cursorBlink;
+        terminalInstance.current.options.cursorStyle = cursorStyle;
+    }, [cursorBlink, cursorStyle]);
 
     useEffect(() => {
         let terminal: GhosttyTerminal | undefined;
@@ -119,8 +127,7 @@ export function Terminal({
             if (cancelled || !terminalElement.current) return;
 
             terminal = new GhosttyTerminal({
-                cursorBlink,
-                cursorStyle,
+                ...terminalOptions.current,
                 smoothScrollDuration: 0,
                 fontFamily: '"Ioskeley Mono Term Nerd Font", Monaco, Menlo, "Courier New", monospace',
                 fontSize: 14,
@@ -229,7 +236,7 @@ export function Terminal({
             terminal?.dispose();
             terminalInstance.current = null;
         };
-    }, [cwd, cursorBlink, cursorStyle, onKeyEvent, onReady, pty, sourceId]);
+    }, [cwd, onKeyEvent, onReady, pty, sourceId]);
 
     return (
         <div
