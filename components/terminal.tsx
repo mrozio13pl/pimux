@@ -6,7 +6,7 @@ import { Ansis } from 'ansis';
 import { FitAddon, init, Terminal as GhosttyTerminal } from 'ghostty-web';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
-const ghosttyReady = init();
+let ghosttyReady: ReturnType<typeof init> | undefined;
 const encoder = new TextEncoder();
 const ansi = new Ansis(3);
 
@@ -40,6 +40,17 @@ function setTerminalActive(terminal: GhosttyTerminal, active: boolean) {
     shownTerminal = terminal;
     renderTerminal(terminal);
     terminal.focus();
+}
+
+export function writeTerminalOutput(terminal: GhosttyTerminal, text: string) {
+    const viewportY = terminal.getViewportY();
+    const scrollbackLength = viewportY > 0 ? terminal.getScrollbackLength() : 0;
+
+    terminal.write(text);
+
+    if (viewportY > 0) {
+        terminal.scrollToLine(viewportY + terminal.getScrollbackLength() - scrollbackLength);
+    }
 }
 
 interface TerminalProps extends React.ComponentProps<'div'> {
@@ -100,7 +111,7 @@ export function Terminal({
         let onReadyCleanup: (() => void) | undefined;
         const decoder = new TextDecoder();
 
-        void ghosttyReady.then(async () => {
+        void (ghosttyReady ??= init()).then(async () => {
             await Promise.all([
                 document.fonts.load('18px "Ioskeley Mono"'),
                 document.fonts.load('18px "Ioskeley Mono Term Nerd Font"'),
@@ -110,6 +121,7 @@ export function Terminal({
             terminal = new GhosttyTerminal({
                 cursorBlink,
                 cursorStyle,
+                smoothScrollDuration: 0,
                 fontFamily: '"Ioskeley Mono Term Nerd Font", Monaco, Menlo, "Courier New", monospace',
                 fontSize: 14,
                 theme: {
@@ -161,7 +173,7 @@ export function Terminal({
                 if (cancelled || !terminal) return;
                 const text = decoder.decode(new Uint8Array(data), { stream: true });
                 onOutputRef.current?.(text);
-                terminal.write(text);
+                writeTerminalOutput(terminal, text);
             };
             const process = new Channel<SourceProcessEvent>();
             process.onmessage = (event) => {
