@@ -6,3 +6,6 @@ allowBuilds:
     msw: false
     protobufjs: false
     simple-git-hooks: true
+
+patchedDependencies:
+    ghostty-web@0.4.0: patches/ghostty-web@0.4.0.patch

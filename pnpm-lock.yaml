@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  ghostty-web@0.4.0: eab9f0a7fe4a7d51ef5c11811282cca243f1947f968a6776f2e01b9ec7367199
+
 importers:
 
   .:
@@ -58,7 +61,7 @@ importers:
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       ghostty-web:
         specifier: ^0.4.0
-        version: 0.4.0
+        version: 0.4.0(patch_hash=eab9f0a7fe4a7d51ef5c11811282cca243f1947f968a6776f2e01b9ec7367199)
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -9004,7 +9007,7 @@ snapshots:
 
   get-value@2.0.6: {}
 
-  ghostty-web@0.4.0: {}
+  ghostty-web@0.4.0(patch_hash=eab9f0a7fe4a7d51ef5c11811282cca243f1947f968a6776f2e01b9ec7367199): {}
 
   giscus@1.6.0:
     dependencies:

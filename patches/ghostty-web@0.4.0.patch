@@ -1,0 +1,1363 @@
+diff --git a/dist/custom-glyphs.js b/dist/custom-glyphs.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..50d3bdd436383425ad752698a76fa98bcaeb0bf5
+--- /dev/null
++++ b/dist/custom-glyphs.js
+@@ -0,0 +1,1272 @@
++/**
++* Copyright (c) 2021 The xterm.js authors. All rights reserved.
++* @license MIT
++*/
++function throwIfFalsy(value) {
++	if (!value) throw new Error("value must not be falsy");
++	return value;
++}
++export const blockElementDefinitions = {
++	// Block elements (0x2580-0x2590)
++	"▀": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 4
++	}],
++	"▁": [{
++		x: 0,
++		y: 7,
++		w: 8,
++		h: 1
++	}],
++	"▂": [{
++		x: 0,
++		y: 6,
++		w: 8,
++		h: 2
++	}],
++	"▃": [{
++		x: 0,
++		y: 5,
++		w: 8,
++		h: 3
++	}],
++	"▄": [{
++		x: 0,
++		y: 4,
++		w: 8,
++		h: 4
++	}],
++	"▅": [{
++		x: 0,
++		y: 3,
++		w: 8,
++		h: 5
++	}],
++	"▆": [{
++		x: 0,
++		y: 2,
++		w: 8,
++		h: 6
++	}],
++	"▇": [{
++		x: 0,
++		y: 1,
++		w: 8,
++		h: 7
++	}],
++	"█": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 8
++	}],
++	"▉": [{
++		x: 0,
++		y: 0,
++		w: 7,
++		h: 8
++	}],
++	"▊": [{
++		x: 0,
++		y: 0,
++		w: 6,
++		h: 8
++	}],
++	"▋": [{
++		x: 0,
++		y: 0,
++		w: 5,
++		h: 8
++	}],
++	"▌": [{
++		x: 0,
++		y: 0,
++		w: 4,
++		h: 8
++	}],
++	"▍": [{
++		x: 0,
++		y: 0,
++		w: 3,
++		h: 8
++	}],
++	"▎": [{
++		x: 0,
++		y: 0,
++		w: 2,
++		h: 8
++	}],
++	"▏": [{
++		x: 0,
++		y: 0,
++		w: 1,
++		h: 8
++	}],
++	"▐": [{
++		x: 4,
++		y: 0,
++		w: 4,
++		h: 8
++	}],
++	// Block elements (0x2594-0x2595)
++	"▔": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 1
++	}],
++	"▕": [{
++		x: 7,
++		y: 0,
++		w: 1,
++		h: 8
++	}],
++	// Terminal graphic characters (0x2596-0x259F)
++	"▖": [{
++		x: 0,
++		y: 4,
++		w: 4,
++		h: 4
++	}],
++	"▗": [{
++		x: 4,
++		y: 4,
++		w: 4,
++		h: 4
++	}],
++	"▘": [{
++		x: 0,
++		y: 0,
++		w: 4,
++		h: 4
++	}],
++	"▙": [{
++		x: 0,
++		y: 0,
++		w: 4,
++		h: 8
++	}, {
++		x: 0,
++		y: 4,
++		w: 8,
++		h: 4
++	}],
++	"▚": [{
++		x: 0,
++		y: 0,
++		w: 4,
++		h: 4
++	}, {
++		x: 4,
++		y: 4,
++		w: 4,
++		h: 4
++	}],
++	"▛": [{
++		x: 0,
++		y: 0,
++		w: 4,
++		h: 8
++	}, {
++		x: 4,
++		y: 0,
++		w: 4,
++		h: 4
++	}],
++	"▜": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 4
++	}, {
++		x: 4,
++		y: 0,
++		w: 4,
++		h: 8
++	}],
++	"▝": [{
++		x: 4,
++		y: 0,
++		w: 4,
++		h: 4
++	}],
++	"▞": [{
++		x: 4,
++		y: 0,
++		w: 4,
++		h: 4
++	}, {
++		x: 0,
++		y: 4,
++		w: 4,
++		h: 4
++	}],
++	"▟": [{
++		x: 4,
++		y: 0,
++		w: 4,
++		h: 8
++	}, {
++		x: 0,
++		y: 4,
++		w: 8,
++		h: 4
++	}],
++	// VERTICAL ONE EIGHTH BLOCK-2 through VERTICAL ONE EIGHTH BLOCK-7
++	"🭰": [{
++		x: 1,
++		y: 0,
++		w: 1,
++		h: 8
++	}],
++	"🭱": [{
++		x: 2,
++		y: 0,
++		w: 1,
++		h: 8
++	}],
++	"🭲": [{
++		x: 3,
++		y: 0,
++		w: 1,
++		h: 8
++	}],
++	"🭳": [{
++		x: 4,
++		y: 0,
++		w: 1,
++		h: 8
++	}],
++	"🭴": [{
++		x: 5,
++		y: 0,
++		w: 1,
++		h: 8
++	}],
++	"🭵": [{
++		x: 6,
++		y: 0,
++		w: 1,
++		h: 8
++	}],
++	// HORIZONTAL ONE EIGHTH BLOCK-2 through HORIZONTAL ONE EIGHTH BLOCK-7
++	"🭶": [{
++		x: 0,
++		y: 1,
++		w: 8,
++		h: 1
++	}],
++	"🭷": [{
++		x: 0,
++		y: 2,
++		w: 8,
++		h: 1
++	}],
++	"🭸": [{
++		x: 0,
++		y: 3,
++		w: 8,
++		h: 1
++	}],
++	"🭹": [{
++		x: 0,
++		y: 4,
++		w: 8,
++		h: 1
++	}],
++	"🭺": [{
++		x: 0,
++		y: 5,
++		w: 8,
++		h: 1
++	}],
++	"🭻": [{
++		x: 0,
++		y: 6,
++		w: 8,
++		h: 1
++	}],
++	// LEFT AND LOWER ONE EIGHTH BLOCK
++	"🭼": [{
++		x: 0,
++		y: 0,
++		w: 1,
++		h: 8
++	}, {
++		x: 0,
++		y: 7,
++		w: 8,
++		h: 1
++	}],
++	// LEFT AND UPPER ONE EIGHTH BLOCK
++	"🭽": [{
++		x: 0,
++		y: 0,
++		w: 1,
++		h: 8
++	}, {
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 1
++	}],
++	// RIGHT AND UPPER ONE EIGHTH BLOCK
++	"🭾": [{
++		x: 7,
++		y: 0,
++		w: 1,
++		h: 8
++	}, {
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 1
++	}],
++	// RIGHT AND LOWER ONE EIGHTH BLOCK
++	"🭿": [{
++		x: 7,
++		y: 0,
++		w: 1,
++		h: 8
++	}, {
++		x: 0,
++		y: 7,
++		w: 8,
++		h: 1
++	}],
++	// UPPER AND LOWER ONE EIGHTH BLOCK
++	"🮀": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 1
++	}, {
++		x: 0,
++		y: 7,
++		w: 8,
++		h: 1
++	}],
++	// HORIZONTAL ONE EIGHTH BLOCK-1358
++	"🮁": [
++		{
++			x: 0,
++			y: 0,
++			w: 8,
++			h: 1
++		},
++		{
++			x: 0,
++			y: 2,
++			w: 8,
++			h: 1
++		},
++		{
++			x: 0,
++			y: 4,
++			w: 8,
++			h: 1
++		},
++		{
++			x: 0,
++			y: 7,
++			w: 8,
++			h: 1
++		}
++	],
++	// UPPER ONE QUARTER BLOCK
++	"🮂": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 2
++	}],
++	// UPPER THREE EIGHTHS BLOCK
++	"🮃": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 3
++	}],
++	// UPPER FIVE EIGHTHS BLOCK
++	"🮄": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 5
++	}],
++	// UPPER THREE QUARTERS BLOCK
++	"🮅": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 6
++	}],
++	// UPPER SEVEN EIGHTHS BLOCK
++	"🮆": [{
++		x: 0,
++		y: 0,
++		w: 8,
++		h: 7
++	}],
++	// RIGHT ONE QUARTER BLOCK
++	"🮇": [{
++		x: 6,
++		y: 0,
++		w: 2,
++		h: 8
++	}],
++	// RIGHT THREE EIGHTHS B0OCK
++	"🮈": [{
++		x: 5,
++		y: 0,
++		w: 3,
++		h: 8
++	}],
++	// RIGHT FIVE EIGHTHS BL0CK
++	"🮉": [{
++		x: 3,
++		y: 0,
++		w: 5,
++		h: 8
++	}],
++	// RIGHT THREE QUARTERS 0LOCK
++	"🮊": [{
++		x: 2,
++		y: 0,
++		w: 6,
++		h: 8
++	}],
++	// RIGHT SEVEN EIGHTHS B0OCK
++	"🮋": [{
++		x: 1,
++		y: 0,
++		w: 7,
++		h: 8
++	}],
++	// CHECKER BOARD FILL
++	"🮕": [
++		{
++			x: 0,
++			y: 0,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 4,
++			y: 0,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 2,
++			y: 2,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 6,
++			y: 2,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 0,
++			y: 4,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 4,
++			y: 4,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 2,
++			y: 6,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 6,
++			y: 6,
++			w: 2,
++			h: 2
++		}
++	],
++	// INVERSE CHECKER BOARD FILL
++	"🮖": [
++		{
++			x: 2,
++			y: 0,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 6,
++			y: 0,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 0,
++			y: 2,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 4,
++			y: 2,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 2,
++			y: 4,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 6,
++			y: 4,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 0,
++			y: 6,
++			w: 2,
++			h: 2
++		},
++		{
++			x: 4,
++			y: 6,
++			w: 2,
++			h: 2
++		}
++	],
++	// HEAVY HORIZONTAL FILL (upper middle and lower one quarter block)
++	"🮗": [{
++		x: 0,
++		y: 2,
++		w: 8,
++		h: 2
++	}, {
++		x: 0,
++		y: 6,
++		w: 8,
++		h: 2
++	}]
++};
++/**
++* Defines the repeating pattern used by special characters, the pattern is made up of a 2d array of
++* pixel values to be filled (1) or not filled (0).
++*/
++const patternCharacterDefinitions = {
++	// Shade characters (0x2591-0x2593)
++	"░": [
++		[
++			1,
++			0,
++			0,
++			0
++		],
++		[
++			0,
++			0,
++			0,
++			0
++		],
++		[
++			0,
++			0,
++			1,
++			0
++		],
++		[
++			0,
++			0,
++			0,
++			0
++		]
++	],
++	"▒": [
++		[1, 0],
++		[0, 0],
++		[0, 1],
++		[0, 0]
++	],
++	"▓": [
++		[0, 1],
++		[1, 1],
++		[1, 0],
++		[1, 1]
++	]
++};
++var Shapes = /* @__PURE__ */ function(Shapes) {
++	/** │ */ Shapes["TOP_TO_BOTTOM"] = "M.5,0 L.5,1";
++	/** ─ */ Shapes["LEFT_TO_RIGHT"] = "M0,.5 L1,.5";
++	/** └ */ Shapes["TOP_TO_RIGHT"] = "M.5,0 L.5,.5 L1,.5";
++	/** ┘ */ Shapes["TOP_TO_LEFT"] = "M.5,0 L.5,.5 L0,.5";
++	/** ┐ */ Shapes["LEFT_TO_BOTTOM"] = "M0,.5 L.5,.5 L.5,1";
++	/** ┌ */ Shapes["RIGHT_TO_BOTTOM"] = "M0.5,1 L.5,.5 L1,.5";
++	/** ╵ */ Shapes["MIDDLE_TO_TOP"] = "M.5,.5 L.5,0";
++	/** ╴ */ Shapes["MIDDLE_TO_LEFT"] = "M.5,.5 L0,.5";
++	/** ╶ */ Shapes["MIDDLE_TO_RIGHT"] = "M.5,.5 L1,.5";
++	/** ╷ */ Shapes["MIDDLE_TO_BOTTOM"] = "M.5,.5 L.5,1";
++	/** ┴ */ Shapes["T_TOP"] = "M0,.5 L1,.5 M.5,.5 L.5,0";
++	/** ┤ */ Shapes["T_LEFT"] = "M.5,0 L.5,1 M.5,.5 L0,.5";
++	/** ├ */ Shapes["T_RIGHT"] = "M.5,0 L.5,1 M.5,.5 L1,.5";
++	/** ┬ */ Shapes["T_BOTTOM"] = "M0,.5 L1,.5 M.5,.5 L.5,1";
++	/** ┼ */ Shapes["CROSS"] = "M0,.5 L1,.5 M.5,0 L.5,1";
++	/** ╌ */ Shapes["TWO_DASHES_HORIZONTAL"] = "M.1,.5 L.4,.5 M.6,.5 L.9,.5";
++	/** ┄ */ Shapes["THREE_DASHES_HORIZONTAL"] = "M.0667,.5 L.2667,.5 M.4,.5 L.6,.5 M.7333,.5 L.9333,.5";
++	/** ┉ */ Shapes["FOUR_DASHES_HORIZONTAL"] = "M.05,.5 L.2,.5 M.3,.5 L.45,.5 M.55,.5 L.7,.5 M.8,.5 L.95,.5";
++	/** ╎ */ Shapes["TWO_DASHES_VERTICAL"] = "M.5,.1 L.5,.4 M.5,.6 L.5,.9";
++	/** ┆ */ Shapes["THREE_DASHES_VERTICAL"] = "M.5,.0667 L.5,.2667 M.5,.4 L.5,.6 M.5,.7333 L.5,.9333";
++	/** ┊ */ Shapes["FOUR_DASHES_VERTICAL"] = "M.5,.05 L.5,.2 M.5,.3 L.5,.45 L.5,.55 M.5,.7 L.5,.95";
++	return Shapes;
++}(Shapes || {});
++var Style = /* @__PURE__ */ function(Style) {
++	Style[Style["NORMAL"] = 1] = "NORMAL";
++	Style[Style["BOLD"] = 3] = "BOLD";
++	return Style;
++}(Style || {});
++/**
++* This contains the definitions of all box drawing characters in the format of SVG paths (ie. the
++* svg d attribute).
++*/
++export const boxDrawingDefinitions = {
++	// Uniform normal and bold
++	"─": { [Style.NORMAL]: Shapes.LEFT_TO_RIGHT },
++	"━": { [Style.BOLD]: Shapes.LEFT_TO_RIGHT },
++	"│": { [Style.NORMAL]: Shapes.TOP_TO_BOTTOM },
++	"┃": { [Style.BOLD]: Shapes.TOP_TO_BOTTOM },
++	"┌": { [Style.NORMAL]: Shapes.RIGHT_TO_BOTTOM },
++	"┏": { [Style.BOLD]: Shapes.RIGHT_TO_BOTTOM },
++	"┐": { [Style.NORMAL]: Shapes.LEFT_TO_BOTTOM },
++	"┓": { [Style.BOLD]: Shapes.LEFT_TO_BOTTOM },
++	"└": { [Style.NORMAL]: Shapes.TOP_TO_RIGHT },
++	"┗": { [Style.BOLD]: Shapes.TOP_TO_RIGHT },
++	"┘": { [Style.NORMAL]: Shapes.TOP_TO_LEFT },
++	"┛": { [Style.BOLD]: Shapes.TOP_TO_LEFT },
++	"├": { [Style.NORMAL]: Shapes.T_RIGHT },
++	"┣": { [Style.BOLD]: Shapes.T_RIGHT },
++	"┤": { [Style.NORMAL]: Shapes.T_LEFT },
++	"┫": { [Style.BOLD]: Shapes.T_LEFT },
++	"┬": { [Style.NORMAL]: Shapes.T_BOTTOM },
++	"┳": { [Style.BOLD]: Shapes.T_BOTTOM },
++	"┴": { [Style.NORMAL]: Shapes.T_TOP },
++	"┻": { [Style.BOLD]: Shapes.T_TOP },
++	"┼": { [Style.NORMAL]: Shapes.CROSS },
++	"╋": { [Style.BOLD]: Shapes.CROSS },
++	"╴": { [Style.NORMAL]: Shapes.MIDDLE_TO_LEFT },
++	"╸": { [Style.BOLD]: Shapes.MIDDLE_TO_LEFT },
++	"╵": { [Style.NORMAL]: Shapes.MIDDLE_TO_TOP },
++	"╹": { [Style.BOLD]: Shapes.MIDDLE_TO_TOP },
++	"╶": { [Style.NORMAL]: Shapes.MIDDLE_TO_RIGHT },
++	"╺": { [Style.BOLD]: Shapes.MIDDLE_TO_RIGHT },
++	"╷": { [Style.NORMAL]: Shapes.MIDDLE_TO_BOTTOM },
++	"╻": { [Style.BOLD]: Shapes.MIDDLE_TO_BOTTOM },
++	// Double border
++	"═": { [Style.NORMAL]: (xp, yp) => `M0,${.5 - yp} L1,${.5 - yp} M0,${.5 + yp} L1,${.5 + yp}` },
++	"║": { [Style.NORMAL]: (xp, yp) => `M${.5 - xp},0 L${.5 - xp},1 M${.5 + xp},0 L${.5 + xp},1` },
++	"╒": { [Style.NORMAL]: (xp, yp) => `M.5,1 L.5,${.5 - yp} L1,${.5 - yp} M.5,${.5 + yp} L1,${.5 + yp}` },
++	"╓": { [Style.NORMAL]: (xp, yp) => `M${.5 - xp},1 L${.5 - xp},.5 L1,.5 M${.5 + xp},.5 L${.5 + xp},1` },
++	"╔": { [Style.NORMAL]: (xp, yp) => `M1,${.5 - yp} L${.5 - xp},${.5 - yp} L${.5 - xp},1 M1,${.5 + yp} L${.5 + xp},${.5 + yp} L${.5 + xp},1` },
++	"╕": { [Style.NORMAL]: (xp, yp) => `M0,${.5 - yp} L.5,${.5 - yp} L.5,1 M0,${.5 + yp} L.5,${.5 + yp}` },
++	"╖": { [Style.NORMAL]: (xp, yp) => `M${.5 + xp},1 L${.5 + xp},.5 L0,.5 M${.5 - xp},.5 L${.5 - xp},1` },
++	"╗": { [Style.NORMAL]: (xp, yp) => `M0,${.5 + yp} L${.5 - xp},${.5 + yp} L${.5 - xp},1 M0,${.5 - yp} L${.5 + xp},${.5 - yp} L${.5 + xp},1` },
++	"╘": { [Style.NORMAL]: (xp, yp) => `M.5,0 L.5,${.5 + yp} L1,${.5 + yp} M.5,${.5 - yp} L1,${.5 - yp}` },
++	"╙": { [Style.NORMAL]: (xp, yp) => `M1,.5 L${.5 - xp},.5 L${.5 - xp},0 M${.5 + xp},.5 L${.5 + xp},0` },
++	"╚": { [Style.NORMAL]: (xp, yp) => `M1,${.5 - yp} L${.5 + xp},${.5 - yp} L${.5 + xp},0 M1,${.5 + yp} L${.5 - xp},${.5 + yp} L${.5 - xp},0` },
++	"╛": { [Style.NORMAL]: (xp, yp) => `M0,${.5 + yp} L.5,${.5 + yp} L.5,0 M0,${.5 - yp} L.5,${.5 - yp}` },
++	"╜": { [Style.NORMAL]: (xp, yp) => `M0,.5 L${.5 + xp},.5 L${.5 + xp},0 M${.5 - xp},.5 L${.5 - xp},0` },
++	"╝": { [Style.NORMAL]: (xp, yp) => `M0,${.5 - yp} L${.5 - xp},${.5 - yp} L${.5 - xp},0 M0,${.5 + yp} L${.5 + xp},${.5 + yp} L${.5 + xp},0` },
++	"╞": { [Style.NORMAL]: (xp, yp) => `${Shapes.TOP_TO_BOTTOM} M.5,${.5 - yp} L1,${.5 - yp} M.5,${.5 + yp} L1,${.5 + yp}` },
++	"╟": { [Style.NORMAL]: (xp, yp) => `M${.5 - xp},0 L${.5 - xp},1 M${.5 + xp},0 L${.5 + xp},1 M${.5 + xp},.5 L1,.5` },
++	"╠": { [Style.NORMAL]: (xp, yp) => `M${.5 - xp},0 L${.5 - xp},1 M1,${.5 + yp} L${.5 + xp},${.5 + yp} L${.5 + xp},1 M1,${.5 - yp} L${.5 + xp},${.5 - yp} L${.5 + xp},0` },
++	"╡": { [Style.NORMAL]: (xp, yp) => `${Shapes.TOP_TO_BOTTOM} M0,${.5 - yp} L.5,${.5 - yp} M0,${.5 + yp} L.5,${.5 + yp}` },
++	"╢": { [Style.NORMAL]: (xp, yp) => `M0,.5 L${.5 - xp},.5 M${.5 - xp},0 L${.5 - xp},1 M${.5 + xp},0 L${.5 + xp},1` },
++	"╣": { [Style.NORMAL]: (xp, yp) => `M${.5 + xp},0 L${.5 + xp},1 M0,${.5 + yp} L${.5 - xp},${.5 + yp} L${.5 - xp},1 M0,${.5 - yp} L${.5 - xp},${.5 - yp} L${.5 - xp},0` },
++	"╤": { [Style.NORMAL]: (xp, yp) => `M0,${.5 - yp} L1,${.5 - yp} M0,${.5 + yp} L1,${.5 + yp} M.5,${.5 + yp} L.5,1` },
++	"╥": { [Style.NORMAL]: (xp, yp) => `${Shapes.LEFT_TO_RIGHT} M${.5 - xp},.5 L${.5 - xp},1 M${.5 + xp},.5 L${.5 + xp},1` },
++	"╦": { [Style.NORMAL]: (xp, yp) => `M0,${.5 - yp} L1,${.5 - yp} M0,${.5 + yp} L${.5 - xp},${.5 + yp} L${.5 - xp},1 M1,${.5 + yp} L${.5 + xp},${.5 + yp} L${.5 + xp},1` },
++	"╧": { [Style.NORMAL]: (xp, yp) => `M.5,0 L.5,${.5 - yp} M0,${.5 - yp} L1,${.5 - yp} M0,${.5 + yp} L1,${.5 + yp}` },
++	"╨": { [Style.NORMAL]: (xp, yp) => `${Shapes.LEFT_TO_RIGHT} M${.5 - xp},.5 L${.5 - xp},0 M${.5 + xp},.5 L${.5 + xp},0` },
++	"╩": { [Style.NORMAL]: (xp, yp) => `M0,${.5 + yp} L1,${.5 + yp} M0,${.5 - yp} L${.5 - xp},${.5 - yp} L${.5 - xp},0 M1,${.5 - yp} L${.5 + xp},${.5 - yp} L${.5 + xp},0` },
++	"╪": { [Style.NORMAL]: (xp, yp) => `${Shapes.TOP_TO_BOTTOM} M0,${.5 - yp} L1,${.5 - yp} M0,${.5 + yp} L1,${.5 + yp}` },
++	"╫": { [Style.NORMAL]: (xp, yp) => `${Shapes.LEFT_TO_RIGHT} M${.5 - xp},0 L${.5 - xp},1 M${.5 + xp},0 L${.5 + xp},1` },
++	"╬": { [Style.NORMAL]: (xp, yp) => `M0,${.5 + yp} L${.5 - xp},${.5 + yp} L${.5 - xp},1 M1,${.5 + yp} L${.5 + xp},${.5 + yp} L${.5 + xp},1 M0,${.5 - yp} L${.5 - xp},${.5 - yp} L${.5 - xp},0 M1,${.5 - yp} L${.5 + xp},${.5 - yp} L${.5 + xp},0` },
++	// Diagonal
++	"╱": { [Style.NORMAL]: "M1,0 L0,1" },
++	"╲": { [Style.NORMAL]: "M0,0 L1,1" },
++	"╳": { [Style.NORMAL]: "M1,0 L0,1 M0,0 L1,1" },
++	// Mixed weight
++	"╼": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_LEFT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_RIGHT
++	},
++	"╽": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_TOP,
++		[Style.BOLD]: Shapes.MIDDLE_TO_BOTTOM
++	},
++	"╾": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_RIGHT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_LEFT
++	},
++	"╿": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_TOP
++	},
++	"┍": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_RIGHT
++	},
++	"┎": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_RIGHT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_BOTTOM
++	},
++	"┑": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_LEFT
++	},
++	"┒": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_LEFT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_BOTTOM
++	},
++	"┕": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_TOP,
++		[Style.BOLD]: Shapes.MIDDLE_TO_RIGHT
++	},
++	"┖": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_RIGHT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_TOP
++	},
++	"┙": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_TOP,
++		[Style.BOLD]: Shapes.MIDDLE_TO_LEFT
++	},
++	"┚": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_LEFT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_TOP
++	},
++	"┝": {
++		[Style.NORMAL]: Shapes.TOP_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_RIGHT
++	},
++	"┞": {
++		[Style.NORMAL]: Shapes.RIGHT_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_TOP
++	},
++	"┟": {
++		[Style.NORMAL]: Shapes.TOP_TO_RIGHT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_BOTTOM
++	},
++	"┠": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_RIGHT,
++		[Style.BOLD]: Shapes.TOP_TO_BOTTOM
++	},
++	"┡": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_BOTTOM,
++		[Style.BOLD]: Shapes.TOP_TO_RIGHT
++	},
++	"┢": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_TOP,
++		[Style.BOLD]: Shapes.RIGHT_TO_BOTTOM
++	},
++	"┥": {
++		[Style.NORMAL]: Shapes.TOP_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_LEFT
++	},
++	"┦": {
++		[Style.NORMAL]: Shapes.LEFT_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_TOP
++	},
++	"┧": {
++		[Style.NORMAL]: Shapes.TOP_TO_LEFT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_BOTTOM
++	},
++	"┨": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_LEFT,
++		[Style.BOLD]: Shapes.TOP_TO_BOTTOM
++	},
++	"┩": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_BOTTOM,
++		[Style.BOLD]: Shapes.TOP_TO_LEFT
++	},
++	"┪": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_TOP,
++		[Style.BOLD]: Shapes.LEFT_TO_BOTTOM
++	},
++	"┭": {
++		[Style.NORMAL]: Shapes.RIGHT_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_LEFT
++	},
++	"┮": {
++		[Style.NORMAL]: Shapes.LEFT_TO_BOTTOM,
++		[Style.BOLD]: Shapes.MIDDLE_TO_RIGHT
++	},
++	"┯": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_BOTTOM,
++		[Style.BOLD]: Shapes.LEFT_TO_RIGHT
++	},
++	"┰": {
++		[Style.NORMAL]: Shapes.LEFT_TO_RIGHT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_BOTTOM
++	},
++	"┱": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_RIGHT,
++		[Style.BOLD]: Shapes.LEFT_TO_BOTTOM
++	},
++	"┲": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_LEFT,
++		[Style.BOLD]: Shapes.RIGHT_TO_BOTTOM
++	},
++	"┵": {
++		[Style.NORMAL]: Shapes.TOP_TO_RIGHT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_LEFT
++	},
++	"┶": {
++		[Style.NORMAL]: Shapes.TOP_TO_LEFT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_RIGHT
++	},
++	"┷": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_TOP,
++		[Style.BOLD]: Shapes.LEFT_TO_RIGHT
++	},
++	"┸": {
++		[Style.NORMAL]: Shapes.LEFT_TO_RIGHT,
++		[Style.BOLD]: Shapes.MIDDLE_TO_TOP
++	},
++	"┹": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_RIGHT,
++		[Style.BOLD]: Shapes.TOP_TO_LEFT
++	},
++	"┺": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_LEFT,
++		[Style.BOLD]: Shapes.TOP_TO_RIGHT
++	},
++	"┽": {
++		[Style.NORMAL]: `${Shapes.TOP_TO_BOTTOM} ${Shapes.MIDDLE_TO_RIGHT}`,
++		[Style.BOLD]: Shapes.MIDDLE_TO_LEFT
++	},
++	"┾": {
++		[Style.NORMAL]: `${Shapes.TOP_TO_BOTTOM} ${Shapes.MIDDLE_TO_LEFT}`,
++		[Style.BOLD]: Shapes.MIDDLE_TO_RIGHT
++	},
++	"┿": {
++		[Style.NORMAL]: Shapes.TOP_TO_BOTTOM,
++		[Style.BOLD]: Shapes.LEFT_TO_RIGHT
++	},
++	"╀": {
++		[Style.NORMAL]: `${Shapes.LEFT_TO_RIGHT} ${Shapes.MIDDLE_TO_BOTTOM}`,
++		[Style.BOLD]: Shapes.MIDDLE_TO_TOP
++	},
++	"╁": {
++		[Style.NORMAL]: `${Shapes.MIDDLE_TO_TOP} ${Shapes.LEFT_TO_RIGHT}`,
++		[Style.BOLD]: Shapes.MIDDLE_TO_BOTTOM
++	},
++	"╂": {
++		[Style.NORMAL]: Shapes.LEFT_TO_RIGHT,
++		[Style.BOLD]: Shapes.TOP_TO_BOTTOM
++	},
++	"╃": {
++		[Style.NORMAL]: Shapes.RIGHT_TO_BOTTOM,
++		[Style.BOLD]: Shapes.TOP_TO_LEFT
++	},
++	"╄": {
++		[Style.NORMAL]: Shapes.LEFT_TO_BOTTOM,
++		[Style.BOLD]: Shapes.TOP_TO_RIGHT
++	},
++	"╅": {
++		[Style.NORMAL]: Shapes.TOP_TO_RIGHT,
++		[Style.BOLD]: Shapes.LEFT_TO_BOTTOM
++	},
++	"╆": {
++		[Style.NORMAL]: Shapes.TOP_TO_LEFT,
++		[Style.BOLD]: Shapes.RIGHT_TO_BOTTOM
++	},
++	"╇": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_BOTTOM,
++		[Style.BOLD]: `${Shapes.MIDDLE_TO_TOP} ${Shapes.LEFT_TO_RIGHT}`
++	},
++	"╈": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_TOP,
++		[Style.BOLD]: `${Shapes.LEFT_TO_RIGHT} ${Shapes.MIDDLE_TO_BOTTOM}`
++	},
++	"╉": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_RIGHT,
++		[Style.BOLD]: `${Shapes.TOP_TO_BOTTOM} ${Shapes.MIDDLE_TO_LEFT}`
++	},
++	"╊": {
++		[Style.NORMAL]: Shapes.MIDDLE_TO_LEFT,
++		[Style.BOLD]: `${Shapes.TOP_TO_BOTTOM} ${Shapes.MIDDLE_TO_RIGHT}`
++	},
++	// Dashed
++	"╌": { [Style.NORMAL]: Shapes.TWO_DASHES_HORIZONTAL },
++	"╍": { [Style.BOLD]: Shapes.TWO_DASHES_HORIZONTAL },
++	"┄": { [Style.NORMAL]: Shapes.THREE_DASHES_HORIZONTAL },
++	"┅": { [Style.BOLD]: Shapes.THREE_DASHES_HORIZONTAL },
++	"┈": { [Style.NORMAL]: Shapes.FOUR_DASHES_HORIZONTAL },
++	"┉": { [Style.BOLD]: Shapes.FOUR_DASHES_HORIZONTAL },
++	"╎": { [Style.NORMAL]: Shapes.TWO_DASHES_VERTICAL },
++	"╏": { [Style.BOLD]: Shapes.TWO_DASHES_VERTICAL },
++	"┆": { [Style.NORMAL]: Shapes.THREE_DASHES_VERTICAL },
++	"┇": { [Style.BOLD]: Shapes.THREE_DASHES_VERTICAL },
++	"┊": { [Style.NORMAL]: Shapes.FOUR_DASHES_VERTICAL },
++	"┋": { [Style.BOLD]: Shapes.FOUR_DASHES_VERTICAL },
++	// Curved
++	"╭": { [Style.NORMAL]: (xp, yp) => `M.5,1 L.5,${.5 + yp / .15 * .5} C.5,${.5 + yp / .15 * .5},.5,.5,1,.5` },
++	"╮": { [Style.NORMAL]: (xp, yp) => `M.5,1 L.5,${.5 + yp / .15 * .5} C.5,${.5 + yp / .15 * .5},.5,.5,0,.5` },
++	"╯": { [Style.NORMAL]: (xp, yp) => `M.5,0 L.5,${.5 - yp / .15 * .5} C.5,${.5 - yp / .15 * .5},.5,.5,0,.5` },
++	"╰": { [Style.NORMAL]: (xp, yp) => `M.5,0 L.5,${.5 - yp / .15 * .5} C.5,${.5 - yp / .15 * .5},.5,.5,1,.5` }
++};
++var VectorType = /* @__PURE__ */ function(VectorType) {
++	VectorType[VectorType["FILL"] = 0] = "FILL";
++	VectorType[VectorType["STROKE"] = 1] = "STROKE";
++	return VectorType;
++}(VectorType || {});
++/**
++* This contains the definitions of the primarily used box drawing characters as vector shapes. The
++* reason these characters are defined specially is to avoid common problems if a user's font has
++* not been patched with powerline characters and also to get pixel perfect rendering as rendering
++* issues can occur around AA/SPAA.
++*
++* The line variants draw beyond the cell and get clipped to ensure the end of the line is not
++* visible.
++*
++* Original symbols defined in https://github.com/powerline/fontpatcher
++*/
++export const powerlineDefinitions = {
++	// Git branch
++	"": {
++		d: "M.3,1 L.03,1 L.03,.88 C.03,.82,.06,.78,.11,.73 C.15,.7,.2,.68,.28,.65 L.43,.6 C.49,.58,.53,.56,.56,.53 C.59,.5,.6,.47,.6,.43 L.6,.27 L.4,.27 L.69,.1 L.98,.27 L.78,.27 L.78,.46 C.78,.52,.76,.56,.72,.61 C.68,.66,.63,.67,.56,.7 L.48,.72 C.42,.74,.38,.76,.35,.78 C.32,.8,.31,.84,.31,.88 L.31,1 M.3,.5 L.03,.59 L.03,.09 L.3,.09 L.3,.655",
++		type: VectorType.FILL
++	},
++	// L N
++	"": {
++		d: "M.7,.4 L.7,.47 L.2,.47 L.2,.03 L.355,.03 L.355,.4 L.705,.4 M.7,.5 L.86,.5 L.86,.95 L.69,.95 L.44,.66 L.46,.86 L.46,.95 L.3,.95 L.3,.49 L.46,.49 L.71,.78 L.69,.565 L.69,.5",
++		type: VectorType.FILL
++	},
++	// Lock
++	"": {
++		d: "M.25,.94 C.16,.94,.11,.92,.11,.87 L.11,.53 C.11,.48,.15,.455,.23,.45 L.23,.3 C.23,.25,.26,.22,.31,.19 C.36,.16,.43,.15,.51,.15 C.59,.15,.66,.16,.71,.19 C.77,.22,.79,.26,.79,.3 L.79,.45 C.87,.45,.91,.48,.91,.53 L.91,.87 C.91,.92,.86,.94,.77,.94 L.24,.94 M.53,.2 C.49,.2,.45,.21,.42,.23 C.39,.25,.38,.27,.38,.3 L.38,.45 L.68,.45 L.68,.3 C.68,.27,.67,.25,.64,.23 C.61,.21,.58,.2,.53,.2 M.58,.82 L.58,.66 C.63,.65,.65,.63,.65,.6 C.65,.58,.64,.57,.61,.56 C.58,.55,.56,.54,.52,.54 C.48,.54,.46,.55,.43,.56 C.4,.57,.39,.59,.39,.6 C.39,.63,.41,.64,.46,.66 L.46,.82 L.57,.82",
++		type: VectorType.FILL
++	},
++	// Right triangle solid
++	"": {
++		d: "M0,0 L1,.5 L0,1",
++		type: VectorType.FILL,
++		rightPadding: 2
++	},
++	// Right triangle line
++	"": {
++		d: "M-1,-.5 L1,.5 L-1,1.5",
++		type: VectorType.STROKE,
++		leftPadding: 1,
++		rightPadding: 1
++	},
++	// Left triangle solid
++	"": {
++		d: "M1,0 L0,.5 L1,1",
++		type: VectorType.FILL,
++		leftPadding: 2
++	},
++	// Left triangle line
++	"": {
++		d: "M2,-.5 L0,.5 L2,1.5",
++		type: VectorType.STROKE,
++		leftPadding: 1,
++		rightPadding: 1
++	},
++	// Right semi-circle solid
++	"": {
++		d: "M0,0 L0,1 C0.552,1,1,0.776,1,.5 C1,0.224,0.552,0,0,0",
++		type: VectorType.FILL,
++		rightPadding: 1
++	},
++	// Right semi-circle line
++	"": {
++		d: "M.2,1 C.422,1,.8,.826,.78,.5 C.8,.174,0.422,0,.2,0",
++		type: VectorType.STROKE,
++		rightPadding: 1
++	},
++	// Left semi-circle solid
++	"": {
++		d: "M1,0 L1,1 C0.448,1,0,0.776,0,.5 C0,0.224,0.448,0,1,0",
++		type: VectorType.FILL,
++		leftPadding: 1
++	},
++	// Left semi-circle line
++	"": {
++		d: "M.8,1 C0.578,1,0.2,.826,.22,.5 C0.2,0.174,0.578,0,0.8,0",
++		type: VectorType.STROKE,
++		leftPadding: 1
++	},
++	// Lower left triangle
++	"": {
++		d: "M-.5,-.5 L1.5,1.5 L-.5,1.5",
++		type: VectorType.FILL
++	},
++	// Backslash separator
++	"": {
++		d: "M-.5,-.5 L1.5,1.5",
++		type: VectorType.STROKE,
++		leftPadding: 1,
++		rightPadding: 1
++	},
++	// Lower right triangle
++	"": {
++		d: "M1.5,-.5 L-.5,1.5 L1.5,1.5",
++		type: VectorType.FILL
++	},
++	// Upper left triangle
++	"": {
++		d: "M1.5,-.5 L-.5,1.5 L-.5,-.5",
++		type: VectorType.FILL
++	},
++	// Forward slash separator
++	"": {
++		d: "M1.5,-.5 L-.5,1.5",
++		type: VectorType.STROKE,
++		leftPadding: 1,
++		rightPadding: 1
++	},
++	// Upper right triangle
++	"": {
++		d: "M-.5,-.5 L1.5,1.5 L1.5,-.5",
++		type: VectorType.FILL
++	}
++};
++// Forward slash separator redundant
++powerlineDefinitions[""] = powerlineDefinitions[""];
++// Backslash separator redundant
++powerlineDefinitions[""] = powerlineDefinitions[""];
++/**
++* Try drawing a custom block element or box drawing character, returning whether it was
++* successfully drawn.
++*/
++export function tryDrawCustomChar(ctx, c, xOffset, yOffset, deviceCellWidth, deviceCellHeight, fontSize, devicePixelRatio) {
++	const blockElementDefinition = blockElementDefinitions[c];
++	if (blockElementDefinition) {
++		drawBlockElementChar(ctx, blockElementDefinition, xOffset, yOffset, deviceCellWidth, deviceCellHeight);
++		return true;
++	}
++	const patternDefinition = patternCharacterDefinitions[c];
++	if (patternDefinition) {
++		drawPatternChar(ctx, patternDefinition, xOffset, yOffset, deviceCellWidth, deviceCellHeight);
++		return true;
++	}
++	const boxDrawingDefinition = boxDrawingDefinitions[c];
++	if (boxDrawingDefinition) {
++		drawBoxDrawingChar(ctx, boxDrawingDefinition, xOffset, yOffset, deviceCellWidth, deviceCellHeight, devicePixelRatio);
++		return true;
++	}
++	const powerlineDefinition = powerlineDefinitions[c];
++	if (powerlineDefinition) {
++		drawPowerlineChar(ctx, powerlineDefinition, xOffset, yOffset, deviceCellWidth, deviceCellHeight, fontSize, devicePixelRatio);
++		return true;
++	}
++	return false;
++}
++function drawBlockElementChar(ctx, charDefinition, xOffset, yOffset, deviceCellWidth, deviceCellHeight) {
++	for (let i = 0; i < charDefinition.length; i++) {
++		const box = charDefinition[i];
++		const xEighth = deviceCellWidth / 8;
++		const yEighth = deviceCellHeight / 8;
++		ctx.fillRect(xOffset + box.x * xEighth, yOffset + box.y * yEighth, box.w * xEighth, box.h * yEighth);
++	}
++}
++const cachedPatterns = new Map();
++function drawPatternChar(ctx, charDefinition, xOffset, yOffset, deviceCellWidth, deviceCellHeight) {
++	let patternSet = cachedPatterns.get(charDefinition);
++	if (!patternSet) {
++		patternSet = new Map();
++		cachedPatterns.set(charDefinition, patternSet);
++	}
++	const fillStyle = ctx.fillStyle;
++	if (typeof fillStyle !== "string") {
++		throw new Error(`Unexpected fillStyle type "${fillStyle}"`);
++	}
++	let pattern = patternSet.get(fillStyle);
++	if (!pattern) {
++		const width = charDefinition[0].length;
++		const height = charDefinition.length;
++		const tmpCanvas = ctx.canvas.ownerDocument.createElement("canvas");
++		tmpCanvas.width = width;
++		tmpCanvas.height = height;
++		const tmpCtx = throwIfFalsy(tmpCanvas.getContext("2d"));
++		const imageData = new ImageData(width, height);
++		// Extract rgba from fillStyle
++		let r;
++		let g;
++		let b;
++		let a;
++		if (fillStyle.startsWith("#")) {
++			r = parseInt(fillStyle.slice(1, 3), 16);
++			g = parseInt(fillStyle.slice(3, 5), 16);
++			b = parseInt(fillStyle.slice(5, 7), 16);
++			a = fillStyle.length > 7 && parseInt(fillStyle.slice(7, 9), 16) || 1;
++		} else if (fillStyle.startsWith("rgba")) {
++			[r, g, b, a] = fillStyle.substring(5, fillStyle.length - 1).split(",").map((e) => parseFloat(e));
++		} else if (fillStyle.startsWith("rgb(")) {
++			[r, g, b] = fillStyle.substring(4, fillStyle.length - 1).split(",").map((e) => parseFloat(e));
++			a = 1;
++		} else {
++			throw new Error(`Unexpected fillStyle color format "${fillStyle}" when drawing pattern glyph`);
++		}
++		for (let y = 0; y < height; y++) {
++			for (let x = 0; x < width; x++) {
++				imageData.data[(y * width + x) * 4] = r;
++				imageData.data[(y * width + x) * 4 + 1] = g;
++				imageData.data[(y * width + x) * 4 + 2] = b;
++				imageData.data[(y * width + x) * 4 + 3] = charDefinition[y][x] * (a * 255);
++			}
++		}
++		tmpCtx.putImageData(imageData, 0, 0);
++		pattern = throwIfFalsy(ctx.createPattern(tmpCanvas, null));
++		patternSet.set(fillStyle, pattern);
++	}
++	ctx.fillStyle = pattern;
++	ctx.fillRect(xOffset, yOffset, deviceCellWidth, deviceCellHeight);
++}
++/**
++* Draws the following box drawing characters by mapping a subset of SVG d attribute instructions to
++* canvas draw calls.
++*
++* Box styles:       ┎┰┒┍┯┑╓╥╖╒╤╕ ┏┳┓┌┲┓┌┬┐┏┱┐
++* ┌─┬─┐ ┏━┳━┓ ╔═╦═╗ ┠╂┨┝┿┥╟╫╢╞╪╡ ┡╇┩├╊┫┢╈┪┣╉┤
++* │ │ │ ┃ ┃ ┃ ║ ║ ║ ┖┸┚┕┷┙╙╨╜╘╧╛ └┴┘└┺┛┗┻┛┗┹┘
++* ├─┼─┤ ┣━╋━┫ ╠═╬═╣ ┏┱┐┌┲┓┌┬┐┌┬┐ ┏┳┓┌┮┓┌┬┐┏┭┐
++* │ │ │ ┃ ┃ ┃ ║ ║ ║ ┡╃┤├╄┩├╆┪┢╅┤ ┞╀┦├┾┫┟╁┧┣┽┤
++* └─┴─┘ ┗━┻━┛ ╚═╩═╝ └┴┘└┴┘└┺┛┗┹┘ └┴┘└┶┛┗┻┛┗┵┘
++*
++* Other:
++* ╭─╮ ╲ ╱ ╷╻╎╏┆┇┊┋ ╺╾╴ ╌╌╌ ┄┄┄ ┈┈┈
++* │ │  ╳  ╽╿╎╏┆┇┊┋ ╶╼╸ ╍╍╍ ┅┅┅ ┉┉┉
++* ╰─╯ ╱ ╲ ╹╵╎╏┆┇┊┋
++*
++* All box drawing characters:
++* ─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏
++* ┐ ┑ ┒ ┓ └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ├ ┝ ┞ ┟
++* ┠ ┡ ┢ ┣ ┤ ┥ ┦ ┧ ┨ ┩ ┪ ┫ ┬ ┭ ┮ ┯
++* ┰ ┱ ┲ ┳ ┴ ┵ ┶ ┷ ┸ ┹ ┺ ┻ ┼ ┽ ┾ ┿
++* ╀ ╁ ╂ ╃ ╄ ╅ ╆ ╇ ╈ ╉ ╊ ╋ ╌ ╍ ╎ ╏
++* ═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞ ╟
++* ╠ ╡ ╢ ╣ ╤ ╥ ╦ ╧ ╨ ╩ ╪ ╫ ╬ ╭ ╮ ╯
++* ╰ ╱ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
++*
++* ---
++*
++* Box drawing alignment tests:                                          █
++*                                                                       ▉
++*   ╔══╦══╗  ┌──┬──┐  ╭──┬──╮  ╭──┬──╮  ┏━━┳━━┓  ┎┒┏┑   ╷  ╻ ┏┯┓ ┌┰┐    ▊ ╱╲╱╲╳╳╳
++*   ║┌─╨─┐║  │╔═╧═╗│  │╒═╪═╕│  │╓─╁─╖│  ┃┌─╂─┐┃  ┗╃╄┙  ╶┼╴╺╋╸┠┼┨ ┝╋┥    ▋ ╲╱╲╱╳╳╳
++*   ║│╲ ╱│║  │║   ║│  ││ │ ││  │║ ┃ ║│  ┃│ ╿ │┃  ┍╅╆┓   ╵  ╹ ┗┷┛ └┸┘    ▌ ╱╲╱╲╳╳╳
++*   ╠╡ ╳ ╞╣  ├╢   ╟┤  ├┼─┼─┼┤  ├╫─╂─╫┤  ┣┿╾┼╼┿┫  ┕┛┖┚     ┌┄┄┐ ╎ ┏┅┅┓ ┋ ▍ ╲╱╲╱╳╳╳
++*   ║│╱ ╲│║  │║   ║│  ││ │ ││  │║ ┃ ║│  ┃│ ╽ │┃  ░░▒▒▓▓██ ┊  ┆ ╎ ╏  ┇ ┋ ▎
++*   ║└─╥─┘║  │╚═╤═╝│  │╘═╪═╛│  │╙─╀─╜│  ┃└─╂─┘┃  ░░▒▒▓▓██ ┊  ┆ ╎ ╏  ┇ ┋ ▏
++*   ╚══╩══╝  └──┴──┘  ╰──┴──╯  ╰──┴──╯  ┗━━┻━━┛           └╌╌┘ ╎ ┗╍╍┛ ┋  ▁▂▃▄▅▆▇█
++*
++* Source: https://www.w3.org/2001/06/utf-8-test/UTF-8-demo.html
++*/
++function drawBoxDrawingChar(ctx, charDefinition, xOffset, yOffset, deviceCellWidth, deviceCellHeight, devicePixelRatio) {
++	ctx.strokeStyle = ctx.fillStyle;
++	for (const [fontWeight, instructions] of Object.entries(charDefinition)) {
++		ctx.beginPath();
++		ctx.lineWidth = devicePixelRatio * Number.parseInt(fontWeight);
++		let actualInstructions;
++		if (typeof instructions === "function") {
++			const xp = .15;
++			const yp = .15 / deviceCellHeight * deviceCellWidth;
++			actualInstructions = instructions(xp, yp);
++		} else {
++			actualInstructions = instructions;
++		}
++		for (const instruction of actualInstructions.split(" ")) {
++			const type = instruction[0];
++			const f = svgToCanvasInstructionMap[type];
++			if (!f) {
++				console.error(`Could not find drawing instructions for "${type}"`);
++				continue;
++			}
++			const args = instruction.substring(1).split(",");
++			if (!args[0] || !args[1]) {
++				continue;
++			}
++			f(ctx, translateArgs(args, deviceCellWidth, deviceCellHeight, xOffset, yOffset, true, devicePixelRatio));
++		}
++		ctx.stroke();
++		ctx.closePath();
++	}
++}
++function drawPowerlineChar(ctx, charDefinition, xOffset, yOffset, deviceCellWidth, deviceCellHeight, fontSize, devicePixelRatio) {
++	// Clip the cell to make sure drawing doesn't occur beyond bounds
++	const clipRegion = new Path2D();
++	clipRegion.rect(xOffset, yOffset, deviceCellWidth, deviceCellHeight);
++	ctx.clip(clipRegion);
++	ctx.beginPath();
++	// Scale the stroke with DPR and font size
++	const cssLineWidth = fontSize / 12;
++	ctx.lineWidth = devicePixelRatio * cssLineWidth;
++	for (const instruction of charDefinition.d.split(" ")) {
++		const type = instruction[0];
++		const f = svgToCanvasInstructionMap[type];
++		if (!f) {
++			console.error(`Could not find drawing instructions for "${type}"`);
++			continue;
++		}
++		const args = instruction.substring(1).split(",");
++		if (!args[0] || !args[1]) {
++			continue;
++		}
++		f(ctx, translateArgs(args, deviceCellWidth, deviceCellHeight, xOffset, yOffset, false, devicePixelRatio, (charDefinition.leftPadding ?? 0) * (cssLineWidth / 2), (charDefinition.rightPadding ?? 0) * (cssLineWidth / 2)));
++	}
++	if (charDefinition.type === VectorType.STROKE) {
++		ctx.strokeStyle = ctx.fillStyle;
++		ctx.stroke();
++	} else {
++		ctx.fill();
++	}
++	ctx.closePath();
++}
++function clamp(value, max, min = 0) {
++	return Math.max(Math.min(value, max), min);
++}
++const svgToCanvasInstructionMap = {
++	"C": (ctx, args) => ctx.bezierCurveTo(args[0], args[1], args[2], args[3], args[4], args[5]),
++	"L": (ctx, args) => ctx.lineTo(args[0], args[1]),
++	"M": (ctx, args) => ctx.moveTo(args[0], args[1])
++};
++function translateArgs(args, cellWidth, cellHeight, xOffset, yOffset, doClamp, devicePixelRatio, leftPadding = 0, rightPadding = 0) {
++	const result = args.map((e) => parseFloat(e) || parseInt(e));
++	if (result.length < 2) {
++		throw new Error("Too few arguments for instruction");
++	}
++	for (let x = 0; x < result.length; x += 2) {
++		// Translate from 0-1 to 0-cellWidth
++		result[x] *= cellWidth - leftPadding * devicePixelRatio - rightPadding * devicePixelRatio;
++		// Ensure coordinate doesn't escape cell bounds and round to the nearest 0.5 to ensure a crisp
++		// line at 100% devicePixelRatio
++		if (doClamp && result[x] !== 0) {
++			result[x] = clamp(Math.round(result[x] + .5) - .5, cellWidth, 0);
++		}
++		// Apply the cell's offset (ie. x*cellWidth)
++		result[x] += xOffset + leftPadding * devicePixelRatio;
++	}
++	for (let y = 1; y < result.length; y += 2) {
++		// Translate from 0-1 to 0-cellHeight
++		result[y] *= cellHeight;
++		// Ensure coordinate doesn't escape cell bounds and round to the nearest 0.5 to ensure a crisp
++		// line at 100% devicePixelRatio
++		if (doClamp && result[y] !== 0) {
++			result[y] = clamp(Math.round(result[y] + .5) - .5, cellHeight, 0);
++		}
++		// Apply the cell's offset (ie. x*cellHeight)
++		result[y] += yOffset;
++	}
++	return result;
++}
+diff --git a/dist/ghostty-web.js b/dist/ghostty-web.js
+index a4ca427b95288e70c782ce303013cd644893dcec..551b6b0c63fe214acdfcda71177801c090fbb673 100644
+--- a/dist/ghostty-web.js
++++ b/dist/ghostty-web.js
+@@ -1,3 +1,4 @@
++import { tryDrawCustomChar } from "./custom-glyphs.js";
+ var H = /* @__PURE__ */ ((Q) => (Q[Q.CURSOR_KEY_APPLICATION = 0] = "CURSOR_KEY_APPLICATION", Q[Q.KEYPAD_KEY_APPLICATION = 1] = "KEYPAD_KEY_APPLICATION", Q[Q.IGNORE_KEYPAD_WITH_NUMLOCK = 2] = "IGNORE_KEYPAD_WITH_NUMLOCK", Q[Q.ALT_ESC_PREFIX = 3] = "ALT_ESC_PREFIX", Q[Q.MODIFY_OTHER_KEYS_STATE_2 = 4] = "MODIFY_OTHER_KEYS_STATE_2", Q[Q.KITTY_KEYBOARD_FLAGS = 5] = "KITTY_KEYBOARD_FLAGS", Q))(H || {}), b = /* @__PURE__ */ ((Q) => (Q[Q.RELEASE = 0] = "RELEASE", Q[Q.PRESS = 1] = "PRESS", Q[Q.REPEAT = 2] = "REPEAT", Q))(b || {}), o = /* @__PURE__ */ ((Q) => (Q[Q.UNIDENTIFIED = 0] = "UNIDENTIFIED", Q[Q.GRAVE = 1] = "GRAVE", Q[Q.BACKSLASH = 2] = "BACKSLASH", Q[Q.BRACKET_LEFT = 3] = "BRACKET_LEFT", Q[Q.BRACKET_RIGHT = 4] = "BRACKET_RIGHT", Q[Q.COMMA = 5] = "COMMA", Q[Q.ZERO = 6] = "ZERO", Q[Q.ONE = 7] = "ONE", Q[Q.TWO = 8] = "TWO", Q[Q.THREE = 9] = "THREE", Q[Q.FOUR = 10] = "FOUR", Q[Q.FIVE = 11] = "FIVE", Q[Q.SIX = 12] = "SIX", Q[Q.SEVEN = 13] = "SEVEN", Q[Q.EIGHT = 14] = "EIGHT", Q[Q.NINE = 15] = "NINE", Q[Q.EQUAL = 16] = "EQUAL", Q[Q.INTL_BACKSLASH = 17] = "INTL_BACKSLASH", Q[Q.INTL_RO = 18] = "INTL_RO", Q[Q.INTL_YEN = 19] = "INTL_YEN", Q[Q.A = 20] = "A", Q[Q.B = 21] = "B", Q[Q.C = 22] = "C", Q[Q.D = 23] = "D", Q[Q.E = 24] = "E", Q[Q.F = 25] = "F", Q[Q.G = 26] = "G", Q[Q.H = 27] = "H", Q[Q.I = 28] = "I", Q[Q.J = 29] = "J", Q[Q.K = 30] = "K", Q[Q.L = 31] = "L", Q[Q.M = 32] = "M", Q[Q.N = 33] = "N", Q[Q.O = 34] = "O", Q[Q.P = 35] = "P", Q[Q.Q = 36] = "Q", Q[Q.R = 37] = "R", Q[Q.S = 38] = "S", Q[Q.T = 39] = "T", Q[Q.U = 40] = "U", Q[Q.V = 41] = "V", Q[Q.W = 42] = "W", Q[Q.X = 43] = "X", Q[Q.Y = 44] = "Y", Q[Q.Z = 45] = "Z", Q[Q.MINUS = 46] = "MINUS", Q[Q.PERIOD = 47] = "PERIOD", Q[Q.QUOTE = 48] = "QUOTE", Q[Q.SEMICOLON = 49] = "SEMICOLON", Q[Q.SLASH = 50] = "SLASH", Q[Q.ALT_LEFT = 51] = "ALT_LEFT", Q[Q.ALT_RIGHT = 52] = "ALT_RIGHT", Q[Q.BACKSPACE = 53] = "BACKSPACE", Q[Q.CAPS_LOCK = 54] = "CAPS_LOCK", Q[Q.CONTEXT_MENU = 55] = "CONTEXT_MENU", Q[Q.CONTROL_LEFT = 56] = "CONTROL_LEFT", Q[Q.CONTROL_RIGHT = 57] = "CONTROL_RIGHT", Q[Q.ENTER = 58] = "ENTER", Q[Q.META_LEFT = 59] = "META_LEFT", Q[Q.META_RIGHT = 60] = "META_RIGHT", Q[Q.SHIFT_LEFT = 61] = "SHIFT_LEFT", Q[Q.SHIFT_RIGHT = 62] = "SHIFT_RIGHT", Q[Q.SPACE = 63] = "SPACE", Q[Q.TAB = 64] = "TAB", Q[Q.CONVERT = 65] = "CONVERT", Q[Q.KANA_MODE = 66] = "KANA_MODE", Q[Q.NON_CONVERT = 67] = "NON_CONVERT", Q[Q.DELETE = 68] = "DELETE", Q[Q.END = 69] = "END", Q[Q.HELP = 70] = "HELP", Q[Q.HOME = 71] = "HOME", Q[Q.INSERT = 72] = "INSERT", Q[Q.PAGE_DOWN = 73] = "PAGE_DOWN", Q[Q.PAGE_UP = 74] = "PAGE_UP", Q[Q.DOWN = 75] = "DOWN", Q[Q.LEFT = 76] = "LEFT", Q[Q.RIGHT = 77] = "RIGHT", Q[Q.UP = 78] = "UP", Q[Q.NUM_LOCK = 79] = "NUM_LOCK", Q[Q.KP_0 = 80] = "KP_0", Q[Q.KP_1 = 81] = "KP_1", Q[Q.KP_2 = 82] = "KP_2", Q[Q.KP_3 = 83] = "KP_3", Q[Q.KP_4 = 84] = "KP_4", Q[Q.KP_5 = 85] = "KP_5", Q[Q.KP_6 = 86] = "KP_6", Q[Q.KP_7 = 87] = "KP_7", Q[Q.KP_8 = 88] = "KP_8", Q[Q.KP_9 = 89] = "KP_9", Q[Q.KP_PLUS = 90] = "KP_PLUS", Q[Q.KP_BACKSPACE = 91] = "KP_BACKSPACE", Q[Q.KP_CLEAR = 92] = "KP_CLEAR", Q[Q.KP_CLEAR_ENTRY = 93] = "KP_CLEAR_ENTRY", Q[Q.KP_COMMA = 94] = "KP_COMMA", Q[Q.KP_PERIOD = 95] = "KP_PERIOD", Q[Q.KP_DIVIDE = 96] = "KP_DIVIDE", Q[Q.KP_ENTER = 97] = "KP_ENTER", Q[Q.KP_EQUAL = 98] = "KP_EQUAL", Q[Q.KP_MEMORY_ADD = 99] = "KP_MEMORY_ADD", Q[Q.KP_MEMORY_CLEAR = 100] = "KP_MEMORY_CLEAR", Q[Q.KP_MEMORY_RECALL = 101] = "KP_MEMORY_RECALL", Q[Q.KP_MEMORY_STORE = 102] = "KP_MEMORY_STORE", Q[Q.KP_MEMORY_SUBTRACT = 103] = "KP_MEMORY_SUBTRACT", Q[Q.KP_MULTIPLY = 104] = "KP_MULTIPLY", Q[Q.KP_PAREN_LEFT = 105] = "KP_PAREN_LEFT", Q[Q.KP_PAREN_RIGHT = 106] = "KP_PAREN_RIGHT", Q[Q.KP_MINUS = 107] = "KP_MINUS", Q[Q.KP_SEPARATOR = 108] = "KP_SEPARATOR", Q[Q.NUMPAD_UP = 109] = "NUMPAD_UP", Q[Q.NUMPAD_DOWN = 110] = "NUMPAD_DOWN", Q[Q.NUMPAD_RIGHT = 111] = "NUMPAD_RIGHT", Q[Q.NUMPAD_LEFT = 112] = "NUMPAD_LEFT", Q[Q.NUMPAD_BEGIN = 113] = "NUMPAD_BEGIN", Q[Q.NUMPAD_HOME = 114] = "NUMPAD_HOME", Q[Q.NUMPAD_END = 115] = "NUMPAD_END", Q[Q.NUMPAD_INSERT = 116] = "NUMPAD_INSERT", Q[Q.NUMPAD_DELETE = 117] = "NUMPAD_DELETE", Q[Q.NUMPAD_PAGE_UP = 118] = "NUMPAD_PAGE_UP", Q[Q.NUMPAD_PAGE_DOWN = 119] = "NUMPAD_PAGE_DOWN", Q[Q.ESCAPE = 120] = "ESCAPE", Q[Q.F1 = 121] = "F1", Q[Q.F2 = 122] = "F2", Q[Q.F3 = 123] = "F3", Q[Q.F4 = 124] = "F4", Q[Q.F5 = 125] = "F5", Q[Q.F6 = 126] = "F6", Q[Q.F7 = 127] = "F7", Q[Q.F8 = 128] = "F8", Q[Q.F9 = 129] = "F9", Q[Q.F10 = 130] = "F10", Q[Q.F11 = 131] = "F11", Q[Q.F12 = 132] = "F12", Q[Q.F13 = 133] = "F13", Q[Q.F14 = 134] = "F14", Q[Q.F15 = 135] = "F15", Q[Q.F16 = 136] = "F16", Q[Q.F17 = 137] = "F17", Q[Q.F18 = 138] = "F18", Q[Q.F19 = 139] = "F19", Q[Q.F20 = 140] = "F20", Q[Q.F21 = 141] = "F21", Q[Q.F22 = 142] = "F22", Q[Q.F23 = 143] = "F23", Q[Q.F24 = 144] = "F24", Q[Q.F25 = 145] = "F25", Q[Q.FN_LOCK = 146] = "FN_LOCK", Q[Q.PRINT_SCREEN = 147] = "PRINT_SCREEN", Q[Q.SCROLL_LOCK = 148] = "SCROLL_LOCK", Q[Q.PAUSE = 149] = "PAUSE", Q[Q.BROWSER_BACK = 150] = "BROWSER_BACK", Q[Q.BROWSER_FAVORITES = 151] = "BROWSER_FAVORITES", Q[Q.BROWSER_FORWARD = 152] = "BROWSER_FORWARD", Q[Q.BROWSER_HOME = 153] = "BROWSER_HOME", Q[Q.BROWSER_REFRESH = 154] = "BROWSER_REFRESH", Q[Q.BROWSER_SEARCH = 155] = "BROWSER_SEARCH", Q[Q.BROWSER_STOP = 156] = "BROWSER_STOP", Q[Q.EJECT = 157] = "EJECT", Q[Q.LAUNCH_APP_1 = 158] = "LAUNCH_APP_1", Q[Q.LAUNCH_APP_2 = 159] = "LAUNCH_APP_2", Q[Q.LAUNCH_MAIL = 160] = "LAUNCH_MAIL", Q[Q.MEDIA_PLAY_PAUSE = 161] = "MEDIA_PLAY_PAUSE", Q[Q.MEDIA_SELECT = 162] = "MEDIA_SELECT", Q[Q.MEDIA_STOP = 163] = "MEDIA_STOP", Q[Q.MEDIA_TRACK_NEXT = 164] = "MEDIA_TRACK_NEXT", Q[Q.MEDIA_TRACK_PREVIOUS = 165] = "MEDIA_TRACK_PREVIOUS", Q[Q.POWER = 166] = "POWER", Q[Q.SLEEP = 167] = "SLEEP", Q[Q.AUDIO_VOLUME_DOWN = 168] = "AUDIO_VOLUME_DOWN", Q[Q.AUDIO_VOLUME_MUTE = 169] = "AUDIO_VOLUME_MUTE", Q[Q.AUDIO_VOLUME_UP = 170] = "AUDIO_VOLUME_UP", Q[Q.WAKE_UP = 171] = "WAKE_UP", Q[Q.COPY = 172] = "COPY", Q[Q.CUT = 173] = "CUT", Q[Q.PASTE = 174] = "PASTE", Q))(o || {}), y = /* @__PURE__ */ ((Q) => (Q[Q.NONE = 0] = "NONE", Q[Q.SHIFT = 1] = "SHIFT", Q[Q.CTRL = 2] = "CTRL", Q[Q.ALT = 4] = "ALT", Q[Q.SUPER = 8] = "SUPER", Q[Q.CAPSLOCK = 16] = "CAPSLOCK", Q[Q.NUMLOCK = 32] = "NUMLOCK", Q))(y || {}), O = /* @__PURE__ */ ((Q) => (Q[Q.NONE = 0] = "NONE", Q[Q.PARTIAL = 1] = "PARTIAL", Q[Q.FULL = 2] = "FULL", Q))(O || {});
+ const d = 80;
+ var e = /* @__PURE__ */ ((Q) => (Q[Q.BOLD = 1] = "BOLD", Q[Q.ITALIC = 2] = "ITALIC", Q[Q.UNDERLINE = 4] = "UNDERLINE", Q[Q.STRIKETHROUGH = 8] = "STRIKETHROUGH", Q[Q.INVERSE = 16] = "INVERSE", Q[Q.INVISIBLE = 32] = "INVISIBLE", Q[Q.BLINK = 64] = "BLINK", Q[Q.FAINT = 128] = "FAINT", Q))(e || {});
+@@ -1338,7 +1339,7 @@ class $ {
+     const g = A.getContext("2d", { alpha: !0 });
+     if (!g)
+       throw new Error("Failed to get 2D rendering context");
+-    this.ctx = g, this.fontSize = B.fontSize ?? 15, this.fontFamily = B.fontFamily ?? "monospace", this.cursorStyle = B.cursorStyle ?? "block", this.cursorBlink = B.cursorBlink ?? !1, this.theme = { ...f, ...B.theme }, this.devicePixelRatio = B.devicePixelRatio ?? window.devicePixelRatio ?? 1, this.palette = [
++    this.ctx = g, this.fontSize = B.fontSize ?? 15, this.fontFamily = B.fontFamily ?? "monospace", this.cursorStyle = B.cursorStyle ?? "block", this.cursorBlink = B.cursorBlink ?? !1, this.customGlyphs = B.customGlyphs ?? !0, this.theme = { ...f, ...B.theme }, this.devicePixelRatio = B.devicePixelRatio ?? window.devicePixelRatio ?? 1, this.palette = [
+       this.theme.black,
+       this.theme.red,
+       this.theme.green,
+@@ -1519,6 +1520,19 @@ class $ {
+    * Render a cell's text and decorations (Pass 2 of two-pass rendering)
+    * Selection foreground color is applied here to match the selection background.
+    */
++  drawCustomGlyph(A, B, g, E) {
++    if (!this.customGlyphs)
++      return !1;
++    const C = this.devicePixelRatio;
++    let I = !1;
++    this.ctx.save();
++    try {
++      this.ctx.setTransform(1, 0, 0, 1, 0, 0), I = tryDrawCustomChar(this.ctx, A, B * C, g * C, E * C, this.metrics.height * C, this.fontSize, C);
++    } finally {
++      this.ctx.restore();
++    }
++    return I;
++  }
+   renderCellText(A, B, g) {
+     var k;
+     const E = B * this.metrics.width, C = g * this.metrics.height, I = this.metrics.width * A.width;
+@@ -1535,7 +1549,7 @@ class $ {
+     A.flags & e.FAINT && (this.ctx.globalAlpha = 0.5);
+     const w = E, s = C + this.metrics.baseline;
+     let N;
+-    if (A.grapheme_len > 0 && ((k = this.currentBuffer) != null && k.getGraphemeString) ? N = this.currentBuffer.getGraphemeString(g, B) : N = String.fromCodePoint(A.codepoint || 32), this.ctx.fillText(N, w, s), A.flags & e.FAINT && (this.ctx.globalAlpha = 1), A.flags & e.UNDERLINE) {
++    if (A.grapheme_len > 0 && ((k = this.currentBuffer) != null && k.getGraphemeString) ? N = this.currentBuffer.getGraphemeString(g, B) : N = String.fromCodePoint(A.codepoint || 32), (this.drawCustomGlyph(N, E, C, I) || this.ctx.fillText(N, w, s)), A.flags & e.FAINT && (this.ctx.globalAlpha = 1), A.flags & e.UNDERLINE) {
+       const M = C + this.metrics.baseline + 2;
+       this.ctx.strokeStyle = this.ctx.fillStyle, this.ctx.lineWidth = 1, this.ctx.beginPath(), this.ctx.moveTo(E, M), this.ctx.lineTo(E + I, M), this.ctx.stroke();
+     }
+@@ -1622,6 +1636,9 @@ class $ {
+   setFontSize(A) {
+     this.fontSize = A, this.metrics = this.measureFont();
+   }
++  setCustomGlyphs(A) {
++    this.customGlyphs = A;
++  }
+   /**
+    * Update font family
+    */
+@@ -2206,7 +2223,8 @@ class IA {
+       allowTransparency: A.allowTransparency ?? !1,
+       convertEol: A.convertEol ?? !1,
+       disableStdin: A.disableStdin ?? !1,
+-      smoothScrollDuration: A.smoothScrollDuration ?? 100
++      smoothScrollDuration: A.smoothScrollDuration ?? 100,
++      customGlyphs: A.customGlyphs ?? !0
+       // Default: 100ms smooth scroll
+     };
+     this.options = new Proxy(B, {
+@@ -2235,6 +2253,9 @@ class IA {
+         case "theme":
+           this.renderer && console.warn("ghostty-web: theme changes after open() are not yet fully supported");
+           break;
++        case "customGlyphs":
++          this.renderer && this.wasmTerm && (this.renderer.setCustomGlyphs(this.options.customGlyphs), this.renderer.render(this.wasmTerm, !0, this.viewportY, this));
++          break;
+         case "fontSize":
+           this.renderer && (this.renderer.setFontSize(this.options.fontSize), this.handleFontChange());
+           break;
+@@ -2340,6 +2361,7 @@ class IA {
+         fontFamily: this.options.fontFamily,
+         cursorStyle: this.options.cursorStyle,
+         cursorBlink: this.options.cursorBlink,
++        customGlyphs: this.options.customGlyphs,
+         theme: this.options.theme
+       }), this.renderer.resize(this.cols, this.rows), this.inputHandler = new P(
+         this.ghostty,
