@@ -1,5 +1,6 @@
 import { Pi } from '@lobehub/icons';
 import { createSource } from '@/lib/sources/create-source';
+import { isPiPasteShortcut } from '@/lib/sources/pi/paste';
 import { parsePiSidebarUpdate } from '@/lib/sources/pi/protocol';
 
 export const piSource = createSource({
@@ -11,13 +12,14 @@ export const piSource = createSource({
     viewButton: {
         initial: { description: 'New Pi instance', status: 'idle' },
         connect: (terminal, update) => {
-            const paste = (event: ClipboardEvent) => {
+            const paste = (event: KeyboardEvent) => {
+                if (!isPiPasteShortcut(event, navigator.userAgent)) return;
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 terminal.input('\x16', true);
             };
 
-            terminal.element?.addEventListener('paste', paste, { capture: true });
+            terminal.element?.addEventListener('keydown', paste, { capture: true });
             const titles = terminal.onTitleChange((title) => {
                 const sidebar = parsePiSidebarUpdate(title);
                 if (sidebar) update(sidebar);
@@ -28,7 +30,7 @@ export const piSource = createSource({
                     if (event.type === 'exited') update({ status: 'finished' });
                 },
                 dispose: () => {
-                    terminal.element?.removeEventListener('paste', paste, { capture: true });
+                    terminal.element?.removeEventListener('keydown', paste, { capture: true });
                     titles.dispose();
                 },
             };
