@@ -1,4 +1,4 @@
-import { ClaudeCode, OpenCode } from '@lobehub/icons';
+import { OpenCode } from '@lobehub/icons';
 import type { ReactNode } from 'react';
 import {
     createSource,
@@ -6,6 +6,7 @@ import {
     type SourceId,
     type SourceViewButton,
 } from '@/lib/sources/create-source';
+import { claudeSource } from '@/lib/sources/claude';
 import { piSource } from '@/lib/sources/pi';
 import { shellSource } from '@/lib/sources/shell';
 
@@ -13,12 +14,7 @@ export * from '@/lib/sources/create-source';
 
 export const SOURCES = [
     piSource,
-    createSource({
-        id: 'builtin:claudecode',
-        title: 'Claude Code',
-        icon: <ClaudeCode.Color className="size-4.5" />,
-        planned: true,
-    }),
+    claudeSource,
     createSource({
         id: 'builtin:opencode',
         title: 'OpenCode',
@@ -42,6 +38,7 @@ export type AvailableSource = Source | ExecutableSource;
 export const BUILTIN_SOURCES = {
     shell: shellSource,
     pi: piSource,
+    claude: claudeSource,
 } as const;
 export function getSource(id: string, sources = SOURCES) {
     return sources.find((source) => source.id === id);

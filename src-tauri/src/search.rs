@@ -300,6 +300,12 @@ fn parse_transcript(file: &SessionFile) -> Result<Transcript, String> {
             if let Some(directory) = value.get("cwd").and_then(Value::as_str) {
                 cwd = directory.to_string();
             }
+            if entry_type == "custom-title" {
+                if let Some(title) = value.get("customTitle").and_then(Value::as_str) {
+                    name = clipped(title, 80);
+                }
+                continue;
+            }
             if entry_type != "user" && entry_type != "assistant" {
                 continue;
             }
@@ -639,7 +645,10 @@ mod tests {
         let claude = root.join("claude.jsonl");
         fs::write(
             &claude,
-            "{\"type\":\"assistant\",\"sessionId\":\"claude-1\",\"cwd\":\"/tmp/claude\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"done\"},{\"type\":\"thinking\",\"thinking\":\"hidden\"}]}}\n",
+            concat!(
+                "{\"type\":\"custom-title\",\"customTitle\":\"Native Claude Title\",\"sessionId\":\"claude-1\"}\n",
+                "{\"type\":\"assistant\",\"sessionId\":\"claude-1\",\"cwd\":\"/tmp/claude\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"done\"},{\"type\":\"thinking\",\"thinking\":\"hidden\"}]}}\n"
+            ),
         )
         .unwrap();
         let pi = parse_transcript(&SessionFile {
@@ -657,8 +666,12 @@ mod tests {
             ("pi-1", "fix auth")
         );
         assert_eq!(
-            (claude.session_id.as_str(), claude.messages[0].text.as_str()),
-            ("claude-1", "done")
+            (
+                claude.session_id.as_str(),
+                claude.title.as_str(),
+                claude.messages[0].text.as_str()
+            ),
+            ("claude-1", "Native Claude Title", "done")
         );
         fs::remove_dir_all(root).unwrap();
     }

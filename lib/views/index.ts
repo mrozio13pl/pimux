@@ -49,7 +49,9 @@ export function useViews() {
                             ...view,
                             cwd: view.cwd || workspace.cwd,
                             sourceId,
-                            resumeSession: sourceId === BUILTIN_SOURCES.pi.id,
+                            resumeSession:
+                                Boolean(view.sessionId) &&
+                                (sourceId === BUILTIN_SOURCES.pi.id || sourceId === BUILTIN_SOURCES.claude.id),
                         };
                     }),
                 );

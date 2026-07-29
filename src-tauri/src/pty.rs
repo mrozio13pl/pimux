@@ -3,7 +3,8 @@ use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use serde::Serialize;
 use std::{
     collections::HashMap,
-    io::{Read, Write},
+    fs::OpenOptions,
+    io::{BufRead, BufReader, Read, Write},
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicU64, Ordering},
@@ -12,12 +13,39 @@ use std::{
 };
 use tauri::{ipc::Channel, path::BaseDirectory, Manager, WebviewWindow};
 
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub(crate) enum ViewStatus {
+    Idle,
+    Error,
+    Finished,
+    Working,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SourceViewUpdate {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) title: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) status: Option<ViewStatus>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) session_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) model: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) user_submitted: Option<bool>,
+}
+
 #[derive(Clone, Serialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub(crate) enum ProcessEvent {
     Started { title: String },
     Idle,
     Exited,
+    Update { update: SourceViewUpdate },
 }
 
 pub(crate) struct Session {
@@ -44,6 +72,7 @@ impl Default for PtyState {
 fn source_command(
     source_id: &str,
     pi_extension: Option<&Path>,
+    claude_settings: Option<&Path>,
     session_id: Option<&str>,
     resume_session: bool,
     session_exists: bool,
@@ -76,8 +105,45 @@ fn source_command(
             }
             Ok(command)
         }
+        "builtin:claudecode" => {
+            let settings = claude_settings.ok_or("Claude Code settings resource is missing")?;
+            let mut command = CommandBuilder::new("claude");
+            command.arg("--settings");
+            command.arg(settings);
+            if resume_session {
+                let session_id = session_id.ok_or("Claude Code resume requires a session ID")?;
+                if !valid_claude_session_id(session_id) {
+                    return Err("invalid Claude Code session ID".into());
+                }
+                command.arg("--resume");
+                command.arg(session_id);
+            }
+            Ok(command)
+        }
         _ => Err(format!("unknown view source: {source_id}")),
     }
+}
+
+fn create_claude_event_file(path: &Path) -> std::io::Result<std::fs::File> {
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    options.open(path)
+}
+
+fn valid_claude_session_id(session_id: &str) -> bool {
+    session_id.len() == 36
+        && session_id
+            .chars()
+            .enumerate()
+            .all(|(index, character)| match index {
+                8 | 13 | 18 | 23 => character == '-',
+                _ => character.is_ascii_hexdigit(),
+            })
 }
 
 fn pi_session_exists(root: &Path, session_id: &str) -> bool {
@@ -198,16 +264,18 @@ pub(crate) fn pty_spawn(
     if !cwd.is_dir() {
         return Err("working directory is not a directory".into());
     }
-    let pi_extension = if source_id == "builtin:pi" {
-        Some(
-            window
-                .path()
-                .resolve("resources/pi-extension.ts", BaseDirectory::Resource)
-                .map_err(|error| format!("failed to resolve Pi extension resource: {error}"))?,
-        )
-    } else {
-        None
+    let resource = |name: &str| {
+        window
+            .path()
+            .resolve(name, BaseDirectory::Resource)
+            .map_err(|error| format!("failed to resolve resource: {error}"))
     };
+    let pi_extension = (source_id == "builtin:pi")
+        .then(|| resource("resources/pi-extension.ts"))
+        .transpose()?;
+    let claude_settings = (source_id == "builtin:claudecode")
+        .then(|| resource("resources/claude-settings.json"))
+        .transpose()?;
     let session_exists = session_id.as_deref().is_some_and(|session_id| {
         let sessions_dir = std::env::var_os("PI_CODING_AGENT_SESSION_DIR")
             .map(PathBuf::from)
@@ -225,27 +293,51 @@ pub(crate) fn pty_spawn(
             });
         sessions_dir.is_some_and(|directory| pi_session_exists(&directory, session_id))
     });
+    let id = state.next_id.fetch_add(1, Ordering::Relaxed) + 1;
+    let claude_events = (source_id == "builtin:claudecode").then(|| {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        std::env::temp_dir().join(format!(
+            "pimux-claude-{}-{id}-{nonce}.jsonl",
+            std::process::id()
+        ))
+    });
     let mut command = if source_id.starts_with("custom:") {
         CommandBuilder::new(custom_source_executable(window.app_handle(), &source_id)?)
     } else {
         source_command(
             &source_id,
             pi_extension.as_deref(),
+            claude_settings.as_deref(),
             session_id.as_deref(),
             resume_session,
             session_exists,
         )?
     };
     command.env("TERM", "xterm-256color");
+    if let Some(path) = &claude_events {
+        command.env("PIMUX_CLAUDE_EVENTS", path);
+        command.env(
+            "PIMUX_EXECUTABLE",
+            std::env::current_exe().map_err(|error| error.to_string())?,
+        );
+    }
     command.cwd(cwd);
     let pair = native_pty_system()
         .openpty(size)
         .map_err(|error| error.to_string())?;
+    if let Some(path) = &claude_events {
+        create_claude_event_file(path).map_err(|error| error.to_string())?;
+    }
 
-    let child = pair
-        .slave
-        .spawn_command(command)
-        .map_err(|error| error.to_string())?;
+    let child = pair.slave.spawn_command(command).map_err(|error| {
+        if let Some(path) = &claude_events {
+            let _ = std::fs::remove_file(path);
+        }
+        error.to_string()
+    })?;
     #[cfg(unix)]
     let root_pid = child.process_id();
     drop(pair.slave);
@@ -258,7 +350,6 @@ pub(crate) fn pty_spawn(
         .master
         .take_writer()
         .map_err(|error| error.to_string())?;
-    let id = state.next_id.fetch_add(1, Ordering::Relaxed) + 1;
     let sessions = Arc::clone(&state.sessions);
     let session = Arc::new(Session {
         owner: window.label().to_string(),
@@ -271,6 +362,44 @@ pub(crate) fn pty_spawn(
         .lock()
         .map_err(|_| "PTY state unavailable".to_string())?
         .insert(id, Arc::clone(&session));
+
+    let (claude_done, claude_drained) = if let Some(path) = claude_events {
+        let process_events = on_process.clone();
+        let (done_sender, done_receiver) = std::sync::mpsc::channel();
+        let (drained_sender, drained_receiver) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            if let Ok(file) = std::fs::File::open(&path) {
+                let mut reader = BufReader::new(file);
+                loop {
+                    let mut line = String::new();
+                    match reader.read_line(&mut line) {
+                        Ok(0) => match done_receiver.try_recv() {
+                            Ok(()) | Err(std::sync::mpsc::TryRecvError::Disconnected) => break,
+                            Err(std::sync::mpsc::TryRecvError::Empty) => {
+                                std::thread::sleep(std::time::Duration::from_millis(50));
+                            }
+                        },
+                        Ok(_) => {
+                            if let Ok(update) = serde_json::from_str(&line) {
+                                if process_events
+                                    .send(ProcessEvent::Update { update })
+                                    .is_err()
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        Err(_) => break,
+                    }
+                }
+            }
+            let _ = std::fs::remove_file(path);
+            let _ = drained_sender.send(());
+        });
+        (Some(done_sender), Some(drained_receiver))
+    } else {
+        (None, None)
+    };
 
     #[cfg(unix)]
     if source_id == "builtin:shell" {
@@ -322,6 +451,12 @@ pub(crate) fn pty_spawn(
                 Ok(length) if on_data.send(buffer[..length].to_vec()).is_err() => break,
                 Ok(_) => {}
             }
+        }
+        if let Some(done) = claude_done {
+            let _ = done.send(());
+        }
+        if let Some(drained) = claude_drained {
+            let _ = drained.recv_timeout(std::time::Duration::from_secs(1));
         }
         let _ = on_process.send(ProcessEvent::Exited);
         close_session(&sessions, id);
@@ -382,7 +517,10 @@ pub(crate) fn pty_close(
 
 #[cfg(test)]
 mod tests {
-    use super::{foreground_process, pi_session_exists, source_command, validate_size};
+    use super::{
+        create_claude_event_file, foreground_process, pi_session_exists, source_command,
+        validate_size,
+    };
     #[cfg(unix)]
     use portable_pty::{native_pty_system, CommandBuilder, PtySize};
     use std::path::Path;
@@ -401,12 +539,15 @@ mod tests {
 
     #[test]
     fn sources_are_allowlisted() {
-        assert!(source_command("builtin:shell", None, None, false, false)
-            .unwrap()
-            .is_default_prog());
+        assert!(
+            source_command("builtin:shell", None, None, None, false, false)
+                .unwrap()
+                .is_default_prog()
+        );
         let fresh = source_command(
             "builtin:pi",
             Some(Path::new("pi-extension.ts")),
+            None,
             None,
             false,
             false,
@@ -417,6 +558,7 @@ mod tests {
             "builtin:pi",
             Some(Path::new("pi-extension.ts")),
             None,
+            None,
             true,
             false,
         )
@@ -425,6 +567,7 @@ mod tests {
         let stale = source_command(
             "builtin:pi",
             Some(Path::new("pi-extension.ts")),
+            None,
             Some("12345678-abcd"),
             true,
             false,
@@ -434,6 +577,7 @@ mod tests {
         let pi = source_command(
             "builtin:pi",
             Some(Path::new("pi-extension.ts")),
+            None,
             Some("12345678-abcd"),
             true,
             true,
@@ -444,12 +588,50 @@ mod tests {
         assert!(source_command(
             "builtin:pi",
             Some(Path::new("extension.ts")),
+            None,
             Some("--bad"),
             false,
             false,
         )
         .is_err());
-        assert!(source_command("custom:unknown", None, None, false, false).is_err());
+
+        let claude = source_command(
+            "builtin:claudecode",
+            None,
+            Some(Path::new("claude-settings.json")),
+            Some("03c1fb51-8987-4b47-a915-15938d5549a5"),
+            true,
+            false,
+        )
+        .unwrap();
+        assert_eq!(claude.get_argv()[1], "--settings");
+        assert_eq!(claude.get_argv()[3], "--resume");
+        assert_eq!(claude.get_argv()[4], "03c1fb51-8987-4b47-a915-15938d5549a5");
+        assert!(source_command(
+            "builtin:claudecode",
+            None,
+            Some(Path::new("claude-settings.json")),
+            None,
+            true,
+            false,
+        )
+        .is_err());
+        assert!(source_command("custom:unknown", None, None, None, false, false).is_err());
+    }
+
+    #[test]
+    fn claude_event_file_is_exclusive() {
+        let path = std::env::temp_dir().join(format!("pimux-event-test-{}", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let file = create_claude_event_file(&path).unwrap();
+        assert!(create_claude_event_file(&path).is_err());
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(file.metadata().unwrap().permissions().mode() & 0o777, 0o600);
+        }
+        drop(file);
+        std::fs::remove_file(path).unwrap();
     }
 
     #[test]

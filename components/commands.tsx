@@ -319,6 +319,11 @@ export function AppCommands({
                                     >
                                         {source.icon}
                                         <span className="font-medium">{source.title}</span>
+                                        {source.experimental && (
+                                            <span className="rounded-sm bg-muted px-2 py-px text-xs text-muted-foreground">
+                                                Experimental
+                                            </span>
+                                        )}
                                         {index < 9 && (
                                             <CommandShortcut>
                                                 <Kbd>Ctrl {index + 1}</Kbd>

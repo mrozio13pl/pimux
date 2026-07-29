@@ -1,0 +1,21 @@
+{
+    "hooks": {
+        "SessionStart": [{ "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }],
+        "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }],
+        "PreToolUse": [
+            { "matcher": "*", "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }
+        ],
+        "PostToolUse": [
+            { "matcher": "*", "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }
+        ],
+        "PostToolUseFailure": [
+            { "matcher": "*", "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }
+        ],
+        "Notification": [
+            { "matcher": "*", "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }
+        ],
+        "Stop": [{ "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }],
+        "StopFailure": [{ "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }],
+        "SessionEnd": [{ "hooks": [{ "type": "command", "command": "\"$PIMUX_EXECUTABLE\" --claude-hook" }] }]
+    }
+}

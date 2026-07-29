@@ -8,7 +8,7 @@ export const piSource = createSource({
     title: 'Pi',
     icon: <Pi />,
     executable: ({ cwd }) => ({ cwd, sourceId: 'builtin:pi' }),
-    experimental: true,
+    experimental: false,
     viewButton: {
         initial: { description: 'New Pi instance', status: 'idle' },
         connect: (terminal, update) => {

@@ -167,7 +167,7 @@ export function Terminal({
                 resize(cols: number, rows: number): void;
             };
             // const measured = renderer.metrics.height;
-            // renderer.metrics.width = 9;
+            renderer.metrics.width = 9;
             renderer.metrics.height = 20;
             renderer.metrics.baseline += 5;
             renderer.resize(terminal.cols, terminal.rows);

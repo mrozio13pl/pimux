@@ -1,3 +1,4 @@
+mod claude;
 mod custom_sources;
 mod pty;
 mod search;
@@ -13,6 +14,10 @@ use search::{sessions_refresh, sessions_search, SearchState};
 use tauri::Manager;
 use views::{views_load, views_save};
 use workspace::{directory_children, workspace_info};
+
+pub fn run_claude_hook() -> Result<(), String> {
+    claude::run_hook()
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

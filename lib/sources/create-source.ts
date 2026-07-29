@@ -3,7 +3,7 @@ import type { Terminal } from 'ghostty-web';
 import type { ViewStatusType } from '@/components/sidebar/view-status';
 
 export const DEFAULT_SOURCE_ID = 'builtin:pi' as const;
-export type BuiltinSourceId = 'builtin:pi' | 'builtin:shell';
+export type BuiltinSourceId = 'builtin:pi' | 'builtin:claudecode' | 'builtin:shell';
 export type CustomSourceId = `custom:${string}`;
 export type SourceId = BuiltinSourceId | CustomSourceId;
 
@@ -20,7 +20,11 @@ export interface SourceViewUpdate {
     userSubmitted?: boolean;
 }
 
-export type SourceProcessEvent = { type: 'started'; title: string } | { type: 'idle' } | { type: 'exited' };
+export type SourceProcessEvent =
+    | { type: 'started'; title: string }
+    | { type: 'idle' }
+    | { type: 'exited' }
+    | { type: 'update'; update: SourceViewUpdate };
 
 export interface SourceTerminalBinding {
     onProcessEvent?: (event: SourceProcessEvent) => void;
