@@ -1,11 +1,11 @@
+packages: []
+
 allowBuilds:
-    electron: true
-    esbuild: true
-    node-pty: true
-    koffi: true
-    simple-git-hooks: true
-    protobufjs: true
     '@google/genai': false
-    electron-winstaller: true
-    sharp: true
-minimumReleaseAge: 720
+    esbuild: true
+    msw: false
+    protobufjs: false
+    simple-git-hooks: true
+
+patchedDependencies:
+    ghostty-web@0.4.0: patches/ghostty-web@0.4.0.patch

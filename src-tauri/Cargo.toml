@@ -1,0 +1,30 @@
+[package]
+name = "pimux"
+version = "0.4.0"
+description = "Native terminal multiplexer"
+authors = ["mrozio13pl"]
+license = "MIT"
+repository = "https://github.com/mrozio13pl/pimux"
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "pimux_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.3", features = ["protocol-asset"] }
+portable-pty = "0.9.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22.1"
+regex = "1.13.1"
+tauri-plugin-dialog = "2.7.2"
+tauri-plugin-store = "2.4.2"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+tantivy = { version = "0.26.1", default-features = false, features = ["lz4-compression", "mmap"] }
