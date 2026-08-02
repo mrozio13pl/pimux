@@ -1277,7 +1277,7 @@ index 0000000000000000000000000000000000000000..50d3bdd436383425ad752698a76fa98b
 +	return result;
 +}
 diff --git a/dist/ghostty-web.js b/dist/ghostty-web.js
-index a4ca427b95288e70c782ce303013cd644893dcec..551b6b0c63fe214acdfcda71177801c090fbb673 100644
+index a4ca427b95288e70c782ce303013cd644893dcec..fd7e31e84d397d503d1cf0088546b85c4438f68f 100644
 --- a/dist/ghostty-web.js
 +++ b/dist/ghostty-web.js
 @@ -1,3 +1,4 @@
@@ -1333,6 +1333,15 @@ index a4ca427b95288e70c782ce303013cd644893dcec..551b6b0c63fe214acdfcda71177801c0
    /**
     * Update font family
     */
+@@ -2103,7 +2120,7 @@ class IA {
+       get activeVersion() {
+         return "15.1";
+       }
+-    }, this.dataEmitter = new J(), this.resizeEmitter = new J(), this.bellEmitter = new J(), this.selectionChangeEmitter = new J(), this.keyEmitter = new J(), this.titleChangeEmitter = new J(), this.scrollEmitter = new J(), this.renderEmitter = new J(), this.cursorMoveEmitter = new J(), this.onData = this.dataEmitter.event, this.onResize = this.resizeEmitter.event, this.onBell = this.bellEmitter.event, this.onSelectionChange = this.selectionChangeEmitter.event, this.onKey = this.keyEmitter.event, this.onTitleChange = this.titleChangeEmitter.event, this.onScroll = this.scrollEmitter.event, this.onRender = this.renderEmitter.event, this.onCursorMove = this.cursorMoveEmitter.event, this.isOpen = !1, this.isDisposed = !1, this.addons = [], this.currentTitle = "", this.viewportY = 0, this.targetViewportY = 0, this.lastCursorY = 0, this.isDraggingScrollbar = !1, this.scrollbarDragStart = null, this.scrollbarDragStartViewportY = 0, this.scrollbarVisible = !1, this.scrollbarOpacity = 0, this.SCROLLBAR_HIDE_DELAY_MS = 1500, this.SCROLLBAR_FADE_DURATION_MS = 200, this.animateScroll = () => {
++    }, this.dataEmitter = new J(), this.resizeEmitter = new J(), this.bellEmitter = new J(), this.selectionChangeEmitter = new J(), this.keyEmitter = new J(), this.titleChangeEmitter = new J(), this.scrollEmitter = new J(), this.renderEmitter = new J(), this.cursorMoveEmitter = new J(), this.onData = this.dataEmitter.event, this.onResize = this.resizeEmitter.event, this.onBell = this.bellEmitter.event, this.onSelectionChange = this.selectionChangeEmitter.event, this.onKey = this.keyEmitter.event, this.onTitleChange = this.titleChangeEmitter.event, this.onScroll = this.scrollEmitter.event, this.onRender = this.renderEmitter.event, this.onCursorMove = this.cursorMoveEmitter.event, this.isOpen = !1, this.isDisposed = !1, this.renderPaused = !1, this.addons = [], this.currentTitle = "", this.viewportY = 0, this.targetViewportY = 0, this.lastCursorY = 0, this.isDraggingScrollbar = !1, this.scrollbarDragStart = null, this.scrollbarDragStartViewportY = 0, this.scrollbarVisible = !1, this.scrollbarOpacity = 0, this.SCROLLBAR_HIDE_DELAY_MS = 1500, this.SCROLLBAR_FADE_DURATION_MS = 200, this.animateScroll = () => {
+       if (!this.wasmTerm || this.scrollAnimationStartTime === void 0)
+         return;
+       const g = this.options.smoothScrollDuration ?? 100, E = this.targetViewportY - this.viewportY;
 @@ -2206,7 +2223,8 @@ class IA {
        allowTransparency: A.allowTransparency ?? !1,
        convertEol: A.convertEol ?? !1,
@@ -1361,3 +1370,32 @@ index a4ca427b95288e70c782ce303013cd644893dcec..551b6b0c63fe214acdfcda71177801c0
          theme: this.options.theme
        }), this.renderer.resize(this.cols, this.rows), this.inputHandler = new P(
          this.ghostty,
+@@ -2619,6 +2641,9 @@ class IA {
+   // ==========================================================================
+   // Lifecycle
+   // ==========================================================================
++  setRenderPaused(A) {
++    this.renderPaused !== A && (this.renderPaused = A, this.animationFrameId !== void 0 && (cancelAnimationFrame(this.animationFrameId), this.animationFrameId = void 0), !A && this.isOpen && !this.isDisposed && this.renderer && this.wasmTerm && (this.renderer.render(this.wasmTerm, !0, this.viewportY, this, this.scrollbarOpacity), this.startRenderLoop()));
++  }
+   /**
+    * Dispose terminal and clean up resources
+    */
+@@ -2637,14 +2662,16 @@ class IA {
+    * Start the render loop
+    */
+   startRenderLoop() {
++    if (this.renderPaused || this.animationFrameId !== void 0)
++      return;
+     const A = () => {
+-      if (!this.isDisposed && this.isOpen) {
++      if (this.animationFrameId = void 0, !this.isDisposed && this.isOpen && !this.renderPaused) {
+         this.renderer.render(this.wasmTerm, !1, this.viewportY, this, this.scrollbarOpacity);
+         const B = this.wasmTerm.getCursor();
+         B.y !== this.lastCursorY && (this.lastCursorY = B.y, this.cursorMoveEmitter.fire()), this.animationFrameId = requestAnimationFrame(A);
+       }
+     };
+-    A();
++    this.animationFrameId = requestAnimationFrame(A);
+   }
+   /**
+    * Get a line from native WASM scrollback buffer

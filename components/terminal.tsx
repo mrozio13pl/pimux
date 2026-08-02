@@ -12,20 +12,20 @@ const ansi = new Ansis(3);
 
 let shownTerminal: GhosttyTerminal | undefined;
 
+/* comes from patch */
+function setTerminalRenderPaused(terminal: GhosttyTerminal, paused: boolean) {
+    (terminal as GhosttyTerminal & { setRenderPaused(paused: boolean): void }).setRenderPaused(paused);
+}
+
 function detachTerminal(terminal: GhosttyTerminal) {
     terminal.blur();
     terminal.renderer?.getCanvas().remove();
     terminal.textarea?.remove();
 }
 
-function renderTerminal(terminal: GhosttyTerminal) {
-    if (!terminal.renderer || !terminal.wasmTerm) return;
-    terminal.renderer.clear();
-    terminal.renderer.render(terminal.wasmTerm, true, terminal.viewportY, terminal);
-}
-
 function setTerminalActive(terminal: GhosttyTerminal, active: boolean) {
     if (!active) {
+        setTerminalRenderPaused(terminal, true);
         detachTerminal(terminal);
         if (shownTerminal === terminal) shownTerminal = undefined;
         return;
@@ -38,7 +38,7 @@ function setTerminalActive(terminal: GhosttyTerminal, active: boolean) {
         .forEach((element) => element.remove());
     terminal.element.replaceChildren(canvas, ...(terminal.textarea ? [terminal.textarea] : []));
     shownTerminal = terminal;
-    renderTerminal(terminal);
+    setTerminalRenderPaused(terminal, false);
     terminal.focus();
 }
 

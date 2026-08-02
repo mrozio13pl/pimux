@@ -19,7 +19,7 @@ import { ViewButton } from '@/components/sidebar/view-button';
 import { BUILTIN_SOURCES, SOURCES, type CustomSourceId, type ExecutableSource } from '@/lib/sources';
 import { applySourceOverride, customSource, useCustomSources } from '@/lib/sources/custom';
 import { useViews } from '@/lib/views';
-import { previousView } from '@/lib/views/history';
+import { previousView, startedTerminalIds } from '@/lib/views/history';
 import { Terminal } from '@/components/terminal';
 import { SettingsDialog } from '@/components/settings';
 import { cn } from '@/lib/utils';
@@ -176,10 +176,7 @@ export function App() {
     for (const id of shellOutput.current.keys()) {
         if (!viewIds.has(id)) shellOutput.current.delete(id);
     }
-    terminalViewIds.current = [
-        ...terminalViewIds.current.filter((id) => viewIds.has(id)),
-        ...views.map((view) => view.id).filter((id) => !terminalViewIds.current.includes(id)),
-    ];
+    terminalViewIds.current = startedTerminalIds(views, currentViewId, terminalViewIds.current);
     const terminalViews = terminalViewIds.current.flatMap((id) => {
         const view = views.find((candidate) => candidate.id === id);
         return view ? [view] : [];
@@ -285,6 +282,11 @@ export function App() {
     function togglePinnedView(id: string) {
         toggleViewPin(id);
         setReorderRevision((revision) => revision + 1);
+    }
+
+    function restoreArchivedView(id: string) {
+        updateView(id, { archived: false, lastActiveAt: Date.now() });
+        activateView(id);
     }
 
     function toggleArchivedView(id: string) {
@@ -399,7 +401,7 @@ export function App() {
                                                         key={view.id}
                                                         view={view}
                                                         active={view.id === currentViewId}
-                                                        onClick={() => activateView(view.id)}
+                                                        onClick={() => restoreArchivedView(view.id)}
                                                         onDelete={deleteView}
                                                         onTogglePin={togglePinnedView}
                                                         onToggleArchive={toggleArchivedView}
