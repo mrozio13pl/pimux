@@ -68,9 +68,24 @@ jobs:
                   prerelease: false
                   args: ${{ matrix.args }}
 
+            - name: Collect workflow artifacts
+              env:
+                  ARTIFACT_PATHS: ${{ steps.tauri.outputs.artifactPaths }}
+              shell: bash
+              run: |
+                  node <<'EOF'
+                  const fs = require('node:fs');
+                  const path = require('node:path');
+
+                  fs.mkdirSync('release-artifacts');
+                  for (const source of JSON.parse(process.env.ARTIFACT_PATHS)) {
+                      fs.cpSync(source, path.join('release-artifacts', path.basename(source)), { recursive: true });
+                  }
+                  EOF
+
             - name: Upload workflow artifacts
               uses: actions/upload-artifact@v4
               with:
                   name: pimux-${{ runner.os }}
-                  path: ${{ steps.tauri.outputs.artifactPaths }}
+                  path: release-artifacts
                   if-no-files-found: error
