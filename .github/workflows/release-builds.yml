@@ -2,6 +2,11 @@ name: Release builds
 
 on:
     workflow_dispatch:
+        inputs:
+            tag:
+                description: Existing release tag to attach builds to
+                required: true
+                type: string
     release:
         types: [published]
 
@@ -61,8 +66,8 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   NO_STRIP: ${{ runner.os == 'Linux' && '1' || '' }}
               with:
-                  tagName: ${{ github.event.release.tag_name || (github.ref_type == 'tag' && github.ref_name) || '' }}
-                  releaseName: Pimux ${{ github.event.release.tag_name || github.ref_name }}
+                  tagName: ${{ github.event.release.tag_name || inputs.tag }}
+                  releaseName: Pimux ${{ github.event.release.tag_name || inputs.tag }}
                   releaseBody: See the assets below to download this version and install.
                   releaseDraft: false
                   prerelease: false
