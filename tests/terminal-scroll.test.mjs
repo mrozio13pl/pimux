@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test, { after } from 'node:test';
 import { createServer } from 'vite';
+import { Terminal as GhosttyTerminal } from 'ghostty-web';
 
 // broken tauri window and lobehub icons import
 // might need to address it in the future
@@ -67,4 +68,33 @@ test('output follows the terminal when already at the bottom', () => {
     writeTerminalOutput(terminal, 'new output');
 
     assert.equal(restored, false);
+});
+
+test('paused terminals cancel rendering and redraw when resumed', () => {
+    const originalRequest = globalThis.requestAnimationFrame;
+    const originalCancel = globalThis.cancelAnimationFrame;
+    let renders = 0;
+    let cancelled;
+
+    try {
+        globalThis.requestAnimationFrame = () => 7;
+        globalThis.cancelAnimationFrame = (id) => {
+            cancelled = id;
+        };
+        const terminal = new GhosttyTerminal({ ghostty: {} });
+        terminal.isOpen = true;
+        terminal.renderer = { render: () => renders++ };
+        terminal.wasmTerm = { getCursor: () => ({ y: 0 }) };
+
+        terminal.setRenderPaused(true);
+        terminal.setRenderPaused(false);
+        terminal.setRenderPaused(true);
+
+        assert.equal(renders, 1);
+        assert.equal(cancelled, 7);
+        assert.equal(terminal.animationFrameId, undefined);
+    } finally {
+        globalThis.requestAnimationFrame = originalRequest;
+        globalThis.cancelAnimationFrame = originalCancel;
+    }
 });

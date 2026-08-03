@@ -244,6 +244,7 @@ fn owned_session(
     Ok(session)
 }
 
+#[allow(clippy::too_many_arguments)] // Tauri command boundary mirrors IPC payload.
 #[tauri::command]
 pub(crate) fn pty_spawn(
     rows: u16,
