@@ -191,6 +191,9 @@ export default function pimuxExtension(pi: ExtensionAPI) {
     pi.on('agent_start', () => update({ status: 'working' }));
     pi.on('agent_settled', () => update({ status: state.status === 'error' ? 'error' : 'finished' }));
     pi.on('session_before_compact', () => update({ description: 'Compacting context', status: 'working' }));
+    pi.on('session_compact', (event) => {
+        if (!event.willRetry) update({ description: 'Context compacted', status: 'finished' });
+    });
     pi.on('session_shutdown', () => {
         if (timer) clearTimeout(timer);
     });

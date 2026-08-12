@@ -40,6 +40,8 @@ test('Pi extension emits valid sidebar updates', async () => {
             () => undefined,
         );
         handlers.get('before_agent_start')({ prompt: 'Test prompt', systemPrompt: 'Base prompt' });
+        handlers.get('session_before_compact')();
+        handlers.get('session_compact')({ willRetry: false });
     } finally {
         process.stdout.write = write;
     }
@@ -56,8 +58,10 @@ test('Pi extension emits valid sidebar updates', async () => {
         startup?.model !== 'gpt-start' ||
         !updates.some((update) => update.model === 'gpt-next') ||
         !updates.some((update) => update.title === 'Implement Pi Extension') ||
-        updates.at(-1)?.userSubmitted !== true ||
-        parsePiSidebarUpdate(`pimux:${payloads.at(-1)}`)?.userSubmitted !== true
+        !updates.some((update) => update.userSubmitted === true) ||
+        updates.at(-1)?.description !== 'Context compacted' ||
+        updates.at(-1)?.status !== 'finished' ||
+        parsePiSidebarUpdate(`pimux:${payloads.at(-1)}`)?.status !== 'finished'
     ) {
         throw new Error('Invalid Pi sidebar updates');
     }
