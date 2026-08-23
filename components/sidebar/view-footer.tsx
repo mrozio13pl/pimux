@@ -1,6 +1,8 @@
 import { GitBranchIcon, FolderSimpleIcon } from '@phosphor-icons/react';
 import { invoke } from '@tauri-apps/api/core';
 import useSWR from 'swr';
+import { useSettings } from '@/lib/settings';
+import { formatPath } from '@/lib/utils';
 
 interface WorkspaceInfo {
     cwd: string;
@@ -27,6 +29,9 @@ export function WorkspaceIcon({ cwd }: { cwd?: string }) {
 
 export function ViewFooter({ cwd, showIcon = true }: { cwd?: string; showIcon?: boolean }) {
     const { data: workspace } = useWorkspace(cwd);
+    const shortenPaths = useSettings((state) => state.values.shortenPaths);
+    const path = workspace?.path ?? cwd;
+    const displayedPath = formatPath(path, shortenPaths);
 
     return (
         <div className="flex min-w-0 items-center gap-1 overflow-hidden pt-1 text-xs text-muted-foreground">
@@ -36,8 +41,8 @@ export function ViewFooter({ cwd, showIcon = true }: { cwd?: string; showIcon?: 
                 ) : (
                     <FolderSimpleIcon className="size-4 shrink-0" weight="bold" />
                 ))}
-            <span className="truncate" title={workspace?.path}>
-                {workspace?.path ?? cwd}
+            <span className="truncate" title={path}>
+                {displayedPath}
             </span>
             {workspace?.isGit && (
                 <>

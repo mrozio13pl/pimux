@@ -58,6 +58,13 @@ export const settingDefinitions = {
         label: 'Archive inactive views',
         description: 'Days without activity before moving a view to archive.',
     },
+    shortenPaths: {
+        section: 'appearance',
+        type: 'boolean',
+        default: false,
+        label: 'Shorten paths',
+        description: 'Show only the current folder name instead of the full path.',
+    },
     reduceMotion: {
         section: 'appearance',
         type: 'boolean',

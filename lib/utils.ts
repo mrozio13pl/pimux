@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+export function formatPath(path: string | undefined, shortened: boolean) {
+    return shortened ? path?.split(/[\\/]/).filter(Boolean).at(-1) : path;
+}
+
 export function compactAge(timestamp: number | undefined) {
     if (!timestamp) return '';
     const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
