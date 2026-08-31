@@ -9,7 +9,7 @@ static FILE_LOCK: Mutex<()> = Mutex::new(());
 pub(crate) struct CustomSource {
     pub(crate) id: String,
     pub(crate) title: String,
-    pub(crate) executable: PathBuf,
+    pub(crate) executable: String,
     pub(crate) icon: Option<PathBuf>,
     #[serde(default)]
     pub(crate) icon_monochrome: bool,
@@ -88,6 +88,24 @@ fn validate_id(id: &str) -> bool {
         && suffix
             .chars()
             .all(|character| character.is_ascii_alphanumeric() || character == '-')
+}
+
+fn parse_command(value: &str) -> Result<(PathBuf, Vec<String>), String> {
+    if value.len() > 4096 || value.chars().any(char::is_control) {
+        return Err("invalid executable".into());
+    }
+    let mut tokens = shell_words::split(value)
+        .map_err(|_| "invalid executable command")?
+        .into_iter();
+    let program = tokens.next().ok_or("invalid executable")?;
+    Ok((validate_executable(program.into())?, tokens.collect()))
+}
+
+fn normalize_command(value: &str) -> Result<String, String> {
+    let (program, args) = parse_command(value)?;
+    let mut parts = vec![program.to_string_lossy().into_owned()];
+    parts.extend(args);
+    Ok(shell_words::join(parts))
 }
 
 fn validate_executable(path: PathBuf) -> Result<PathBuf, String> {
@@ -171,7 +189,7 @@ pub(crate) fn custom_source_add(
     app: AppHandle,
     id: String,
     title: String,
-    executable: PathBuf,
+    executable: String,
     icon: Option<PathBuf>,
     icon_monochrome: bool,
 ) -> Result<CustomSource, String> {
@@ -183,7 +201,7 @@ pub(crate) fn custom_source_add(
         return Err("invalid custom source title".into());
     }
     let source = CustomSource {
-        executable: validate_executable(executable)?,
+        executable: normalize_command(&executable)?,
         icon: icon.map(|icon| copy_icon(&app, &id, icon)).transpose()?,
         icon_monochrome,
         id,
@@ -207,7 +225,7 @@ pub(crate) fn custom_source_update(
     app: AppHandle,
     id: String,
     title: String,
-    executable: PathBuf,
+    executable: String,
     icon: Option<PathBuf>,
     icon_monochrome: bool,
 ) -> Result<CustomSource, String> {
@@ -218,7 +236,7 @@ pub(crate) fn custom_source_update(
     if title.is_empty() || title.len() > 64 || title.chars().any(char::is_control) {
         return Err("invalid custom source title".into());
     }
-    let executable = validate_executable(executable)?;
+    let executable = normalize_command(&executable)?;
     let _lock = FILE_LOCK
         .lock()
         .map_err(|_| "custom source storage unavailable")?;
@@ -331,7 +349,10 @@ pub(crate) async fn lobehub_icon_stage(slug: String, version: String) -> Result<
     Ok(path)
 }
 
-pub(crate) fn custom_source_executable(app: &AppHandle, id: &str) -> Result<PathBuf, String> {
+pub(crate) fn custom_source_command(
+    app: &AppHandle,
+    id: &str,
+) -> Result<(PathBuf, Vec<String>), String> {
     if !validate_id(id) {
         return Err("invalid custom source ID".into());
     }
@@ -342,12 +363,12 @@ pub(crate) fn custom_source_executable(app: &AppHandle, id: &str) -> Result<Path
         .into_iter()
         .find(|source| source.id == id)
         .ok_or("unknown custom source")?;
-    validate_executable(source.executable)
+    parse_command(&source.executable)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{validate_executable, validate_id};
+    use super::{normalize_command, parse_command, validate_executable, validate_id};
 
     #[test]
     fn custom_source_ids_are_namespaced() {
@@ -361,6 +382,11 @@ mod tests {
         assert!(!validate_id("custom:../shell"));
         assert!(validate_executable("aider".into()).is_ok());
         assert!(validate_executable("aider --help".into()).is_err());
+        let (program, args) = parse_command("aider --model gpt-5 \"my prompt\"").unwrap();
+        assert_eq!(program, std::path::PathBuf::from("aider"));
+        assert_eq!(args, ["--model", "gpt-5", "my prompt"]);
+        assert_eq!(normalize_command("  aider  --yes ").unwrap(), "aider --yes");
+        assert!(parse_command("aider \"unclosed").is_err());
         assert!(super::valid_lobehub_part("claude-color"));
         assert!(!super::valid_lobehub_part("../claude"));
     }

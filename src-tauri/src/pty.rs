@@ -1,4 +1,4 @@
-use crate::custom_sources::custom_source_executable;
+use crate::custom_sources::custom_source_command;
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use serde::Serialize;
 use std::{
@@ -306,7 +306,10 @@ pub(crate) fn pty_spawn(
         ))
     });
     let mut command = if source_id.starts_with("custom:") {
-        CommandBuilder::new(custom_source_executable(window.app_handle(), &source_id)?)
+        let (program, args) = custom_source_command(window.app_handle(), &source_id)?;
+        let mut command = CommandBuilder::new(program);
+        command.args(args);
+        command
     } else {
         source_command(
             &source_id,

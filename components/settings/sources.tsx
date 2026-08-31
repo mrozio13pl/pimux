@@ -68,7 +68,8 @@ export function SourcesSettings({
 
     async function chooseExecutable() {
         const path = await openDialog({ directory: false, multiple: false, title: 'Choose executable' });
-        if (typeof path === 'string') setExecutable(path);
+        if (typeof path === 'string')
+            setExecutable(/[\s'"\\]/.test(path) ? `'${path.replaceAll("'", `'\\''`)}'` : path);
     }
 
     async function chooseIcon() {
