@@ -6,6 +6,7 @@ import { parsePiSidebarUpdate } from '@/lib/sources/pi/protocol';
 export const piSource = createSource({
     id: 'builtin:pi',
     title: 'Pi',
+    command: 'pi',
     icon: <Pi />,
     executable: ({ cwd }) => ({ cwd, sourceId: 'builtin:pi' }),
     experimental: false,

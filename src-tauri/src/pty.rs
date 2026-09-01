@@ -1,4 +1,4 @@
-use crate::custom_sources::custom_source_command;
+use crate::custom_sources::{custom_source_command, parse_command};
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use serde::Serialize;
 use std::{
@@ -69,8 +69,22 @@ impl Default for PtyState {
     }
 }
 
+fn builtin_command(
+    executable: Option<&str>,
+    default_program: &str,
+) -> Result<CommandBuilder, String> {
+    let Some(executable) = executable else {
+        return Ok(CommandBuilder::new(default_program));
+    };
+    let (program, args) = parse_command(executable)?;
+    let mut command = CommandBuilder::new(program);
+    command.args(args);
+    Ok(command)
+}
+
 fn source_command(
     source_id: &str,
+    executable: Option<&str>,
     pi_extension: Option<&Path>,
     claude_settings: Option<&Path>,
     session_id: Option<&str>,
@@ -78,10 +92,18 @@ fn source_command(
     session_exists: bool,
 ) -> Result<CommandBuilder, String> {
     match source_id {
-        "builtin:shell" => Ok(CommandBuilder::new_default_prog()),
+        "builtin:shell" => match executable {
+            Some(executable) => {
+                let (program, args) = parse_command(executable)?;
+                let mut command = CommandBuilder::new(program);
+                command.args(args);
+                Ok(command)
+            }
+            None => Ok(CommandBuilder::new_default_prog()),
+        },
         "builtin:pi" => {
             let extension = pi_extension.ok_or("Pi extension resource is missing")?;
-            let mut command = CommandBuilder::new("pi");
+            let mut command = builtin_command(executable, "pi")?;
             command.arg("-e");
             command.arg(extension);
             if let Some(session_id) = session_id {
@@ -107,7 +129,7 @@ fn source_command(
         }
         "builtin:claudecode" => {
             let settings = claude_settings.ok_or("Claude Code settings resource is missing")?;
-            let mut command = CommandBuilder::new("claude");
+            let mut command = builtin_command(executable, "claude")?;
             command.arg("--settings");
             command.arg(settings);
             if resume_session {
@@ -251,6 +273,7 @@ pub(crate) fn pty_spawn(
     cols: u16,
     cwd: String,
     source_id: String,
+    executable: Option<String>,
     session_id: Option<String>,
     resume_session: bool,
     on_data: Channel<Vec<u8>>,
@@ -313,6 +336,10 @@ pub(crate) fn pty_spawn(
     } else {
         source_command(
             &source_id,
+            executable
+                .as_deref()
+                .map(str::trim)
+                .filter(|executable| !executable.is_empty()),
             pi_extension.as_deref(),
             claude_settings.as_deref(),
             session_id.as_deref(),
@@ -544,12 +571,13 @@ mod tests {
     #[test]
     fn sources_are_allowlisted() {
         assert!(
-            source_command("builtin:shell", None, None, None, false, false)
+            source_command("builtin:shell", None, None, None, None, false, false)
                 .unwrap()
                 .is_default_prog()
         );
         let fresh = source_command(
             "builtin:pi",
+            None,
             Some(Path::new("pi-extension.ts")),
             None,
             None,
@@ -560,6 +588,7 @@ mod tests {
         assert_eq!(fresh.get_argv().len(), 3);
         let resumed = source_command(
             "builtin:pi",
+            None,
             Some(Path::new("pi-extension.ts")),
             None,
             None,
@@ -570,6 +599,7 @@ mod tests {
         assert_eq!(resumed.get_argv()[3], "--resume");
         let stale = source_command(
             "builtin:pi",
+            None,
             Some(Path::new("pi-extension.ts")),
             None,
             Some("12345678-abcd"),
@@ -580,6 +610,7 @@ mod tests {
         assert_eq!(stale.get_argv()[3], "--resume");
         let pi = source_command(
             "builtin:pi",
+            None,
             Some(Path::new("pi-extension.ts")),
             None,
             Some("12345678-abcd"),
@@ -591,6 +622,7 @@ mod tests {
         assert_eq!(pi.get_argv()[4], "12345678-abcd");
         assert!(source_command(
             "builtin:pi",
+            None,
             Some(Path::new("extension.ts")),
             None,
             Some("--bad"),
@@ -601,6 +633,7 @@ mod tests {
 
         let claude = source_command(
             "builtin:claudecode",
+            None,
             None,
             Some(Path::new("claude-settings.json")),
             Some("03c1fb51-8987-4b47-a915-15938d5549a5"),
@@ -614,13 +647,68 @@ mod tests {
         assert!(source_command(
             "builtin:claudecode",
             None,
+            None,
             Some(Path::new("claude-settings.json")),
             None,
             true,
             false,
         )
         .is_err());
-        assert!(source_command("custom:unknown", None, None, None, false, false).is_err());
+        assert!(source_command("custom:unknown", None, None, None, None, false, false).is_err());
+    }
+
+    #[test]
+    fn builtin_sources_accept_a_command_override() {
+        let shell = source_command(
+            "builtin:shell",
+            Some("bash --login"),
+            None,
+            None,
+            None,
+            false,
+            false,
+        )
+        .unwrap();
+        assert!(!shell.is_default_prog());
+        assert_eq!(shell.get_argv()[1], "--login");
+
+        let pi = source_command(
+            "builtin:pi",
+            Some("pi-nightly --verbose"),
+            Some(Path::new("pi-extension.ts")),
+            None,
+            None,
+            false,
+            false,
+        )
+        .unwrap();
+        assert_eq!(pi.get_argv()[0], "pi-nightly");
+        assert_eq!(pi.get_argv()[1], "--verbose");
+        assert_eq!(pi.get_argv()[2], "-e");
+
+        let claude = source_command(
+            "builtin:claudecode",
+            Some("claude-nightly"),
+            None,
+            Some(Path::new("claude-settings.json")),
+            None,
+            false,
+            false,
+        )
+        .unwrap();
+        assert_eq!(claude.get_argv()[0], "claude-nightly");
+        assert_eq!(claude.get_argv()[1], "--settings");
+
+        assert!(source_command(
+            "builtin:pi",
+            Some("../pi"),
+            Some(Path::new("pi-extension.ts")),
+            None,
+            None,
+            false,
+            false,
+        )
+        .is_err());
     }
 
     #[test]

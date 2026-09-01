@@ -8,6 +8,8 @@ import type { HotkeyOverrides } from './hotkeys';
 
 export interface SourceOverride {
     title: string;
+    /** empty means the default command. */
+    executable?: string;
     icon?: string;
     iconMonochrome: boolean;
 }

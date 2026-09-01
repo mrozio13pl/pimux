@@ -6,6 +6,7 @@ import { claudeProcessUpdate } from '@/lib/sources/claude/protocol';
 export const claudeSource = createSource({
     id: 'builtin:claudecode',
     title: 'Claude Code',
+    command: 'claude',
     icon: <Claude.Color className="size-4.5" />,
     executable: ({ cwd }) => ({ cwd, sourceId: 'builtin:claudecode' }),
     experimental: true,

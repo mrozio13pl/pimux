@@ -40,6 +40,7 @@ export type SourceDefinition<Id extends `${string}:${string}`> = {
     id: Id;
     title: string;
     icon: ReactNode;
+    command?: string;
 } & (
     | {
           experimental: boolean;

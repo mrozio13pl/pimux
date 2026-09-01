@@ -90,7 +90,7 @@ fn validate_id(id: &str) -> bool {
             .all(|character| character.is_ascii_alphanumeric() || character == '-')
 }
 
-fn parse_command(value: &str) -> Result<(PathBuf, Vec<String>), String> {
+pub(crate) fn parse_command(value: &str) -> Result<(PathBuf, Vec<String>), String> {
     if value.len() > 4096 || value.chars().any(char::is_control) {
         return Err("invalid executable".into());
     }

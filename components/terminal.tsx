@@ -195,6 +195,7 @@ export function Terminal({
                         cols: terminal.cols,
                         cwd,
                         sourceId,
+                        executable: useSettings.getState().sourceOverrides[sourceId]?.executable,
                         sessionId: launchSessionId.current,
                         resumeSession: launchWithResume.current,
                         onData: output,

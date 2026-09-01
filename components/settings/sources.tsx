@@ -50,7 +50,12 @@ export function SourcesSettings({
     query,
 }: SourcesSettingsProps) {
     const [creating, setCreating] = useState(false);
-    const [editing, setEditing] = useState<{ id: string; custom?: CustomSourceRecord }>();
+    const [editing, setEditing] = useState<{
+        id: string;
+        custom?: CustomSourceRecord;
+        planned?: boolean;
+        command?: string;
+    }>();
     const [title, setTitle] = useState('');
     const [executable, setExecutable] = useState('');
     const [icon, setIcon] = useState('');
@@ -87,9 +92,14 @@ export function SourcesSettings({
 
     function editSource(source: AvailableSource, customSource?: CustomSourceRecord) {
         const override = sourceOverrides[source.id];
-        setEditing({ id: source.id, custom: customSource });
+        setEditing({
+            id: source.id,
+            custom: customSource,
+            planned: 'planned' in source,
+            command: 'command' in source ? source.command : undefined,
+        });
         setTitle(customSource?.title || source.title);
-        setExecutable(customSource?.executable || '');
+        setExecutable(customSource?.executable || override?.executable || '');
         setIcon(customSource?.icon || override?.icon || '');
         setIconMonochrome(customSource?.iconMonochrome || override?.iconMonochrome || false);
         setError(undefined);
@@ -113,6 +123,7 @@ export function SourcesSettings({
             } else if (editing) {
                 updateSourceOverride(editing.id, {
                     title: title.trim(),
+                    executable: executable.trim() || undefined,
                     icon: icon || undefined,
                     iconMonochrome,
                 });
@@ -156,7 +167,7 @@ export function SourcesSettings({
                                 autoFocus
                             />
                         </Field>
-                        {(!editing || editing.custom) && (
+                        {!editing?.planned && (
                             <Field>
                                 <FieldLabel htmlFor="source-executable">Command or executable</FieldLabel>
                                 <ButtonGroup className="w-full">
@@ -164,7 +175,7 @@ export function SourcesSettings({
                                         id="source-executable"
                                         value={executable}
                                         onChange={(event) => setExecutable(event.target.value)}
-                                        placeholder="some_cli.sh"
+                                        placeholder={editing && !editing.custom ? editing.command : 'some_cli.sh'}
                                     />
                                     <Button
                                         type="button"
@@ -258,9 +269,8 @@ export function SourcesSettings({
                         {sources
                             .filter((source) => {
                                 const customSource = customSources.find((candidate) => candidate.id === source.id);
-                                return `${source.title} ${customSource?.executable || ''}`
-                                    .toLowerCase()
-                                    .includes(query.toLowerCase());
+                                const command = customSource?.executable || sourceOverrides[source.id]?.executable;
+                                return `${source.title} ${command || ''}`.toLowerCase().includes(query.toLowerCase());
                             })
                             .map((source) => {
                                 const customSource = customSources.find((candidate) => candidate.id === source.id);
@@ -287,7 +297,9 @@ export function SourcesSettings({
                                         <div className="min-w-0 flex-1">
                                             <p className="font-medium">{source.title}</p>
                                             <p className="truncate text-xs text-muted-foreground">
-                                                {customSource?.executable || 'Built-in'}
+                                                {customSource?.executable ||
+                                                    sourceOverrides[source.id]?.executable ||
+                                                    'Built-in'}
                                             </p>
                                         </div>
                                         {customSource && (

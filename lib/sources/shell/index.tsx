@@ -3,6 +3,7 @@ import { createSource } from '@/lib/sources/create-source';
 
 export const shellSource = createSource({
     id: 'builtin:shell',
+    command: '$SHELL',
     title: 'Shell',
     icon: <TerminalWindowIcon />,
     executable: ({ cwd }) => ({ cwd, sourceId: 'builtin:shell' }),
