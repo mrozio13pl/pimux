@@ -236,6 +236,9 @@ export function ViewButton({
                             </ContextMenuItem>
                         )}
                         <ContextMenuItem onClick={openTitleDialog}>Change title</ContextMenuItem>
+                        <ContextMenuItem onClick={() => void navigator.clipboard.writeText(view.cwd)}>
+                            Copy path
+                        </ContextMenuItem>
                         <ContextMenuItem onClick={() => onToggleArchive(view.id)}>
                             {view.archived ? 'Unarchive view' : 'Archive view'}
                         </ContextMenuItem>
