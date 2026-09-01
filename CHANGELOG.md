@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.1](https://github.com/mrozio13pl/pimux/compare/v0.5.0...v0.5.1) (2026-09-01)
+
+
+### Fixes
+
+* **pi:** clear compacting sidebar status ([445a9b9](https://github.com/mrozio13pl/pimux/commit/445a9b9f96cbe6696a352cb0401d30b340c712f0))
+
+
+### Improvements
+
+* add copy path to view context menu ([ef2d66e](https://github.com/mrozio13pl/pimux/commit/ef2d66ed584f8b79d05b600ea4aba952b6de9475))
+* add shortened path setting ([6b5ee36](https://github.com/mrozio13pl/pimux/commit/6b5ee365a445070c0d1a3929b887e92adf302b69))
+* allow overriding built-in source commands ([5897190](https://github.com/mrozio13pl/pimux/commit/5897190d932147f3f692ebea69cd71b29991180d))
+* complex source commands ([5c86030](https://github.com/mrozio13pl/pimux/commit/5c86030eb09dcdb032d035e9850b95f81f6e1b04))
+
 ## [0.5.0](https://github.com/mrozio13pl/pimux/compare/v0.4.0...v0.5.0) (2026-08-03)
 
 
