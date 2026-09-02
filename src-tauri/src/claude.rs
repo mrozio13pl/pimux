@@ -1,4 +1,4 @@
-use crate::pty::{SourceViewUpdate, ViewStatus};
+use crate::session::{SourceViewUpdate, ViewStatus};
 use serde_json::Value;
 use std::{
     fs::OpenOptions,
@@ -181,13 +181,15 @@ pub(crate) fn parse_hook(value: &Value) -> Option<SourceViewUpdate> {
             Some(ViewStatus::Error),
             None,
         ),
+        // Claude only notifies when it needs the user: a permission prompt or an
+        // idle input box. Neither one is work in progress.
         "Notification" => (
             value
                 .get("message")
                 .or_else(|| value.get("title"))
                 .and_then(Value::as_str)
                 .map(clip),
-            Some(ViewStatus::Working),
+            Some(ViewStatus::Idle),
             None,
         ),
         "Stop" => (
@@ -245,7 +247,7 @@ pub fn run_hook() -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::{parse_hook, transcript_title};
-    use crate::pty::ViewStatus;
+    use crate::session::ViewStatus;
     use serde_json::json;
 
     #[test]
@@ -301,6 +303,17 @@ mod tests {
             Some("Implemented the feature")
         );
         assert_eq!(stopped.status, Some(ViewStatus::Finished));
+
+        let notified = parse_hook(&json!({
+            "hook_event_name": "Notification",
+            "message": "Claude is waiting for your input"
+        }))
+        .unwrap();
+        assert_eq!(
+            notified.description.as_deref(),
+            Some("Claude is waiting for your input")
+        );
+        assert_eq!(notified.status, Some(ViewStatus::Idle));
 
         let ended = parse_hook(&json!({ "hook_event_name": "SessionEnd" })).unwrap();
         assert_eq!(ended.status, None);
