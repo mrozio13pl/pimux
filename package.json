@@ -1,6 +1,6 @@
 {
     "name": "pimux",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "private": true,
     "description": "Pimux multiplexer",
     "author": "mrozio13pl",
