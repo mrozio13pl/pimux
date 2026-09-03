@@ -2,7 +2,7 @@ import type { ViewStatusType } from '@/components/sidebar/view-status';
 import type { SourceViewUpdate } from '@/lib/sources/create-source';
 
 const PREFIX = 'pimux:';
-const statuses = new Set<ViewStatusType>(['idle', 'error', 'finished', 'working']);
+const statuses = new Set<ViewStatusType>(['idle', 'error', 'finished', 'working', 'attention']);
 
 export function parsePiSidebarUpdate(title: string): SourceViewUpdate | undefined {
     if (!title.startsWith(PREFIX)) return;

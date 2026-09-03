@@ -8,6 +8,7 @@ const statusVariants = cva('size-2 rounded-full', {
             error: 'bg-destructive',
             finished: 'bg-green-400',
             working: 'bg-yellow-400',
+            attention: 'animate-pulse bg-blue-400',
         },
     },
 });

@@ -2,10 +2,12 @@ import { Type } from '@earendil-works/pi-ai';
 import { Text } from '@earendil-works/pi-tui';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
-type Status = 'idle' | 'error' | 'finished' | 'working';
+type Status = 'idle' | 'error' | 'finished' | 'working' | 'attention';
 type SidebarState = { title: string; description: string; status: Status; sessionId: string; model: string };
 
 const PREFIX = 'pimux:';
+const WAITING_DELAY = 60_000;
+const WAITING_DESCRIPTION = 'Pi is waiting for your input';
 const TITLE_TOOL = 'set_view_title';
 const TITLE_ENTRY = 'pimux-view-title';
 const TITLE_INSTRUCTION =
@@ -65,6 +67,7 @@ export default function pimuxExtension(pi: ExtensionAPI) {
         model: '',
     };
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let waiting: ReturnType<typeof setTimeout> | undefined;
     let pending: Partial<SidebarState> | undefined;
 
     const emit = (value: Partial<SidebarState> & { userSubmitted?: boolean }) => {
@@ -74,7 +77,9 @@ export default function pimuxExtension(pi: ExtensionAPI) {
 
     const update = (patch: Partial<SidebarState>, event?: { userSubmitted: true }) => {
         if (timer) clearTimeout(timer);
+        if (waiting) clearTimeout(waiting);
         timer = undefined;
+        waiting = undefined;
         pending = undefined;
         Object.assign(state, patch);
         emit({ ...patch, ...event, sessionId: state.sessionId });
@@ -90,6 +95,15 @@ export default function pimuxExtension(pi: ExtensionAPI) {
             pending = undefined;
             if (patch) emit({ ...patch, sessionId: state.sessionId });
         }, 150);
+    };
+
+    const waitForUser = () => {
+        if (waiting) clearTimeout(waiting);
+        waiting = setTimeout(() => {
+            waiting = undefined;
+            update({ description: WAITING_DESCRIPTION, status: 'attention' });
+        }, WAITING_DELAY);
+        waiting.unref?.();
     };
 
     pi.registerTool({
@@ -189,12 +203,16 @@ export default function pimuxExtension(pi: ExtensionAPI) {
     });
 
     pi.on('agent_start', () => update({ status: 'working' }));
-    pi.on('agent_settled', () => update({ status: state.status === 'error' ? 'error' : 'finished' }));
+    pi.on('agent_settled', () => {
+        update({ status: state.status === 'error' ? 'error' : 'finished' });
+        waitForUser();
+    });
     pi.on('session_before_compact', () => update({ description: 'Compacting context', status: 'working' }));
     pi.on('session_compact', (event) => {
         if (!event.willRetry) update({ description: 'Context compacted', status: 'finished' });
     });
     pi.on('session_shutdown', () => {
         if (timer) clearTimeout(timer);
+        if (waiting) clearTimeout(waiting);
     });
 }

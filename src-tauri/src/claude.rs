@@ -189,7 +189,7 @@ pub(crate) fn parse_hook(value: &Value) -> Option<SourceViewUpdate> {
                 .or_else(|| value.get("title"))
                 .and_then(Value::as_str)
                 .map(clip),
-            Some(ViewStatus::Idle),
+            Some(ViewStatus::Attention),
             None,
         ),
         "Stop" => (
@@ -313,7 +313,7 @@ mod tests {
             notified.description.as_deref(),
             Some("Claude is waiting for your input")
         );
-        assert_eq!(notified.status, Some(ViewStatus::Idle));
+        assert_eq!(notified.status, Some(ViewStatus::Attention));
 
         let ended = parse_hook(&json!({ "hook_event_name": "SessionEnd" })).unwrap();
         assert_eq!(ended.status, None);
