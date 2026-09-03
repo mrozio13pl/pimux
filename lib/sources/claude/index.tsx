@@ -1,6 +1,7 @@
 import { Claude } from '@lobehub/icons';
 import type { ViewStatusType } from '@/components/sidebar/view-status';
 import { createSource } from '@/lib/sources/create-source';
+import { bindNativePaste } from '@/lib/sources/native-paste';
 import { claudeProcessUpdate } from '@/lib/sources/claude/protocol';
 
 export const claudeSource = createSource({
@@ -14,6 +15,7 @@ export const claudeSource = createSource({
         initial: { description: 'New Claude Code instance', status: 'idle' },
         connect: (terminal, update) => {
             let status: ViewStatusType = 'idle';
+            const unbindPaste = bindNativePaste(terminal);
             const titles = terminal.onTitleChange((title) => {
                 const clean = title.trim().slice(0, 48);
                 if (clean) update({ title: clean });
@@ -25,7 +27,10 @@ export const claudeSource = createSource({
                     if (patch.status) status = patch.status;
                     update(patch);
                 },
-                dispose: () => titles.dispose(),
+                dispose: () => {
+                    unbindPaste();
+                    titles.dispose();
+                },
             };
         },
     },
