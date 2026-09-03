@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::{path::PathBuf, sync::Mutex};
+use std::{
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
 use tauri::{AppHandle, Manager};
 
 static FILE_LOCK: Mutex<()> = Mutex::new(());
@@ -15,13 +18,17 @@ pub(crate) struct CustomSource {
     pub(crate) icon_monochrome: bool,
 }
 
-fn sources_path(app: &AppHandle) -> Result<PathBuf, String> {
+fn sources_path(data_dir: &Path) -> Result<PathBuf, String> {
+    std::fs::create_dir_all(data_dir).map_err(|error| error.to_string())?;
+    Ok(data_dir.join("custom-sources.json"))
+}
+
+fn app_sources_path(app: &AppHandle) -> Result<PathBuf, String> {
     let directory = app
         .path()
         .app_data_dir()
         .map_err(|error| error.to_string())?;
-    std::fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
-    Ok(directory.join("custom-sources.json"))
+    sources_path(&directory)
 }
 
 fn load(path: &std::path::Path) -> Result<Vec<CustomSource>, String> {
@@ -181,7 +188,7 @@ pub(crate) fn custom_sources_load(app: AppHandle) -> Result<Vec<CustomSource>, S
     let _lock = FILE_LOCK
         .lock()
         .map_err(|_| "custom source storage unavailable")?;
-    load(&sources_path(&app)?)
+    load(&app_sources_path(&app)?)
 }
 
 #[tauri::command]
@@ -210,7 +217,7 @@ pub(crate) fn custom_source_add(
     let _lock = FILE_LOCK
         .lock()
         .map_err(|_| "custom source storage unavailable")?;
-    let path = sources_path(&app)?;
+    let path = app_sources_path(&app)?;
     let mut sources = load(&path)?;
     if sources.iter().any(|existing| existing.id == source.id) {
         return Err("custom source already exists".into());
@@ -240,7 +247,7 @@ pub(crate) fn custom_source_update(
     let _lock = FILE_LOCK
         .lock()
         .map_err(|_| "custom source storage unavailable")?;
-    let path = sources_path(&app)?;
+    let path = app_sources_path(&app)?;
     let mut sources = load(&path)?;
     let index = sources
         .iter()
@@ -277,7 +284,7 @@ pub(crate) fn custom_source_remove(app: AppHandle, id: String) -> Result<(), Str
     let _lock = FILE_LOCK
         .lock()
         .map_err(|_| "custom source storage unavailable")?;
-    let path = sources_path(&app)?;
+    let path = app_sources_path(&app)?;
     let mut sources = load(&path)?;
     let icon = sources
         .iter()
@@ -350,7 +357,7 @@ pub(crate) async fn lobehub_icon_stage(slug: String, version: String) -> Result<
 }
 
 pub(crate) fn custom_source_command(
-    app: &AppHandle,
+    data_dir: &Path,
     id: &str,
 ) -> Result<(PathBuf, Vec<String>), String> {
     if !validate_id(id) {
@@ -359,7 +366,7 @@ pub(crate) fn custom_source_command(
     let _lock = FILE_LOCK
         .lock()
         .map_err(|_| "custom source storage unavailable")?;
-    let source = load(&sources_path(app)?)?
+    let source = load(&sources_path(data_dir)?)?
         .into_iter()
         .find(|source| source.id == id)
         .ok_or("unknown custom source")?;

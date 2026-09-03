@@ -25,6 +25,25 @@ type SavedView = Omit<View, 'cwd' | 'sourceId'> & {
     cwd?: string | null;
     sourceId?: string | null;
 };
+
+interface DaemonSession {
+    viewId: string;
+    pid: number | null;
+    alive: boolean;
+    sourceId: string;
+    cwd: string;
+    attached: boolean;
+}
+
+function killSession(id: string) {
+    void invoke('pty_kill', { viewId: id }).catch(() => undefined);
+}
+
+function newlyArchived(before: View[], after: View[]) {
+    const archived = new Set(before.filter((view) => view.archived).map((view) => view.id));
+    return after.filter((view) => view.archived && !archived.has(view.id)).map((view) => view.id);
+}
+
 type NewView = Omit<View, 'id'>;
 type OpenView = Pick<View, 'cwd' | 'sourceId'> & Partial<Pick<View, 'sessionId' | 'resumeSession' | 'title'>>;
 
@@ -35,8 +54,16 @@ export function useViews() {
     const [error, setError] = useState<string>();
 
     useEffect(() => {
-        void Promise.all([invoke<SavedView[]>('views_load'), invoke<{ cwd: string }>('workspace_info', { cwd: null })])
-            .then(([savedViews, workspace]) => {
+        void Promise.all([
+            invoke<SavedView[]>('views_load'),
+            invoke<{ cwd: string }>('workspace_info', { cwd: null }),
+            invoke<DaemonSession[]>('pty_sessions_list').catch(() => [] as DaemonSession[]),
+        ])
+            .then(([savedViews, workspace, sessions]) => {
+                const adoptable = new Set(savedViews.filter((view) => !view.archived).map((view) => view.id));
+                for (const session of sessions) {
+                    if (!adoptable.has(session.viewId)) killSession(session.viewId);
+                }
                 setDefaultCwd(workspace.cwd);
                 setViews(
                     savedViews.map((view) => {
@@ -121,6 +148,7 @@ export function useViews() {
     }, []);
 
     const removeView = useCallback((id: string) => {
+        killSession(id);
         setViews((current) => current.filter((view) => view.id !== id));
     }, []);
 
@@ -158,17 +186,23 @@ export function useViews() {
     }, []);
 
     const toggleViewArchive = useCallback((id: string) => {
-        setViews((current) =>
-            current.map((view) =>
+        setViews((current) => {
+            const next = current.map((view) =>
                 view.id === id
                     ? { ...view, archived: !view.archived, pinned: view.archived ? view.pinned : false }
                     : view,
-            ),
-        );
+            );
+            newlyArchived(current, next).forEach(killSession);
+            return next;
+        });
     }, []);
 
     const archiveInactiveViews = useCallback((cutoff: number) => {
-        setViews((current) => archiveInactive(current, cutoff));
+        setViews((current) => {
+            const next = archiveInactive(current, cutoff);
+            if (next !== current) newlyArchived(current, next).forEach(killSession);
+            return next;
+        });
     }, []);
 
     return {

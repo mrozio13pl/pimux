@@ -451,6 +451,7 @@ export function App() {
                     return (
                         <Terminal
                             key={view.id}
+                            viewId={view.id}
                             active={view.id === currentViewId}
                             aria-hidden={view.id !== currentViewId}
                             className={cn(

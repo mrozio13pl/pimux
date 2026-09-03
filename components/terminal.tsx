@@ -56,6 +56,7 @@ export function writeTerminalOutput(terminal: GhosttyTerminal, text: string) {
 interface TerminalProps extends React.ComponentProps<'div'> {
     active?: boolean;
     cwd?: string;
+    viewId?: string;
     sourceId?: SourceId;
     sessionId?: string;
     resumeSession?: boolean;
@@ -70,6 +71,7 @@ interface TerminalProps extends React.ComponentProps<'div'> {
 export function Terminal({
     active = true,
     cwd,
+    viewId,
     sourceId = BUILTIN_SOURCES.shell.id,
     sessionId,
     resumeSession = false,
@@ -111,7 +113,7 @@ export function Terminal({
 
     useEffect(() => {
         let terminal: GhosttyTerminal | undefined;
-        let sessionId: number | undefined;
+        let attached = false;
         let cancelled = false;
         let inputSubscription: { dispose(): void } | undefined;
         let resizeSubscription: { dispose(): void } | undefined;
@@ -190,7 +192,10 @@ export function Terminal({
             if (pty) {
                 try {
                     if (!cwd) throw new Error('Terminal working directory is missing');
-                    sessionId = await invoke<number>('pty_spawn', {
+                    if (!viewId) throw new Error('Terminal view ID is missing');
+
+                    await invoke('pty_spawn', {
+                        viewId,
                         rows: terminal.rows,
                         cols: terminal.cols,
                         cwd,
@@ -201,6 +206,8 @@ export function Terminal({
                         onData: output,
                         onProcess: process,
                     });
+
+                    attached = true;
                 } catch (error) {
                     if (!cancelled) terminal.writeln(`\r\n${ansi.red(String(error))}`);
                     return;
@@ -208,17 +215,17 @@ export function Terminal({
             }
 
             if (cancelled) {
-                if (sessionId !== undefined) void invoke('pty_close', { id: sessionId }).catch(() => undefined);
+                if (attached) void invoke('pty_detach', { viewId }).catch(() => undefined);
                 return;
             }
 
-            if (sessionId !== undefined) {
+            if (attached) {
                 inputSubscription = terminal.onData((data) => {
                     if (data.includes('\r') || data.includes('\n')) onSubmitRef.current?.();
-                    void invoke('pty_write', { id: sessionId, data: [...encoder.encode(data)] }).catch(() => undefined);
+                    void invoke('pty_write', { viewId, data: [...encoder.encode(data)] }).catch(() => undefined);
                 });
                 resizeSubscription = terminal.onResize(({ rows, cols }) => {
-                    void invoke('pty_resize', { id: sessionId, rows, cols }).catch(() => undefined);
+                    void invoke('pty_resize', { viewId, rows, cols }).catch(() => undefined);
                 });
             }
             setTerminalActive(terminal, activeRef.current);
@@ -232,12 +239,13 @@ export function Terminal({
             sourceBinding?.dispose?.();
             inputSubscription?.dispose();
             resizeSubscription?.dispose();
-            if (sessionId !== undefined) void invoke('pty_close', { id: sessionId }).catch(() => undefined);
+
+            if (attached) void invoke('pty_detach', { viewId }).catch(() => undefined);
             if (terminal) setTerminalActive(terminal, false);
             terminal?.dispose();
             terminalInstance.current = null;
         };
-    }, [cwd, onKeyEvent, onReady, pty, sourceId]);
+    }, [cwd, onKeyEvent, onReady, pty, sourceId, viewId]);
 
     return (
         <div

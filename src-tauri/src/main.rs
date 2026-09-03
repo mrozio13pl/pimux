@@ -2,12 +2,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    if std::env::args().nth(1).as_deref() == Some("--claude-hook") {
-        if let Err(error) = pimux_lib::run_claude_hook() {
-            eprintln!("{error}");
-            std::process::exit(1);
+    match std::env::args().nth(1).as_deref() {
+        Some("--claude-hook") => {
+            if let Err(error) = pimux_lib::run_claude_hook() {
+                eprintln!("{error}");
+                std::process::exit(1);
+            }
         }
-        return;
+        #[cfg(unix)]
+        Some("--daemon") => pimux_lib::run_daemon(),
+        _ => pimux_lib::run(),
     }
-    pimux_lib::run();
 }
