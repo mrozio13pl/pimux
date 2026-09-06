@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="none" role="img" aria-label="pimux">
+  <title>pimux</title>
+  <rect width="16" height="16" rx="3.5" fill="#111111"/>
+  <path fill="#f7e1be" d="M6 2h4v1H6z M4 3h8v1H4z M3 4h10v2H3z M2 6h12v4H2z M3 10h10v2H3z M4 12h8v1H4z M6 13h4v1H6z"/>
+  <g fill="#6d5334">
+    <rect x="5" y="5" width="1" height="6"/>
+    <rect x="7" y="4" width="1" height="8"/>
+    <rect x="10" y="5" width="1" height="6"/>
+  </g>
+</svg>

@@ -2,7 +2,7 @@
     "name": "pimux",
     "version": "0.5.1",
     "private": true,
-    "description": "Pimux multiplexer",
+    "description": "boring terminal multiplexer",
     "author": "mrozio13pl",
     "type": "module",
     "scripts": {
