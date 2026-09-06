@@ -1,6 +1,6 @@
 [package]
 name = "pimux"
-version = "0.5.1"
+version = "0.6.0"
 description = "Native terminal multiplexer"
 authors = ["mrozio13pl"]
 license = "MIT"

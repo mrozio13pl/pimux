@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/mrozio13pl/pimux/compare/v0.5.1...v0.6.0) (2026-09-06)
+
+
+### Features
+
+* add attention status ([24dc5e0](https://github.com/mrozio13pl/pimux/commit/24dc5e0376cb3d5a15a05c08a4293fe2b59aceb6))
+* run pty in daemon ([e416dac](https://github.com/mrozio13pl/pimux/commit/e416dac472895d4b61b4b2d6f1e1de3ec31b762c))
+
+
+### Fixes
+
+* **claude:** idle waiting for input status ([3ac1164](https://github.com/mrozio13pl/pimux/commit/3ac1164023625c01435e9c67743793f03043d577))
+* **claude:** image clipboard ([c965d2b](https://github.com/mrozio13pl/pimux/commit/c965d2bb9b82e13e90dc30c2f025f38b69a1908f))
+
 ## [0.5.1](https://github.com/mrozio13pl/pimux/compare/v0.5.0...v0.5.1) (2026-09-01)
 
 
