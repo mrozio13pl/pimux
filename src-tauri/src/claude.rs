@@ -188,7 +188,8 @@ pub(crate) fn parse_hook(value: &Value) -> Option<SourceViewUpdate> {
                 .get("message")
                 .or_else(|| value.get("title"))
                 .and_then(Value::as_str)
-                .map(clip),
+                .map(clip)
+                .filter(|message| !message.ends_with("is waiting for your input")),
             Some(ViewStatus::Attention),
             None,
         ),
@@ -309,11 +310,19 @@ mod tests {
             "message": "Claude is waiting for your input"
         }))
         .unwrap();
-        assert_eq!(
-            notified.description.as_deref(),
-            Some("Claude is waiting for your input")
-        );
+        assert_eq!(notified.description, None);
         assert_eq!(notified.status, Some(ViewStatus::Attention));
+
+        let permission = parse_hook(&json!({
+            "hook_event_name": "Notification",
+            "message": "Claude needs your permission to use Bash"
+        }))
+        .unwrap();
+        assert_eq!(
+            permission.description.as_deref(),
+            Some("Claude needs your permission to use Bash")
+        );
+        assert_eq!(permission.status, Some(ViewStatus::Attention));
 
         let ended = parse_hook(&json!({ "hook_event_name": "SessionEnd" })).unwrap();
         assert_eq!(ended.status, None);

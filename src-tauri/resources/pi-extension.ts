@@ -7,7 +7,6 @@ type SidebarState = { title: string; description: string; status: Status; sessio
 
 const PREFIX = 'pimux:';
 const WAITING_DELAY = 60_000;
-const WAITING_DESCRIPTION = 'Pi is waiting for your input';
 const TITLE_TOOL = 'set_view_title';
 const TITLE_ENTRY = 'pimux-view-title';
 const TITLE_INSTRUCTION =
@@ -101,7 +100,7 @@ export default function pimuxExtension(pi: ExtensionAPI) {
         if (waiting) clearTimeout(waiting);
         waiting = setTimeout(() => {
             waiting = undefined;
-            update({ description: WAITING_DESCRIPTION, status: 'attention' });
+            update({ status: 'attention' });
         }, WAITING_DELAY);
         waiting.unref?.();
     };
