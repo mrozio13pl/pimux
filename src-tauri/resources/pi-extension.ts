@@ -6,7 +6,6 @@ type Status = 'idle' | 'error' | 'finished' | 'working' | 'attention';
 type SidebarState = { title: string; description: string; status: Status; sessionId: string; model: string };
 
 const PREFIX = 'pimux:';
-const WAITING_DELAY = 60_000;
 const TITLE_TOOL = 'set_view_title';
 const TITLE_ENTRY = 'pimux-view-title';
 const TITLE_INSTRUCTION =
@@ -27,6 +26,16 @@ const contentText = (content: unknown) => {
         )
         .map((part) => part.text)
         .join(' ');
+};
+
+const isQuestion = (value: string) => {
+    const lines = value
+        .replace(/```[\s\S]*?(```|$)/g, ' ')
+        .replace(/`[^`]*`/g, ' ')
+        .split('\n')
+        .map((line) => line.replace(/[\s*_~>)\]"'`]+$/, '').trim())
+        .filter(Boolean);
+    return Boolean(lines.at(-1)?.endsWith('?'));
 };
 
 const inputSummary = (input: Record<string, unknown>) => {
@@ -66,8 +75,8 @@ export default function pimuxExtension(pi: ExtensionAPI) {
         model: '',
     };
     let timer: ReturnType<typeof setTimeout> | undefined;
-    let waiting: ReturnType<typeof setTimeout> | undefined;
     let pending: Partial<SidebarState> | undefined;
+    let lastAssistantText = '';
 
     const emit = (value: Partial<SidebarState> & { userSubmitted?: boolean }) => {
         const payload = Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -76,9 +85,7 @@ export default function pimuxExtension(pi: ExtensionAPI) {
 
     const update = (patch: Partial<SidebarState>, event?: { userSubmitted: true }) => {
         if (timer) clearTimeout(timer);
-        if (waiting) clearTimeout(waiting);
         timer = undefined;
-        waiting = undefined;
         pending = undefined;
         Object.assign(state, patch);
         emit({ ...patch, ...event, sessionId: state.sessionId });
@@ -94,15 +101,6 @@ export default function pimuxExtension(pi: ExtensionAPI) {
             pending = undefined;
             if (patch) emit({ ...patch, sessionId: state.sessionId });
         }, 150);
-    };
-
-    const waitForUser = () => {
-        if (waiting) clearTimeout(waiting);
-        waiting = setTimeout(() => {
-            waiting = undefined;
-            update({ status: 'attention' });
-        }, WAITING_DELAY);
-        waiting.unref?.();
     };
 
     pi.registerTool({
@@ -150,6 +148,7 @@ export default function pimuxExtension(pi: ExtensionAPI) {
     pi.on('model_select', (event) => update({ model: event.model.id }));
 
     pi.on('before_agent_start', (event) => {
+        lastAssistantText = '';
         update({ description: clip(event.prompt), status: 'working' }, { userSubmitted: true });
         return { systemPrompt: `${event.systemPrompt}\n\n${TITLE_INSTRUCTION}` };
     });
@@ -183,6 +182,7 @@ export default function pimuxExtension(pi: ExtensionAPI) {
             return;
         }
         const text = contentText(message.content);
+        if (text) lastAssistantText = text;
         if (text) update({ description: clip(text), status: message.stopReason === 'stop' ? 'finished' : 'working' });
     });
 
@@ -201,10 +201,16 @@ export default function pimuxExtension(pi: ExtensionAPI) {
         }
     });
 
-    pi.on('agent_start', () => update({ status: 'working' }));
+    pi.on('agent_start', () => {
+        lastAssistantText = '';
+        update({ status: 'working' });
+    });
     pi.on('agent_settled', () => {
-        update({ status: state.status === 'error' ? 'error' : 'finished' });
-        waitForUser();
+        if (state.status === 'error') {
+            update({ status: 'error' });
+            return;
+        }
+        update({ status: isQuestion(lastAssistantText) ? 'attention' : 'finished' });
     });
     pi.on('session_before_compact', () => update({ description: 'Compacting context', status: 'working' }));
     pi.on('session_compact', (event) => {
@@ -212,6 +218,5 @@ export default function pimuxExtension(pi: ExtensionAPI) {
     });
     pi.on('session_shutdown', () => {
         if (timer) clearTimeout(timer);
-        if (waiting) clearTimeout(waiting);
     });
 }

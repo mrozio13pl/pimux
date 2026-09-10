@@ -80,6 +80,28 @@ fn transcript_model(path: Option<&str>) -> Option<String> {
     })
 }
 
+fn is_question(value: &str) -> bool {
+    let mut fenced = false;
+    value
+        .lines()
+        .filter(|line| {
+            if line.trim_start().starts_with("```") {
+                fenced = !fenced;
+                return false;
+            }
+            !fenced
+        })
+        .map(|line| {
+            line.trim_end_matches(|c: char| {
+                c.is_whitespace() || "*_~>)]\"'`".contains(c)
+            })
+            .trim()
+        })
+        .filter(|line| !line.is_empty())
+        .next_back()
+        .is_some_and(|line| line.ends_with('?'))
+}
+
 fn input_summary(input: Option<&Value>) -> String {
     let Some(Value::Object(input)) = input else {
         return String::new();
@@ -181,26 +203,36 @@ pub(crate) fn parse_hook(value: &Value) -> Option<SourceViewUpdate> {
             Some(ViewStatus::Error),
             None,
         ),
-        // Claude only notifies when it needs the user: a permission prompt or an
-        // idle input box. Neither one is work in progress.
-        "Notification" => (
-            value
+        "Notification" => {
+            let message = value
                 .get("message")
                 .or_else(|| value.get("title"))
                 .and_then(Value::as_str)
-                .map(clip)
-                .filter(|message| !message.ends_with("is waiting for your input")),
-            Some(ViewStatus::Attention),
-            None,
-        ),
-        "Stop" => (
-            value
+                .map(clip);
+            let idle = message
+                .as_deref()
+                .is_none_or(|message| message.ends_with("is waiting for your input"));
+            (
+                message.filter(|_| !idle),
+                if idle { None } else { Some(ViewStatus::Attention) },
+                None,
+            )
+        }
+        "Stop" => {
+            let message = value
                 .get("last_assistant_message")
-                .and_then(Value::as_str)
-                .map(clip),
-            Some(ViewStatus::Finished),
-            None,
-        ),
+                .and_then(Value::as_str);
+            let asking = message.is_some_and(is_question);
+            (
+                message.map(clip),
+                Some(if asking {
+                    ViewStatus::Attention
+                } else {
+                    ViewStatus::Finished
+                }),
+                None,
+            )
+        }
         "StopFailure" => (
             Some(clip(
                 value
@@ -311,7 +343,21 @@ mod tests {
         }))
         .unwrap();
         assert_eq!(notified.description, None);
-        assert_eq!(notified.status, Some(ViewStatus::Attention));
+        assert_eq!(notified.status, None);
+
+        let asking = parse_hook(&json!({
+            "hook_event_name": "Stop",
+            "last_assistant_message": "Which file should I edit?"
+        }))
+        .unwrap();
+        assert_eq!(asking.status, Some(ViewStatus::Attention));
+
+        let fenced = parse_hook(&json!({
+            "hook_event_name": "Stop",
+            "last_assistant_message": "Done.\n\n```sh\nwhat?\n```"
+        }))
+        .unwrap();
+        assert_eq!(fenced.status, Some(ViewStatus::Finished));
 
         let permission = parse_hook(&json!({
             "hook_event_name": "Notification",
