@@ -8,6 +8,8 @@ boring terminal multiplexer
 
 [![Download Badge](https://img.shields.io/badge/-download-f7e1be?style=for-the-badge&cacheSeconds=3600)](https://github.com/mrozio13pl/pimux/releases/latest)
 
+<img src="website/public/pimux-app.webp" alt="preview" />
+
 </div>
 
 pimux is a very simple terminal multiplexer for agents
