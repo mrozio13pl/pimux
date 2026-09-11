@@ -9,6 +9,7 @@ import {
 import { claudeSource } from '@/lib/sources/claude';
 import { piSource } from '@/lib/sources/pi';
 import { shellSource } from '@/lib/sources/shell';
+import type { SourceInputProfile } from '@/lib/sources/input';
 
 export * from '@/lib/sources/create-source';
 
@@ -30,6 +31,7 @@ export interface ExecutableSource {
     title: string;
     icon: ReactNode;
     experimental: boolean;
+    input?: SourceInputProfile;
     executable: (context: SourceExecutionContext) => { cwd: string; sourceId: SourceId };
     viewButton: SourceViewButton;
 }

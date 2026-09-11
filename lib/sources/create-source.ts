@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Terminal } from 'ghostty-web';
 import type { ViewStatusType } from '@/components/sidebar/view-status';
+import type { SourceInputProfile } from '@/lib/sources/input';
 
 export const DEFAULT_SOURCE_ID = 'builtin:pi' as const;
 export type BuiltinSourceId = 'builtin:pi' | 'builtin:claudecode' | 'builtin:shell';
@@ -41,6 +42,7 @@ export type SourceDefinition<Id extends `${string}:${string}`> = {
     title: string;
     icon: ReactNode;
     command?: string;
+    input?: SourceInputProfile;
 } & (
     | {
           experimental: boolean;

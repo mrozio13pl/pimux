@@ -460,6 +460,7 @@ export function App() {
                             )}
                             cwd={view.cwd}
                             sourceId={view.sourceId}
+                            input={source.input}
                             sessionId={view.sessionId}
                             resumeSession={view.resumeSession}
                             connectSource={(terminal) =>

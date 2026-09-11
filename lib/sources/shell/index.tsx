@@ -6,6 +6,7 @@ export const shellSource = createSource({
     command: '$SHELL',
     title: 'Shell',
     icon: <TerminalWindowIcon />,
+    input: { nativePaste: false },
     executable: ({ cwd }) => ({ cwd, sourceId: 'builtin:shell' }),
     experimental: false,
     viewButton: {

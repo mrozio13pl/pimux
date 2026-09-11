@@ -1,5 +1,6 @@
 import { useSettings } from '@/lib/settings';
 import { BUILTIN_SOURCES, type SourceId, type SourceProcessEvent, type SourceTerminalBinding } from '@/lib/sources';
+import { bindTerminalInput, type SourceInputProfile } from '@/lib/sources/input';
 import { cn } from '@/lib/utils';
 import { Channel, invoke } from '@tauri-apps/api/core';
 import { Ansis } from 'ansis';
@@ -58,6 +59,7 @@ interface TerminalProps extends React.ComponentProps<'div'> {
     cwd?: string;
     viewId?: string;
     sourceId?: SourceId;
+    input?: SourceInputProfile;
     sessionId?: string;
     resumeSession?: boolean;
     connectSource?: (terminal: GhosttyTerminal) => SourceTerminalBinding | void;
@@ -73,6 +75,7 @@ export function Terminal({
     cwd,
     viewId,
     sourceId = BUILTIN_SOURCES.shell.id,
+    input,
     sessionId,
     resumeSession = false,
     pty = true,
@@ -93,11 +96,13 @@ export function Terminal({
     const launchWithResume = useRef(resumeSession);
     const activeRef = useRef(active);
     const connectSourceRef = useRef(connectSource);
+    const inputProfile = useRef(input);
     const onOutputRef = useRef(onOutput);
     const onSubmitRef = useRef(onSubmit);
     activeRef.current = active;
     terminalOptions.current = { cursorBlink, cursorStyle };
     connectSourceRef.current = connectSource;
+    inputProfile.current = input;
     onOutputRef.current = onOutput;
     onSubmitRef.current = onSubmit;
 
@@ -118,6 +123,7 @@ export function Terminal({
         let inputSubscription: { dispose(): void } | undefined;
         let resizeSubscription: { dispose(): void } | undefined;
         let sourceBinding: SourceTerminalBinding | undefined;
+        let unbindInput: (() => void) | undefined;
         let onReadyCleanup: (() => void) | undefined;
         const decoder = new TextDecoder();
 
@@ -162,6 +168,7 @@ export function Terminal({
             terminal.open(terminalElement.current);
             terminalInstance.current = terminal;
             if (onKeyEvent) terminal.attachCustomKeyEventHandler(onKeyEvent);
+            unbindInput = bindTerminalInput(terminal, inputProfile.current);
             sourceBinding = connectSourceRef.current?.(terminal) || undefined;
 
             const renderer = terminal.renderer as unknown as {
@@ -236,6 +243,7 @@ export function Terminal({
         return () => {
             cancelled = true;
             onReadyCleanup?.();
+            unbindInput?.();
             sourceBinding?.dispose?.();
             inputSubscription?.dispose();
             resizeSubscription?.dispose();

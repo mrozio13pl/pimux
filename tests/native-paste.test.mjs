@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isNativePasteShortcut } from '../lib/sources/native-paste.ts';
+import { isNativePasteShortcut } from '../lib/sources/input.ts';
 
 const key = (overrides = {}) => ({
     altKey: false,
