@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.1](https://github.com/mrozio13pl/pimux/compare/v0.6.0...v0.6.1) (2026-09-11)
+
+
+### Fixes
+
+* **settings:** automatic archiving ([35b597f](https://github.com/mrozio13pl/pimux/commit/35b597fda35850e782493f35da09dabca80cb346))
+* show attention status only on questions ([c65a0f1](https://github.com/mrozio13pl/pimux/commit/c65a0f11600ac6236680612330be64d7237e63d1))
+* **sources:** native paste and working page keys ([2539fc1](https://github.com/mrozio13pl/pimux/commit/2539fc1bdec21e9f233511aed9b4aff8f0c63dda))
+
+
+### Improvements
+
+* drop input wait message ([10d7e48](https://github.com/mrozio13pl/pimux/commit/10d7e4879b51894b7689c729f0871d851f9550d1))
+* new views always at the top ([52b8aee](https://github.com/mrozio13pl/pimux/commit/52b8aeefc5f0186310c334907c953a180309b537))
+
 ## [0.6.0](https://github.com/mrozio13pl/pimux/compare/v0.5.1...v0.6.0) (2026-09-06)
 
 
