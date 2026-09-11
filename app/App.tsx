@@ -8,7 +8,7 @@ import {
     type DragEndEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import stripAnsi from 'strip-ansi';
 import { AppCommands } from '@/components/commands';
@@ -111,8 +111,10 @@ export function App() {
         [sourceMenuSources],
     );
     const { defaultSource, autoArchiveDays } = useSettings((state) => state.values);
-    const [settingsHydrated, setSettingsHydrated] = useState(useSettings.persist.hasHydrated());
-    useEffect(() => useSettings.persist.onFinishHydration(() => setSettingsHydrated(true)), []);
+    const settingsHydrated = useSyncExternalStore(
+        useSettings.persist.onFinishHydration,
+        useSettings.persist.hasHydrated,
+    );
     const handleTerminalKey = useCallback((event: KeyboardEvent) => isAppHotkey(event), []);
     const [reorderRevision, setReorderRevision] = useState(0);
     const promoteRecentView = useCallback(

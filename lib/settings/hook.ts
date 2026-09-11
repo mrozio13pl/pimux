@@ -79,24 +79,8 @@ export const useSettings = create<SettingsState>()(
                 recentViews,
             }),
             merge: (saved, current) => {
-                const previous = saved as Partial<SettingsState> & Partial<SettingValues>;
-                const autoArchiveDays = Number(previous.values?.autoArchiveDays);
-                return {
-                    ...current,
-                    values: {
-                        ...defaultSettings,
-                        ...previous.values,
-                        autoArchiveDays: Number.isFinite(autoArchiveDays)
-                            ? Math.min(3650, Math.max(1, Math.round(autoArchiveDays)))
-                            : defaultSettings.autoArchiveDays,
-                        theme: previous.values?.theme ?? previous.theme ?? defaultSettings.theme,
-                        reduceMotion:
-                            previous.values?.reduceMotion ?? previous.reduceMotion ?? defaultSettings.reduceMotion,
-                    },
-                    hotkeys: previous.hotkeys ?? {},
-                    sourceOverrides: previous.sourceOverrides ?? {},
-                    recentViews: previous.recentViews ?? [],
-                };
+                const previous = saved as Partial<SettingsState> | undefined;
+                return { ...current, ...previous, values: { ...defaultSettings, ...previous?.values } };
             },
             onRehydrateStorage: () => (_state, error) => {
                 if (error) console.error('Failed to load settings', error);
