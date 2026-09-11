@@ -100,7 +100,10 @@ export function useViews() {
 
     const addView = useCallback((input: NewView) => {
         const view = { id: crypto.randomUUID(), ...input };
-        setViews((current) => [...current, view]);
+        setViews((current) => {
+            const first = current.findIndex((existing) => !existing.pinned);
+            return first < 0 ? [...current, view] : [...current.slice(0, first), view, ...current.slice(first)];
+        });
         return view;
     }, []);
 
