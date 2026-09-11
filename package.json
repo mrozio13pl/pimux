@@ -15,7 +15,10 @@
         "test:pi-extension": "node --experimental-strip-types --test tests/pi-extension.test.mjs",
         "test:settings": "node --experimental-strip-types --test tests/settings.test.mjs",
         "preview": "vite preview",
-        "tauri": "tauri"
+        "tauri": "tauri",
+        "demo": "vite --config vite.demo.config.ts",
+        "demo:shot": "node scripts/shoot-hero.mjs",
+        "demo:shot:window": "node scripts/shoot-hero.mjs --window"
     },
     "dependencies": {
         "@base-ui/react": "^1.8.0",
@@ -60,6 +63,7 @@
         "nano-staged": "^1.0.2",
         "oxfmt": "^0.66.0",
         "oxlint": "^1.81.0",
+        "playwright": "^1.63.0",
         "simple-git-hooks": "^2.14.0",
         "typescript": "~7.0.2",
         "vite": "^8.2.2"

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Pimux - demo</title>
+        <style>
+            :root {
+                color-scheme: dark;
+            }
+
+            html,
+            body {
+                height: 100%;
+                margin: 0;
+                background: #05070d;
+            }
+
+            body {
+                display: grid;
+                place-items: center;
+                overflow: hidden;
+            }
+
+            .backdrop {
+                position: fixed;
+                inset: 0;
+                background:
+                    radial-gradient(120% 90% at 78% 8%, rgba(96, 132, 255, 0.5), transparent 58%),
+                    radial-gradient(90% 80% at 18% 92%, rgba(126, 84, 212, 0.42), transparent 60%),
+                    radial-gradient(70% 60% at 50% 50%, rgba(28, 44, 92, 0.55), transparent 70%),
+                    linear-gradient(160deg, #060a16 0%, #04060e 55%, #070510 100%);
+            }
+
+            .backdrop::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+                background-size: 3px 3px;
+                mix-blend-mode: overlay;
+                opacity: 0.5;
+            }
+
+            .window {
+                position: relative;
+                width: 1440px;
+                height: 900px;
+                border-radius: 14px;
+                overflow: hidden;
+                background: #0b0b0e;
+                box-shadow:
+                    0 0 0 1px rgba(255, 255, 255, 0.09),
+                    0 2px 4px rgba(0, 0, 0, 0.4),
+                    0 40px 90px -20px rgba(0, 0, 0, 0.85),
+                    0 90px 160px -60px rgba(0, 0, 0, 0.9);
+            }
+
+            .window iframe {
+                display: block;
+                width: 100%;
+                height: 100%;
+                border: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="backdrop"></div>
+        <div class="window"><iframe id="app" src="/demo/app.html" title="Pimux"></iframe></div>
+    </body>
+</html>

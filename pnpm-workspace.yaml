@@ -1,11 +1,18 @@
-packages: []
+packages:
+    - '.'
+    - 'website'
 
 allowBuilds:
     '@google/genai': false
     esbuild: true
     msw: false
     protobufjs: false
+    sharp: true
     simple-git-hooks: true
+
+minimumReleaseAgeExclude:
+    - '@astrojs/markdown-satteri@0.4.1'
+    - astro@7.3.2
 
 patchedDependencies:
     ghostty-web@0.4.0: patches/ghostty-web@0.4.0.patch

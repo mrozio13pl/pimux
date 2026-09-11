@@ -1,0 +1,95 @@
+---
+import Claude from '@lobehub/icons-static-svg/icons/claude-color.svg';
+import Pi from '@lobehub/icons-static-svg/icons/pi.svg';
+import MagnifyingGlass from '@phosphor-icons/core/bold/magnifying-glass-bold.svg';
+import { SESSIONS, INITIAL_QUERY, matches, segments } from '../lib/sessions';
+
+const firstHit = SESSIONS.findIndex((session) => matches(session, INITIAL_QUERY));
+
+const kbd =
+    'inline-flex h-5 min-w-5 items-center justify-center rounded border border-white/10 bg-white/5 px-[0.3125rem] font-sans text-[0.6875rem] leading-none text-steel [&+kbd]:-ml-0.5';
+const footItem = 'flex items-center gap-[0.3125rem] text-xs text-steel';
+---
+
+<section class="px-6 pb-20 sm:px-10 lg:pb-28">
+    <div class="grid gap-10 lg:grid-cols-[21rem_minmax(0,1fr)] lg:gap-16">
+        <div>
+            <h2 class="font-heading text-3xl leading-tight font-bold tracking-tight text-balance sm:text-4xl">
+                find it by what was said
+            </h2>
+            <p class="mt-5 max-w-[38ch] text-base leading-relaxed text-steel">
+                <span class="text-foreground" data-mod-label>⌘K</span> searches the transcripts.
+                It indexes the session files pi and claude code already write to disk,
+                so work from before you installed pimux is in there too.
+            </p>
+        </div>
+
+        <div class="self-start overflow-hidden rounded-xl border border-white/10 bg-card shadow-[0_24px_60px_rgb(0_0_0/0.45)]">
+            <div
+                class="flex items-center gap-2.5 border-b border-white/8 px-3.5 py-[0.8125rem] focus-within:rounded-t-xl focus-within:outline-1 focus-within:-outline-offset-1 focus-within:outline-sand/60"
+            >
+                <MagnifyingGlass class="size-4 shrink-0 text-steel" />
+                <input
+                    class="min-w-0 flex-1 border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-steel"
+                    type="text"
+                    value={INITIAL_QUERY}
+                    placeholder="Search commands, views, and sessions…"
+                    aria-label="Search sessions"
+                    autocomplete="off"
+                    spellcheck="false"
+                    data-search
+                />
+            </div>
+
+            <div
+                class="max-h-56 min-h-28 overflow-y-auto p-1.5 [mask-image:linear-gradient(to_bottom,#000_88%,transparent_100%)] [scrollbar-color:oklch(1_0_0/0.14)_transparent] [scrollbar-width:thin]"
+            >
+                <p class="px-2.5 pt-2 pb-1.5 text-xs text-steel" data-group-heading>Previous sessions</p>
+                <ul>
+                    {SESSIONS.map((session, i) => (
+                        <li
+                            class="flex items-start gap-2.5 rounded-md px-2.5 py-[0.4375rem] data-[first]:bg-white/[0.07] [&[hidden]]:hidden"
+                            hidden={!matches(session, INITIAL_QUERY)}
+                            data-row
+                            data-first={i === firstHit ? '' : undefined}
+                        >
+                            {session.source === 'Pi'
+                                ? <Pi class="mt-0.5 size-4 shrink-0" />
+                                : <Claude class="mt-0.5 size-4 shrink-0" />}
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm leading-[1.4] font-medium" data-text={session.title}>
+                                    {segments(session.title, INITIAL_QUERY).map((part) =>
+                                        part.hit ? <mark>{part.text}</mark> : part.text,
+                                    )}
+                                </p>
+                                <p class="text-xs leading-[1.45] text-steel" data-text={session.snippet}>
+                                    {segments(session.snippet, INITIAL_QUERY).map((part) =>
+                                        part.hit ? <mark>{part.text}</mark> : part.text,
+                                    )}
+                                </p>
+                                <p class="text-xs leading-[1.45] text-steel opacity-75" data-text={session.cwd}>
+                                    {segments(session.cwd, INITIAL_QUERY).map((part) =>
+                                        part.hit ? <mark>{part.text}</mark> : part.text,
+                                    )}
+                                </p>
+                            </div>
+                            <span class="shrink-0 pt-0.5 text-xs text-steel">{session.age}</span>
+                        </li>
+                    ))}
+                </ul>
+                <p class="px-2.5 py-2 text-[0.8125rem] text-steel" hidden data-empty>No results found.</p>
+            </div>
+
+            <div class="flex items-center gap-4 border-t border-white/8 bg-black/[0.22] px-3 py-2">
+                <span class={footItem}><kbd class={kbd}>↑</kbd><kbd class={kbd}>↓</kbd>Navigate</span>
+                <span class={footItem}><kbd class={kbd}>Enter</kbd>Select</span>
+                <span class={footItem}><kbd class={kbd}>Esc</kbd>Close</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    import { mountSessionSearch } from '../scripts/session-search';
+    mountSessionSearch();
+</script>

@@ -1,0 +1,151 @@
+---
+import Layout from '../layouts/layout.astro';
+import Nav from '../components/nav.astro';
+import HeroMark from '../components/hero-mark.astro';
+import DitherField from '../components/dither-field.astro';
+import SessionSearch from '../components/session-search.astro';
+import Daemon from '../components/daemon.astro';
+import Get from '../components/get.astro';
+import Pi from '@lobehub/icons-static-svg/icons/pi.svg';
+import Claude from '@lobehub/icons-static-svg/icons/claude-color.svg';
+import TerminalIcon from '@phosphor-icons/core/bold/terminal-window-bold.svg';
+
+const repo = 'https://github.com/mrozio13pl/pimux';
+const latest = `${repo}/releases/latest`;
+
+const harnesses = [
+    { name: 'pi', Icon: Pi },
+    { name: 'claude code', Icon: Claude },
+    { name: 'your shell', Icon: TerminalIcon },
+];
+---
+
+<Layout>
+    <div class="relative w-full max-w-6xl border-x border-white/8">
+        <Nav />
+
+        <section class="relative z-1 grid min-h-[calc(100dvh-3.75rem)] grid-cols-1 items-center lg:grid-cols-[1.05fr_1fr]">
+            <DitherField />
+
+            <div class="relative z-1 h-52 sm:h-68 lg:h-full">
+                <HeroMark />
+            </div>
+
+            <div class="relative z-1 flex flex-col items-start px-6 pt-6 pb-44 sm:px-10 lg:py-24 lg:pb-24 lg:pr-14 lg:pl-0">
+                <h1 class="hero-in font-heading text-5xl leading-[0.92] font-bold tracking-tight text-balance sm:text-6xl lg:text-[4.25rem]">
+                    <span class="text-sand">boring</span> terminal multiplexer
+                </h1>
+
+                <p class="hero-in mt-6 max-w-[36ch] text-lg leading-relaxed text-steel">
+                    keeps your coding agents in tabs, and keeps them running after you close
+                    the window
+                </p>
+
+                <div class="hero-in mt-9 flex flex-col items-start gap-4 min-[480px]:flex-row min-[480px]:items-center min-[480px]:gap-x-6">
+                    <a
+                        href={latest}
+                        data-download
+                        class="bg-sand hover:bg-sand-dim focus-visible:outline-sand inline-flex items-center gap-2 rounded-lg px-5 py-2.5 font-mono text-sm font-medium text-black transition-colors focus-visible:outline-2 focus-visible:outline-offset-3"
+                    >
+                        download
+                    </a>
+                    <a
+                        href={repo}
+                        class="hover:text-foreground focus-visible:outline-sand rounded-md font-mono text-sm whitespace-nowrap text-steel underline decoration-white/20 underline-offset-4 transition-colors hover:decoration-white/50 focus-visible:outline-2 focus-visible:outline-offset-4"
+                    >read the source</a>
+                </div>
+
+                <div class="hero-in mt-14 w-full max-w-md border-t border-white/8 pt-5">
+                    <p class="text-sm text-steel">works with</p>
+                    <ul class="mt-3.5 flex flex-wrap items-center gap-x-7 gap-y-3">
+                        {harnesses.map(({ name, Icon }) => (
+                            <li class="flex items-center gap-2 text-sm text-steel">
+                                <Icon class="size-5 shrink-0" />
+                                {name}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="showcase pb-16 lg:pb-20">
+            <img
+                src={`${import.meta.env.BASE_URL}pimux-app.webp`}
+                alt="pimux with several agent sessions in the sidebar and one open in the terminal"
+                width="1440"
+                height="900"
+                loading="lazy"
+                decoding="async"
+                class="showcase-img w-full"
+            />
+        </section>
+
+        <SessionSearch />
+        <Daemon />
+        <Get />
+    </div>
+</Layout>
+
+<script>
+    import { mountParallax } from '../scripts/parallax';
+    import { labelModifiers } from '../scripts/platform';
+
+    labelModifiers();
+
+    const shot = document.querySelector<HTMLElement>('.showcase-img');
+    if (shot) mountParallax(shot);
+
+    const ua = navigator.userAgent;
+    const platform = /Mac/i.test(ua) ? 'macos' : /Win/i.test(ua) ? 'windows' : /Linux|X11/i.test(ua) ? 'linux' : null;
+    if (platform) {
+        for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-download]')) {
+            link.textContent = `download for ${platform}`;
+        }
+    }
+</script>
+
+<style>
+    .showcase {
+        --shot: min(100vw - 2.5rem, 76rem);
+        width: var(--shot);
+        margin-inline: calc(50% - var(--shot) / 2);
+        perspective: 1400px;
+        perspective-origin: 50% 0%;
+    }
+
+    .showcase-img {
+        display: block;
+        filter: drop-shadow(0 30px 60px rgb(0 0 0 / 0.55));
+    }
+
+    .showcase-img[data-parallax] {
+        transform-origin: 50% 100%;
+        transform: rotateX(calc((1 - var(--enter, 1)) * 12deg))
+            scale(calc(0.9 + var(--enter, 1) * 0.1))
+            translateY(calc(var(--drift, 0) * 1px));
+        will-change: transform;
+    }
+
+    @keyframes hero-in {
+        from {
+            opacity: 0;
+            translate: 0 0.6rem;
+        }
+    }
+
+    .hero-in {
+        animation: hero-in 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+    }
+
+    .hero-in:nth-child(1) { animation-delay: 0.05s; }
+    .hero-in:nth-child(2) { animation-delay: 0.13s; }
+    .hero-in:nth-child(3) { animation-delay: 0.21s; }
+    .hero-in:nth-child(4) { animation-delay: 0.31s; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .hero-in {
+            animation: none;
+        }
+    }
+</style>
