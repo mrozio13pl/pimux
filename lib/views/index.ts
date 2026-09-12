@@ -2,8 +2,10 @@ import type { ViewStatusType } from '@/components/sidebar/view-status';
 import { BUILTIN_SOURCES, getExecutableSource, type SourceId } from '@/lib/sources';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettings } from '@/lib/settings';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { archiveInactive } from './archive';
+
+const SOURCE_ACTIVITY_INTERVAL = 60_000;
 
 export interface View {
     id: string;
@@ -52,6 +54,7 @@ export function useViews() {
     const [defaultCwd, setDefaultCwd] = useState('');
     const [loadState, setLoadState] = useState<'loading' | 'ready' | 'failed'>('loading');
     const [error, setError] = useState<string>();
+    const lastSourceUpdate = useRef(new Map<string, number>());
 
     useEffect(() => {
         void Promise.all([
@@ -137,6 +140,9 @@ export function useViews() {
     }, []);
 
     const updateViewFromSource = useCallback((id: string, patch: Partial<NewView>) => {
+        const now = Date.now();
+        const aged = now - (lastSourceUpdate.current.get(id) ?? 0) >= SOURCE_ACTIVITY_INTERVAL;
+        if (aged) lastSourceUpdate.current.set(id, now);
         setViews((current) =>
             current.map((view) =>
                 view.id === id
@@ -144,6 +150,7 @@ export function useViews() {
                           ...view,
                           ...patch,
                           title: patch.title !== undefined && view.lockTitle !== true ? patch.title : view.title,
+                          lastActiveAt: aged ? now : view.lastActiveAt,
                       }
                     : view,
             ),
@@ -200,9 +207,9 @@ export function useViews() {
         });
     }, []);
 
-    const archiveInactiveViews = useCallback((cutoff: number) => {
+    const archiveInactiveViews = useCallback((cutoff: number, keepId?: string) => {
         setViews((current) => {
-            const next = archiveInactive(current, cutoff);
+            const next = archiveInactive(current, cutoff, Date.now(), keepId);
             if (next !== current) newlyArchived(current, next).forEach(killSession);
             return next;
         });

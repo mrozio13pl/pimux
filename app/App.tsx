@@ -155,23 +155,12 @@ export function App() {
     useEffect(() => {
         if (!settingsHydrated) return;
 
-        const archiveExpired = () => {
-            const cutoff = Date.now() - autoArchiveDays * 86_400_000;
-            archiveInactiveViews(cutoff);
-            if (
-                currentView &&
-                !currentView.archived &&
-                currentView.lastActiveAt !== undefined &&
-                currentView.lastActiveAt <= cutoff
-            ) {
-                restorePreviousActiveView(currentView.id);
-            }
-        };
+        const archiveExpired = () => archiveInactiveViews(Date.now() - autoArchiveDays * 86_400_000, currentViewId);
 
         archiveExpired();
         const timer = window.setInterval(archiveExpired, 60_000);
         return () => window.clearInterval(timer);
-    }, [archiveInactiveViews, autoArchiveDays, currentView, restorePreviousActiveView, settingsHydrated]);
+    }, [archiveInactiveViews, autoArchiveDays, currentViewId, settingsHydrated]);
 
     const terminalViewIds = useRef<string[]>([]);
     const viewIds = new Set(views.map((view) => view.id));

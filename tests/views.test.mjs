@@ -18,6 +18,10 @@ test('inactive views are archived and legacy views start aging', async () => {
         assert.deepEqual(archived[2], { ...legacy, lastActiveAt: 200 });
         assert.strictEqual(archived[3], alreadyArchived);
         assert.strictEqual(archiveInactive(archived, 100), archived);
+
+        const kept = archiveInactive([stale, fresh], 100, 200, 'stale');
+        assert.strictEqual(kept[0], stale);
+        assert.strictEqual(kept[1], fresh);
     } finally {
         await vite.close();
     }
