@@ -3,7 +3,7 @@ import { BUILTIN_SOURCES, getExecutableSource, type SourceId } from '@/lib/sourc
 import { invoke } from '@tauri-apps/api/core';
 import { useSettings } from '@/lib/settings';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { archiveInactive } from './archive';
+import { archiveInactive, hibernateIdle } from './archive';
 
 const SOURCE_ACTIVITY_INTERVAL = 60_000;
 
@@ -20,6 +20,7 @@ export interface View {
     lockTitle?: boolean;
     pinned?: boolean;
     archived?: boolean;
+    hibernated?: boolean;
     lastActiveAt?: number;
 }
 
@@ -79,6 +80,7 @@ export function useViews() {
                             ...view,
                             cwd: view.cwd || workspace.cwd,
                             sourceId,
+                            hibernated: true,
                             resumeSession:
                                 Boolean(view.sessionId) &&
                                 (sourceId === BUILTIN_SOURCES.pi.id || sourceId === BUILTIN_SOURCES.claude.id),
@@ -207,6 +209,18 @@ export function useViews() {
         });
     }, []);
 
+    const wakeView = useCallback((id: string) => {
+        setViews((current) =>
+            current.some((view) => view.id === id && view.hibernated)
+                ? current.map((view) => (view.id === id ? { ...view, hibernated: false } : view))
+                : current,
+        );
+    }, []);
+
+    const hibernateIdleViews = useCallback((cutoff: number, keepId?: string) => {
+        setViews((current) => hibernateIdle(current, cutoff, keepId));
+    }, []);
+
     const archiveInactiveViews = useCallback((cutoff: number, keepId?: string) => {
         setViews((current) => {
             const next = archiveInactive(current, cutoff, Date.now(), keepId);
@@ -226,6 +240,8 @@ export function useViews() {
         promoteView,
         toggleViewPin,
         toggleViewArchive,
+        wakeView,
+        hibernateIdleViews,
         archiveInactiveViews,
         loading: loadState === 'loading',
         error,

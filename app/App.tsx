@@ -71,6 +71,8 @@ export function App() {
         promoteView,
         toggleViewPin,
         toggleViewArchive,
+        wakeView,
+        hibernateIdleViews,
         archiveInactiveViews,
         loading: loadingViews,
         error,
@@ -110,7 +112,7 @@ export function App() {
         () => sourceMenuSources.filter((source) => !('planned' in source)),
         [sourceMenuSources],
     );
-    const { defaultSource, autoArchiveDays } = useSettings((state) => state.values);
+    const { defaultSource, autoArchiveDays, hibernateIdleMinutes } = useSettings((state) => state.values);
     const settingsHydrated = useSyncExternalStore(
         useSettings.persist.onFinishHydration,
         useSettings.persist.hasHydrated,
@@ -155,12 +157,28 @@ export function App() {
     useEffect(() => {
         if (!settingsHydrated) return;
 
-        const archiveExpired = () => archiveInactiveViews(Date.now() - autoArchiveDays * 86_400_000, currentViewId);
+        const sweep = () => {
+            archiveInactiveViews(Date.now() - autoArchiveDays * 86_400_000, currentViewId);
+            if (hibernateIdleMinutes > 0) {
+                hibernateIdleViews(Date.now() - hibernateIdleMinutes * 60_000, currentViewId);
+            }
+        };
 
-        archiveExpired();
-        const timer = window.setInterval(archiveExpired, 60_000);
+        sweep();
+        const timer = window.setInterval(sweep, 60_000);
         return () => window.clearInterval(timer);
-    }, [archiveInactiveViews, autoArchiveDays, currentViewId, settingsHydrated]);
+    }, [
+        archiveInactiveViews,
+        autoArchiveDays,
+        currentViewId,
+        hibernateIdleMinutes,
+        hibernateIdleViews,
+        settingsHydrated,
+    ]);
+
+    useEffect(() => {
+        if (currentViewId) wakeView(currentViewId);
+    }, [currentViewId, wakeView]);
 
     const terminalViewIds = useRef<string[]>([]);
     const viewIds = new Set(views.map((view) => view.id));
@@ -373,6 +391,7 @@ export function App() {
                                             onDelete={deleteView}
                                             onTogglePin={togglePinnedView}
                                             onToggleArchive={toggleArchivedView}
+                                            onHibernate={(id) => updateView(id, { hibernated: true })}
                                             onTitleChange={(id, title, lockTitle) =>
                                                 updateView(id, { title, lockTitle })
                                             }
@@ -396,6 +415,7 @@ export function App() {
                                                         onDelete={deleteView}
                                                         onTogglePin={togglePinnedView}
                                                         onToggleArchive={toggleArchivedView}
+                                                        onHibernate={(id) => updateView(id, { hibernated: true })}
                                                         onTitleChange={(id, title, lockTitle) =>
                                                             updateView(id, { title, lockTitle })
                                                         }

@@ -58,6 +58,16 @@ export const settingDefinitions = {
         label: 'Archive inactive views',
         description: 'Days without activity before moving a view to archive.',
     },
+    hibernateIdleMinutes: {
+        section: 'views',
+        type: 'number',
+        default: 30,
+        min: 0,
+        max: 1440,
+        step: 5,
+        label: 'Hibernate idle views',
+        description: 'Minutes without activity before unloading a view. 0 disables.',
+    },
     shortenPaths: {
         section: 'appearance',
         type: 'boolean',

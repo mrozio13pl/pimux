@@ -27,6 +27,33 @@ test('inactive views are archived and legacy views start aging', async () => {
     }
 });
 
+test('idle agent views hibernate, busy and shell views do not', async () => {
+    const vite = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
+    try {
+        const { hibernateIdle } = await vite.ssrLoadModule('/lib/views/archive.ts');
+        const idle = { id: 'idle', sourceId: 'builtin:pi', lastActiveAt: 100 };
+        const busy = { id: 'busy', sourceId: 'builtin:pi', status: 'working', lastActiveAt: 100 };
+        const asking = { id: 'asking', sourceId: 'builtin:claudecode', status: 'attention', lastActiveAt: 100 };
+        const shell = { id: 'shell', sourceId: 'builtin:shell', lastActiveAt: 100 };
+        const custom = { id: 'custom', sourceId: 'custom:abc', lastActiveAt: 100 };
+        const recent = { id: 'recent', sourceId: 'builtin:pi', lastActiveAt: 300 };
+        const views = [idle, busy, asking, shell, custom, recent];
+
+        const next = hibernateIdle(views, 200);
+
+        assert.deepEqual(next[0], { ...idle, hibernated: true });
+        assert.strictEqual(next[1], busy);
+        assert.strictEqual(next[2], asking);
+        assert.strictEqual(next[3], shell);
+        assert.strictEqual(next[4], custom);
+        assert.strictEqual(next[5], recent);
+        assert.strictEqual(hibernateIdle(next, 200), next);
+        assert.strictEqual(hibernateIdle(views, 200, 'idle'), views);
+    } finally {
+        await vite.close();
+    }
+});
+
 test('closing a view restores the latest active view', async () => {
     const vite = await createServer({ appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
     try {

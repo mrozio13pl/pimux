@@ -15,7 +15,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-const RING_LINES: usize = 200;
+const RING_LINES: usize = 500;
 const RING_BYTES: usize = 256 * 1024;
 
 const QUEUE_BYTES: usize = 4 * 1024 * 1024;

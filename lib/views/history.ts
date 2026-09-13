@@ -1,9 +1,9 @@
 export function startedTerminalIds(
-    views: { id: string; archived?: boolean }[],
+    views: { id: string; archived?: boolean; hibernated?: boolean }[],
     currentViewId: string | undefined,
     startedIds: string[],
 ) {
-    const liveIds = new Set(views.filter((view) => !view.archived).map((view) => view.id));
+    const liveIds = new Set(views.filter((view) => !view.archived && !view.hibernated).map((view) => view.id));
     const ids = startedIds.filter((id) => liveIds.has(id));
     if (currentViewId && liveIds.has(currentViewId) && !ids.includes(currentViewId)) ids.push(currentViewId);
     return ids;

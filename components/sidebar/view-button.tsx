@@ -32,6 +32,7 @@ interface ViewButtonProps extends React.ComponentProps<'button'> {
     onDelete: (id: string) => void;
     onTogglePin: (id: string) => void;
     onToggleArchive: (id: string) => void;
+    onHibernate: (id: string) => void;
     onTitleChange: (id: string, title: string, lockTitle: boolean) => void;
     reorderRevision: number;
 }
@@ -43,6 +44,7 @@ export function ViewButton({
     onDelete,
     onTogglePin,
     onToggleArchive,
+    onHibernate,
     onTitleChange,
     reorderRevision,
     style,
@@ -61,15 +63,17 @@ export function ViewButton({
     const shell = view.sourceId === BUILTIN_SOURCES.shell.id;
 
     const Icon = useCallback(
-        ({ compact = false }: { compact?: boolean }) => {
+        ({ compact = false, hibernated = false }: { compact?: boolean; hibernated?: boolean }) => {
             if (!showSourceIcons) return null;
 
             if (!source?.icon) return null;
 
+            const hibernatedClass = hibernated && 'grayscale'
+
             if (typeof source?.icon === 'string') {
                 return (
                     <img
-                        className={clsx('-mt-1', compact ? 'size-4' : 'size-5')}
+                        className={clsx('-mt-1', compact ? 'size-4' : 'size-5', hibernatedClass)}
                         src={convertFileSrc(source.icon)}
                         alt={source.title}
                     />
@@ -77,7 +81,7 @@ export function ViewButton({
             }
 
             return (
-                <span className={clsx('[&_svg]:-mt-1', compact ? '[&_svg]:size-4' : '[&_svg]:size-5')}>
+                <span className={clsx('[&_svg]:-mt-1', compact ? '[&_svg]:size-4' : '[&_svg]:size-5', hibernatedClass)}>
                     {source.icon}
                 </span>
             );
@@ -153,6 +157,7 @@ export function ViewButton({
                                                 ? 'cursor-pointer space-y-1 py-2'
                                                 : 'cursor-grab space-y-1 py-3 active:cursor-grabbing',
                                             active && 'bg-muted',
+                                            view.hibernated && !active && 'opacity-80',
                                             sortable.isOver &&
                                                 !sortable.isDragging &&
                                                 'after:absolute after:-bottom-[5px] after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-primary after:content-[""]',
@@ -200,7 +205,7 @@ export function ViewButton({
                                 />
                                 <div className="flex items-center justify-between gap-1.5">
                                     <ViewFooter cwd={view.cwd} />
-                                    <Icon />
+                                    <Icon hibernated={view.hibernated} />
                                 </div>
                             </>
                         )}
@@ -239,6 +244,11 @@ export function ViewButton({
                         <ContextMenuItem onClick={() => void navigator.clipboard.writeText(view.cwd)}>
                             Copy path
                         </ContextMenuItem>
+                        {!view.archived && !active && !view.hibernated && (
+                            <ContextMenuItem onClick={() => onHibernate(view.id)}>
+                                Hibernate view
+                            </ContextMenuItem>
+                        )}
                         <ContextMenuItem onClick={() => onToggleArchive(view.id)}>
                             {view.archived ? 'Unarchive view' : 'Archive view'}
                         </ContextMenuItem>
