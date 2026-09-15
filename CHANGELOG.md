@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/mrozio13pl/pimux/compare/v0.6.1...v0.7.0) (2026-09-15)
+
+
+### Features
+
+* hibernate views ([2a7d319](https://github.com/mrozio13pl/pimux/commit/2a7d319e370478ddd429d7fdf731ff044249e966))
+
+
+### Improvements
+
+* more accurate last activity tracker ([2dcfab0](https://github.com/mrozio13pl/pimux/commit/2dcfab03d49b6c9c278a75ea766d64e562765dbd))
+
 ## [0.6.1](https://github.com/mrozio13pl/pimux/compare/v0.6.0...v0.6.1) (2026-09-11)
 
 
